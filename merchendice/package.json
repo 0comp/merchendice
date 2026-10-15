@@ -1,0 +1,14 @@
+{
+  "name": "merchendice-contabo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node scripts/build.mjs && node --env-file-if-exists=.env server.mjs",
+    "test": "node scripts/build.mjs && node --test tests/*.test.mjs"
+  },
+  "dependencies": { "nodemailer": "10.0.13" }
+}

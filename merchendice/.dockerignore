@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.*
+.git
+.openai
+.sites-runtime
+tests
+*.zip
+*.tgz

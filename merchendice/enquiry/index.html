@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#335c67">
+    <meta name="description" content="Send Merchendice a creator merch enquiry.">
+    <title>Send an enquiry — Merchendice</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%23335c67'/%3E%3Cpath d='M10 29V12h4v3c1-2 3-3 5-3s4 1 5 3c1-2 3-3 5-3 4 0 6 3 6 7v10h-4V19c0-2-1-3-3-3s-4 2-4 4v9h-4V19c0-2-1-3-3-3s-3 2-3 4v9z' fill='%23fff3b0'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="../site.css">
+    <script src="../site.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/#top" aria-label="Merchendice home">merchendice<span>.</span></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="/#how-it-works">How it works</a>
+        <a href="/examples/">Storefronts</a>
+        <a class="nav-cta" href="#enquiryForm" aria-current="page">Send an enquiry <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main>
+      <section class="enquiry-section" aria-labelledby="enquiry-title">
+        <div class="enquiry-intro">
+          <h1 id="enquiry-title">Tell us about your merch idea.</h1>
+          <p>A short description is enough to start. We’ll reply by email to plan the next steps together.</p>
+        </div>
+        <div class="form-panel">
+          <form id="enquiryForm" novalidate>
+            <div class="form-row">
+              <div class="field">
+                <label for="name">Name <span>*</span></label>
+                <input id="name" name="name" type="text" autocomplete="name" maxlength="160" required>
+              </div>
+              <div class="field">
+                <label for="email">Email <span>*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+              </div>
+            </div>
+            <fieldset class="platform-field">
+              <legend>Where can we find you?</legend>
+              <p class="field-hint">Optional — choose any platforms you use.</p>
+              <div class="platform-options">
+                <label class="check-option"><input type="checkbox" name="platforms" value="YouTube"><span>YouTube</span></label>
+                <label class="check-option"><input type="checkbox" name="platforms" value="Instagram"><span>Instagram</span></label>
+                <label class="check-option"><input type="checkbox" name="platforms" value="TikTok"><span>TikTok</span></label>
+                <label class="check-option"><input type="checkbox" name="platforms" value="Other platforms"><span>Other platforms</span></label>
+              </div>
+            </fieldset>
+            <div class="field description-field">
+              <label for="description">Project description <span>*</span></label>
+              <p class="field-hint" id="descriptionHint">Tell us what you have in mind. Add a channel link or handle here if you’d like us to see your work.</p>
+              <textarea id="description" name="description" rows="4" maxlength="5000" aria-describedby="descriptionHint" required></textarea>
+            </div>
+            <p class="required-note">Required fields are marked with an asterisk.</p>
+            <button class="button button-submit" type="submit"><span>Send an enquiry</span><span aria-hidden="true">↗</span></button>
+            <p class="form-status" id="formStatus" role="status" aria-live="polite" tabindex="-1"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <a class="wordmark" href="/#top">merchendice<span>.</span></a>
+      <a href="/">Back to the homepage <span aria-hidden="true">↗</span></a>
+    </footer>
+  </body>
+</html>

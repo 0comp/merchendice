@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#335c67">
+    <meta name="description" content="Browse example and real creator merch storefronts in the Merchendice directory.">
+    <title>Storefronts directory — Merchendice</title>
+    <link rel="preconnect" href="https://images-api.printify.com" crossorigin>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%23335c67'/%3E%3Cpath d='M10 29V12h4v3c1-2 3-3 5-3s4 1 5 3c1-2 3-3 5-3 4 0 6 3 6 7v10h-4V19c0-2-1-3-3-3s-4 2-4 4v9h-4V19c0-2-1-3-3-3s-3 2-3 4v9z' fill='%23fff3b0'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="../site.css">
+    <script src="../examples.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="/#top" aria-label="Merchendice home">merchendice<span>.</span></a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="/#how-it-works">How it works</a>
+        <a href="/examples/" aria-current="page">Storefronts</a>
+        <a class="nav-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main class="examples-page">
+      <section class="examples-hero" aria-labelledby="directory-title">
+        <div class="examples-hero-inner">
+          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> MERCHENDICE / STOREFRONTS</p>
+          <h1 id="directory-title">Storefront directory</h1>
+          <p>Browse examples and real creator storefronts. Use the tabs to switch between them.</p>
+        </div>
+      </section>
+      <section class="directory-content" aria-label="Browse storefronts">
+        <div class="directory-toolbar">
+          <label class="directory-search-label" for="exampleSearch">Search storefronts</label>
+          <div class="directory-search-wrap">
+            <span aria-hidden="true">⌕</span>
+            <input id="exampleSearch" type="search" placeholder="Search by name or type" autocomplete="off">
+          </div>
+          <div class="directory-filters" role="group" aria-label="Choose example or real storefronts">
+            <button type="button" class="directory-filter is-active" data-filter="example" aria-pressed="true">Example storefronts</button>
+            <button type="button" class="directory-filter" data-filter="real" aria-pressed="false">Real storefronts</button>
+          </div>
+        </div>
+        <div class="directory-results-heading">
+          <p id="directoryResultCount" role="status" aria-live="polite">1 storefront</p>
+          <span id="directoryResultKind">EXAMPLE STOREFRONTS</span>
+        </div>
+        <div class="directory-grid" id="directoryGrid">
+          <article class="listing-card listing-card--creator" data-kind="example" data-search="creator storefront merch sample example">
+            <a class="listing-art" href="/examplepage.com/" data-prefetch-example aria-label="Open the CREATOR storefront example">
+              <span class="listing-art-kicker">STOREFRONT EXAMPLE</span>
+              <span class="listing-art-sun" aria-hidden="true"></span>
+              <span class="listing-art-title">CREATOR</span>
+            </a>
+            <div class="listing-card-body">
+              <div class="listing-card-meta">STOREFRONT</div>
+              <h2>CREATOR</h2>
+              <p>A sample storefront showing one way a creator merch brand can be presented online.</p>
+              <a class="button button-dark" href="/examplepage.com/" data-prefetch-example>View example website <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+        </div>
+        <p class="directory-empty" id="directoryEmpty" hidden>No storefronts match that search. Try a different name or type.</p>
+      </section>
+      <section class="directory-cta" aria-label="Start an enquiry">
+        <div>
+          <h2>Let’s talk merch.</h2>
+        </div>
+        <a class="button button-light" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <a class="wordmark" href="/#top">merchendice<span>.</span></a>
+      <a href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+    </footer>
+  </body>
+</html>

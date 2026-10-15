@@ -1,0 +1,14 @@
+# Optional overlay when your existing reverse proxy also runs in Docker.
+services:
+  app:
+    networks:
+      default: {}
+      proxy:
+        aliases:
+          - merchendice-contabo
+
+networks:
+  default: {}
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK_NAME:?Set PROXY_NETWORK_NAME to your proxy's existing Docker network}
