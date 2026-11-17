@@ -56,11 +56,12 @@ test('CREATOR example is served on its Merchendice path with working inline layo
 test('homepage explains the service and publishes only the public contact address', async () => {
   const response = await worker.fetch(new Request('https://site.example.test/'));
   const html = await response.text();
-  assert.match(html, /We build and run your merch store/);
+  assert.match(html, /We help creators turn their own ideas into merch/);
+  assert.match(html, /Send us a short note about your idea/);
+  assert.match(html, /href="\/enquiry\/"/);
   assert.match(html, /Shopify/);
-  assert.match(html, /Printify/);
-  assert.match(html, /ShineOn/);
-  assert.match(html, /no inventory to hold/);
+  assert.match(html, /print-on-demand/);
+  assert.doesNotMatch(html, /Printify|ShineOn|\/images\/tee|images-api\.printify\.com/);
   assert.match(html, /merchendices@gmail.com/);
   assert.match(html, /rel="canonical" href="https:\/\/merchendice.com\/"/);
   assert.match(html, /property="og:image"/);
