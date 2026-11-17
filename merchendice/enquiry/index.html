@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#141716">
+    <meta name="theme-color" content="#0b0c0c">
     <meta name="description" content="Send Merchendice a short note about your idea. We help creators turn their own ideas into merch, and we reply by email.">
     <title>Send an enquiry — Merchendice</title>
     <link rel="canonical" href="https://merchendice.com/enquiry/">
@@ -25,37 +25,39 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="../site.css">
     <script src="../site.js" defer></script>
   </head>
   <body>
-    <header class="site-header">
-      <a class="wordmark" href="/#top" aria-label="Merchendice home">merchendice<span>.</span></a>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header" data-header>
+      <a class="wordmark" href="/" aria-label="Merchendice home"><svg class="wordmark-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 30V8l13 15L33 8v22"/><path d="M20 23v4"/><circle cx="20" cy="31" r="3.6"/></svg><span class="wordmark-text">Merchendice</span></a>
       <nav class="main-nav" id="site-nav" aria-label="Main navigation">
-        <a href="/#how-it-works">How it works</a>
-        <a href="/#what-you-get">What you get</a>
+        <a href="/#what-you-get">Services</a>
+        <a href="/#how-it-works">Process</a>
         <a href="/examples/">Storefronts</a>
         <a href="/#faq">FAQ</a>
       </nav>
-      <a class="nav-cta" href="#enquiryForm" aria-current="page">Send a note <span aria-hidden="true">↗</span></a>
+      <a class="nav-cta" href="#enquiryForm" aria-current="page"><span>Send a note</span><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
         <span class="nav-toggle-bars" aria-hidden="true"></span>
         <span class="sr-only">Menu</span>
       </button>
     </header>
-    <main>
+    <main id="main">
       <section class="enquiry-layout" aria-labelledby="enquiry-title">
+        <div class="page-glow" aria-hidden="true"></div>
         <div class="enquiry-intro">
-          <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> A SHORT NOTE</p>
+          <p class="kicker">A short note</p>
           <h1 id="enquiry-title">Send us a short note about your idea.</h1>
           <p>We help creators turn their own ideas into merch. Tell us the idea. We’ll reply by email. You approve each step, and commercial terms are agreed before any work begins.</p>
           <p class="enquiry-mail">Or email <a href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>.</p>
-          <svg class="enquiry-mark" viewBox="0 0 220 220" aria-hidden="true">
-            <path d="M30 50c36 62 124 62 160 0"/>
-            <circle cx="110" cy="112" r="36"/>
-            <circle cx="110" cy="112" r="12"/>
-            <path d="M110 148v18"/>
+          <svg class="enquiry-mark" viewBox="0 0 220 240" aria-hidden="true">
+            <defs><linearGradient id="enquiryStroke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc8d9"/><stop offset=".55" stop-color="#9a8be8"/><stop offset="1" stop-color="#ecd27f"/></linearGradient></defs>
+            <path d="M30 170V30l80 92 80-92v140"/>
+            <path d="M110 122v34"/>
+            <circle cx="110" cy="184" r="24"/>
           </svg>
         </div>
         <div class="form-wrap">
@@ -96,7 +98,7 @@
               </div>
               <p class="required-note">Required fields are marked with an asterisk.</p>
               <p class="form-privacy"><a href="/privacy/">Privacy notice (draft)</a><span>What this form collects, and why.</span></p>
-              <button class="button button-submit" type="submit"><span>Send an enquiry</span><span aria-hidden="true">↗</span></button>
+              <button class="button button-submit" type="submit"><span>Send an enquiry</span><span class="submit-arrow" aria-hidden="true"><svg class="arrow" viewBox="0 0 16 16"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></span></button>
               <p class="form-status" id="formStatus" role="status" aria-live="polite" tabindex="-1"></p>
             </form>
           </div>
@@ -104,22 +106,24 @@
       </section>
     </main>
     <footer class="site-footer">
-      <div>
-        <a class="wordmark" href="/#top">merchendice<span>.</span></a>
+      <div class="footer-brand">
+        <a class="wordmark" href="/" aria-label="Merchendice home"><svg class="wordmark-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 30V8l13 15L33 8v22"/><path d="M20 23v4"/><circle cx="20" cy="31" r="3.6"/></svg><span class="wordmark-text">Merchendice</span></a>
         <p>We help creators turn their own ideas into merch.</p>
       </div>
       <nav class="footer-nav" aria-label="Footer">
-        <p class="footer-label">EXPLORE</p>
-        <a href="/#how-it-works">How it works</a>
+        <p class="footer-label">Explore</p>
+        <a href="/#what-you-get">Services</a>
+        <a href="/#how-it-works">Process</a>
         <a href="/examples/">Storefronts</a>
         <a href="/#faq">FAQ</a>
       </nav>
       <nav class="footer-nav" aria-label="Contact">
-        <p class="footer-label">CONTACT</p>
+        <p class="footer-label">Contact</p>
         <a href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>
         <a href="/privacy/">Privacy notice (draft)</a>
-        <a class="footer-cta" href="/">Back to the homepage <span aria-hidden="true">↗</span></a>
+        <a class="footer-cta" href="/"><span>Back to the homepage</span><svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8h11M9 3.5 13.5 8 9 12.5"/></svg></a>
       </nav>
+      <p class="footer-base">© Merchendice</p>
     </footer>
   </body>
 </html>

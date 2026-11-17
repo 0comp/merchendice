@@ -97,3 +97,66 @@ if (navToggle && siteNav && typeof navToggle.addEventListener === 'function' && 
     if (event.key === 'Escape') closeNav();
   });
 }
+
+// Presentation only: header state, scroll reveal, and a light parallax on the hero mark.
+// Everything is optional, so the page stays fully readable if any of it is unavailable.
+(() => {
+  if (typeof window === 'undefined' || typeof document.querySelectorAll !== 'function' || !document.documentElement) return;
+  const root = document.documentElement;
+  const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const header = document.querySelector('[data-header]');
+  if (header && header.classList) {
+    let ticking = false;
+    const update = () => {
+      header.classList.toggle('is-scrolled', window.scrollY > 24);
+      ticking = false;
+    };
+    window.addEventListener('scroll', () => {
+      if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+  }
+
+  const revealItems = Array.from(document.querySelectorAll('.reveal'));
+  if (revealItems.length && !reduceMotion && 'IntersectionObserver' in window) {
+    const groups = new Map();
+    for (const item of revealItems) {
+      const parent = item.parentElement;
+      const index = groups.get(parent) || 0;
+      groups.set(parent, index + 1);
+      item.style.setProperty('--delay', `${Math.min(index, 4) * 90}ms`);
+    }
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-in');
+          observer.unobserve(entry.target);
+        }
+      }
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+    root.classList.add('js-reveal');
+    for (const item of revealItems) {
+      const rect = item.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.92) item.classList.add('is-in');
+      else observer.observe(item);
+    }
+  }
+
+  const mark = document.querySelector('.hero-mark-body');
+  const hero = document.querySelector('.hero');
+  const finePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
+  if (mark && hero && finePointer && !reduceMotion) {
+    hero.addEventListener('pointermove', (event) => {
+      const box = hero.getBoundingClientRect();
+      const x = (event.clientX - box.left) / box.width - 0.5;
+      const y = (event.clientY - box.top) / box.height - 0.5;
+      mark.style.setProperty('--mx', `${(x * 18).toFixed(1)}px`);
+      mark.style.setProperty('--my', `${(y * 14).toFixed(1)}px`);
+    });
+    hero.addEventListener('pointerleave', () => {
+      mark.style.setProperty('--mx', '0px');
+      mark.style.setProperty('--my', '0px');
+    });
+  }
+})();

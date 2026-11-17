@@ -265,3 +265,17 @@ test('directory matches multiple words in any order and restores the empty state
   search.value=''; search.update();
   assert.equal(card.hidden,false); assert.equal(empty.hidden,true);
 });
+
+test('homepage keeps the redesigned structure without product imagery', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.doesNotMatch(html, /<img\b/);
+  assert.doesNotMatch(html, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
+  for (const number of ['01', '02', '03']) assert.match(html, new RegExp(`class="service-num">${number}<`));
+  for (const step of ['Idea', 'Designs', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
+  assert.match(html, /Let’s make your/);
+  assert.match(html, /class="scroll-cue"/);
+  assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.match(css, /\/fonts\/archivo\.woff2/);
+});
