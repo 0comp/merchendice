@@ -266,12 +266,17 @@ test('directory matches multiple words in any order and restores the empty state
   assert.equal(card.hidden,false); assert.equal(empty.hidden,true);
 });
 
-test('homepage keeps the redesigned structure without product imagery', async () => {
+test('homepage keeps the redesigned structure, a broad audience and no product imagery', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.doesNotMatch(html, /<img\b/);
   assert.doesNotMatch(html, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
   for (const number of ['01', '02', '03']) assert.match(html, new RegExp(`class="service-num">${number}<`));
-  for (const step of ['Idea', 'Designs', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
+  for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
+  assert.match(html, /id="quality"/);
+  assert.match(html, /look cheap or <span class="grad nowrap">off-brand\?/);
+  assert.match(html, /No generic templates/);
+  for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(platform));
+  assert.doesNotMatch(html, /jewel|tote|clothing|fashion|beauty|lifestyle|\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.match(html, /Let’s make your/);
   assert.match(html, /class="scroll-cue"/);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
