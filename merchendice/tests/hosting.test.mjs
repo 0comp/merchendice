@@ -151,6 +151,19 @@ test('a filled website field is ignored before email is sent', async t => {
   assert.equal(fixture.sends(), 0);
 });
 
+test('product images and the display font are served from the site itself', async t => {
+  const fixture = await serverFixture(t);
+  const image = await fetch(`${fixture.base}/images/tee.webp`);
+  assert.equal(image.status, 200);
+  assert.match(image.headers.get('content-type'), /image\/webp/);
+  assert.equal((await image.arrayBuffer()).byteLength > 1000, true);
+  const font = await fetch(`${fixture.base}/fonts/fraunces.woff2`);
+  assert.equal(font.status, 200);
+  assert.match(font.headers.get('content-type'), /font\/woff2/);
+  assert.equal((await fetch(`${fixture.base}/images/../server.mjs`)).status, 404);
+  assert.equal((await fetch(`${fixture.base}/fonts/OFL.txt`)).status, 404);
+});
+
 test('production requires a valid fixed public origin', () => {
   for (const origin of ['', 'https://user:pass@site.example.test', 'https://site.example.test/path']) {
     assert.throws(()=>createAppServer({env:{NODE_ENV:'production',PUBLIC_ORIGIN:origin}}),/PUBLIC_ORIGIN/);

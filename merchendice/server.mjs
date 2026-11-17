@@ -1,5 +1,6 @@
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { resolve } from 'node:path';
+import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 import app from './dist/app.mjs';
@@ -92,6 +93,35 @@ function headerMap(headers) {
   return Object.fromEntries(headers);
 }
 
+const STATIC_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)));
+const STATIC_TYPES = { '.webp': 'image/webp', '.woff2': 'font/woff2' };
+
+function resolveStatic(pathname) {
+  if (!pathname.startsWith('/images/') && !pathname.startsWith('/fonts/')) return null;
+  if (pathname.includes('..') || pathname.includes('\\') || pathname.includes('\0')) return null;
+  const target = resolve(STATIC_ROOT, `.${pathname}`);
+  const imagesRoot = resolve(STATIC_ROOT, 'images') + sep;
+  const fontsRoot = resolve(STATIC_ROOT, 'fonts') + sep;
+  if (!target.startsWith(imagesRoot) && !target.startsWith(fontsRoot)) return null;
+  return target;
+}
+
+function serveStatic(pathname, method, outgoing) {
+  const file = resolveStatic(pathname);
+  if (!file || !existsSync(file) || !statSync(file).isFile()) return false;
+  const type = STATIC_TYPES[extname(file).toLowerCase()];
+  if (!type) return false;
+  const data = readFileSync(file);
+  outgoing.writeHead(200, {
+    'content-type': type,
+    'content-length': data.length,
+    'cache-control': type === 'font/woff2' ? 'public, max-age=31536000, immutable' : 'public, max-age=604800',
+    'x-content-type-options': 'nosniff',
+  });
+  outgoing.end(method === 'HEAD' ? undefined : data);
+  return true;
+}
+
 export function createAppServer({ env = process.env, sendMail, rateLimiter = createRateLimiter() } = {}) {
   const rawOrigin = env.PUBLIC_ORIGIN || (env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
   let publicOrigin;
@@ -110,6 +140,7 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
         incoming.resume();
         return sendJson(outgoing, 400, { message: invalidRequest });
       }
+      if (['GET', 'HEAD'].includes(incoming.method) && serveStatic(url.pathname, incoming.method, outgoing)) return;
       if (['GET', 'HEAD'].includes(incoming.method) && url.pathname === '/healthz') {
         outgoing.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
         outgoing.end(incoming.method === 'HEAD' ? '' : '{"ok":true}');

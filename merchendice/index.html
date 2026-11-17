@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#335c67">
+    <meta name="theme-color" content="#141716">
     <meta name="description" content="We build and run a custom Shopify merch store for creators. Print-on-demand production and shipping, no inventory. Send an enquiry.">
     <title>Merchendice — We build and run your merch store</title>
     <link rel="canonical" href="https://merchendice.com/">
@@ -25,6 +25,8 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/images/tee.webp" as="image">
     <link rel="stylesheet" href="site.css">
     <script src="site.js" defer></script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Merchendice","url":"https://merchendice.com/","email":"merchendices@gmail.com","logo":"https://merchendice.com/apple-touch-icon.png","description":"Merchendice builds and runs custom Shopify merch stores for creators, with print-on-demand production and shipping."}</script>
@@ -32,11 +34,17 @@
   <body>
     <header class="site-header">
       <a class="wordmark" href="#top" aria-label="Merchendice home">merchendice<span>.</span></a>
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="main-nav" id="site-nav" aria-label="Main navigation">
         <a href="#how-it-works">How it works</a>
+        <a href="#what-you-get">What you get</a>
         <a href="/examples/">Storefronts</a>
-        <a class="nav-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+        <a href="#faq">FAQ</a>
       </nav>
+      <a class="nav-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+        <span class="sr-only">Menu</span>
+      </button>
     </header>
 
     <main id="top">
@@ -49,58 +57,194 @@
             <a class="button button-light" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
             <a class="text-link" href="/examples/">Browse storefronts <span aria-hidden="true">↗</span></a>
           </div>
+          <ul class="stack-row">
+            <li>Shopify store</li>
+            <li>Printify clothing</li>
+            <li>ShineOn jewelry</li>
+            <li>No inventory</li>
+          </ul>
+        </div>
+        <div class="stage" aria-hidden="false">
+          <figure class="shot shot-tee">
+            <img src="/images/tee.webp" width="800" height="800" alt="Sample white tee with a small line-drawn bird" fetchpriority="high">
+          </figure>
+          <figure class="shot shot-hoodie">
+            <img src="/images/hoodie.webp" width="800" height="800" alt="Sample white hoodie with a small colorful bird" loading="lazy">
+          </figure>
+          <figure class="shot shot-tote">
+            <img src="/images/tote.webp" width="800" height="800" alt="Sample canvas tote with a small colorful bird" loading="lazy">
+          </figure>
+          <figure class="shot shot-sticker">
+            <img src="/images/sticker.webp" width="399" height="399" alt="Sample bird sticker" loading="lazy">
+          </figure>
+          <p class="stage-note">SAMPLE PRODUCTS FROM THE EXAMPLE STORE</p>
         </div>
       </section>
 
-      <section class="how-section section-wrap" id="how-it-works" aria-labelledby="how-title">
+      <section class="section" id="how-it-works" aria-labelledby="how-title">
         <div class="section-heading">
-          <p class="eyebrow eyebrow-dark">THREE SIMPLE STEPS</p>
-          <h2 id="how-title">How it works</h2>
+          <div>
+            <p class="eyebrow eyebrow-dark">THREE SIMPLE STEPS</p>
+            <h2 id="how-title">How it works</h2>
+          </div>
         </div>
         <ol class="steps">
-          <li><span class="step-number">01</span><h3>Send an enquiry</h3><p>Tell us about your brand and the merch you want. We’ll reply by email.</p></li>
-          <li><span class="step-number">02</span><h3>We build your store</h3><p>We set up a custom Shopify store for you and prepare the products.</p></li>
-          <li><span class="step-number">03</span><h3>We handle production and shipping</h3><p>Orders are made on demand and shipped to your customers. Clothing through Printify, delicate jewelry through ShineOn. You don’t hold inventory.</p></li>
+          <li class="step-card">
+            <div class="step-top"><span class="step-number">01</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span></div>
+            <h3>Send an enquiry</h3>
+            <p>Tell us about your brand and the merch you want. We’ll reply by email.</p>
+          </li>
+          <li class="step-card">
+            <div class="step-top"><span class="step-number">02</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16v10H4z"/><path d="M3 10l9-6 9 6"/><path d="M10 20v-6h4v6"/></svg></span></div>
+            <h3>We build your store</h3>
+            <p>We set up a custom Shopify store for you and prepare the products.</p>
+          </li>
+          <li class="step-card">
+            <div class="step-top"><span class="step-number">03</span><span class="step-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></span></div>
+            <h3>We handle production and shipping</h3>
+            <p>Orders are made on demand and shipped to your customers. Clothing through Printify, delicate jewelry through ShineOn. You don’t hold inventory.</p>
+          </li>
         </ol>
         <a class="button button-dark how-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
       </section>
 
-      <section class="faq-section section-wrap" id="faq" aria-labelledby="faq-title">
+      <section class="section band" id="what-you-get" aria-labelledby="get-title">
         <div class="section-heading">
-          <p class="eyebrow eyebrow-dark">QUESTIONS</p>
-          <h2 id="faq-title">Before you enquire</h2>
+          <div>
+            <p class="eyebrow eyebrow-dark">THE SERVICE</p>
+            <h2 id="get-title">What you get</h2>
+          </div>
+          <p>A store we build and run for you. No prices or terms are listed here — we go through those after you enquire.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v10H4z"/><path d="M3 10l9-6 9 6"/><path d="M10 20v-6h4v6"/></svg>
+            <h3>Custom Shopify store</h3>
+            <p>We set up a custom Shopify store for your brand and run it for you.</p>
+          </article>
+          <article class="feature-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"/><path d="m13 7 4 4"/></svg>
+            <h3>Designs</h3>
+            <p>We prepare the designs for the products on that store.</p>
+          </article>
+          <article class="feature-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v12H3z"/><path d="M3 7l9 7 9-7"/></svg>
+            <h3>Production and shipping</h3>
+            <p>Print-on-demand clothing through Printify and delicate jewelry through ShineOn. Made and shipped for you, with no inventory to hold.</p>
+          </article>
+          <article class="feature-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16v-4"/><path d="M12 16V8"/><path d="M16 16v-6"/></svg>
+            <h3>Monthly reporting</h3>
+            <p>A monthly report on how the store is doing. Anything that needs a price or a term, we’ll go through on a call or by email after you enquire.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="storefront" aria-labelledby="store-title">
+        <div class="showcase">
+          <div class="product-grid">
+            <a href="/examplepage.com/"><img src="/images/tee.webp" width="800" height="800" alt="Sample white tee with a small line-drawn bird" loading="lazy"></a>
+            <a href="/examplepage.com/"><img src="/images/hoodie.webp" width="800" height="800" alt="Sample white hoodie with a small colorful bird" loading="lazy"></a>
+            <a href="/examplepage.com/"><img src="/images/tote.webp" width="800" height="800" alt="Sample canvas tote with a small colorful bird" loading="lazy"></a>
+            <a href="/examplepage.com/"><img src="/images/sticker.webp" width="399" height="399" alt="Sample bird sticker" loading="lazy"></a>
+          </div>
+          <div class="showcase-copy">
+            <p class="eyebrow">SAMPLE STOREFRONT</p>
+            <h2 id="store-title">A store with your name on it.</h2>
+            <p>A sample storefront showing one way a creator merch brand can be presented. It does not take orders.</p>
+            <a class="button button-light" href="/examplepage.com/">View example website <span aria-hidden="true">↗</span></a>
+            <p><a class="text-link" href="/examples/">Browse storefronts <span aria-hidden="true">↗</span></a></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section band" id="who" aria-labelledby="who-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow eyebrow-dark">THE FIT</p>
+            <h2 id="who-title">Who it’s for</h2>
+          </div>
+          <p>Creators who want their own merch store, mainly in the US, without holding inventory or handling production and shipping themselves.</p>
+        </div>
+        <div class="audience-grid">
+          <article class="audience-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 19c1.5-3 4-4.5 7-4.5S17.5 16 19 19"/></svg>
+            <h3>Creators</h3>
+            <p>You want a merch store of your own — the kind of shop your audience can actually visit. YouTube, Instagram, and TikTok links help us find your work. They’re optional.</p>
+          </article>
+          <article class="audience-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v11H4z"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>
+            <h3>No inventory</h3>
+            <p>You don’t hold stock, pack boxes, or run shipping. Orders are made on demand and sent to the customer.</p>
+          </article>
+          <article class="audience-card">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M12 4c2.5 2.5 2.5 13 0 16"/><path d="M12 4c-2.5 2.5-2.5 13 0 16"/></svg>
+            <h3>Mainly in the US</h3>
+            <p>The service is aimed at creators in the US. Send an enquiry and we’ll reply by email.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="faq" aria-labelledby="faq-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow eyebrow-dark">QUESTIONS</p>
+            <h2 id="faq-title">Before you enquire</h2>
+          </div>
         </div>
         <div class="faq-list">
-          <article class="faq-item">
-            <h3>What do you do?</h3>
+          <details class="faq-item" name="faq" open>
+            <summary>What do you do?</summary>
             <p>We build and run a custom merch store for creators. The store is on Shopify. Clothing is produced on demand with Printify, and delicate jewelry with ShineOn. We handle production and shipping, so you don’t keep stock.</p>
-          </article>
-          <article class="faq-item">
-            <h3>Who is it for?</h3>
+          </details>
+          <details class="faq-item" name="faq">
+            <summary>Who is it for?</summary>
             <p>Creators who want their own merch store, mainly in the US, without holding inventory or handling production and shipping themselves.</p>
-          </article>
-          <article class="faq-item">
-            <h3>What do you need from me?</h3>
+          </details>
+          <details class="faq-item" name="faq">
+            <summary>What do you need from me?</summary>
             <p>Your name, email, and a short description of what you have in mind. Links or handles for YouTube, Instagram, TikTok, or other platforms are optional. They help us find your work.</p>
-          </article>
-          <article class="faq-item">
-            <h3>How do production and shipping work?</h3>
+          </details>
+          <details class="faq-item" name="faq">
+            <summary>How do production and shipping work?</summary>
             <p>When someone orders, the item is made to order and shipped to them. Clothing goes through Printify. Delicate jewelry goes through ShineOn. You don’t pack boxes or hold inventory.</p>
-          </article>
-          <article class="faq-item">
-            <h3>How do I get started?</h3>
+          </details>
+          <details class="faq-item" name="faq">
+            <summary>How do I get started?</summary>
             <p>Send an enquiry, or email merchendices@gmail.com. We’ll reply by email. Pricing and other terms aren’t listed on this site. We’ll go through them on a call or by email after you enquire.</p>
-          </article>
+          </details>
         </div>
         <p class="faq-contact">Questions first? Email <a href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>.</p>
-        <a class="button button-dark how-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
       </section>
       <!-- TODO: About / founder. Add a visible section only after the owner supplies a name, photo, and bio. Do not invent them. -->
+
+      <section class="closer" aria-labelledby="closer-title">
+        <div>
+          <p class="eyebrow">THE NEXT STEP</p>
+          <h2 id="closer-title">Send an enquiry.</h2>
+          <p>Tell us about your brand. We’ll reply by email.</p>
+        </div>
+        <div class="closer-actions">
+          <a class="button button-light" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+          <a class="text-link" href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
-      <a class="wordmark" href="#top">merchendice<span>.</span></a>
+      <div>
+        <a class="wordmark" href="#top">merchendice<span>.</span></a>
+        <p>We build and run a custom Shopify merch store for creators. Print-on-demand production and shipping, no inventory.</p>
+      </div>
       <nav class="footer-nav" aria-label="Footer">
+        <p class="footer-label">ON THIS PAGE</p>
+        <a href="#how-it-works">How it works</a>
+        <a href="#what-you-get">What you get</a>
+        <a href="/examples/">Storefronts</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <nav class="footer-nav" aria-label="Contact">
+        <p class="footer-label">CONTACT</p>
         <a href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>
         <a href="/privacy/">Privacy notice (draft)</a>
         <a class="footer-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>

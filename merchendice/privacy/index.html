@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#335c67">
+    <meta name="theme-color" content="#141716">
     <meta name="robots" content="noindex">
     <meta name="description" content="Draft privacy notice for Merchendice. What the enquiry form collects and why. Pending owner review.">
     <title>Privacy notice (draft) — Merchendice</title>
@@ -26,16 +26,23 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/site.css">
   </head>
   <body>
     <header class="site-header">
       <a class="wordmark" href="/" aria-label="Merchendice home">merchendice<span>.</span></a>
-      <nav class="main-nav" aria-label="Main navigation">
+      <nav class="main-nav" id="site-nav" aria-label="Main navigation">
         <a href="/#how-it-works">How it works</a>
+        <a href="/#what-you-get">What you get</a>
         <a href="/examples/">Storefronts</a>
-        <a class="nav-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+        <a href="/#faq">FAQ</a>
       </nav>
+      <a class="nav-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle-bars" aria-hidden="true"></span>
+        <span class="sr-only">Menu</span>
+      </button>
     </header>
     <main>
       <p class="draft-banner" role="note"><strong>Draft for the owner to review.</strong> This notice is not final, it is not legal advice, and it does not name a legal entity. Please approve or replace it before treating it as the site’s privacy policy. Search engines are asked not to index this page until then.</p>
@@ -75,12 +82,23 @@
       </article>
     </main>
     <footer class="site-footer">
-      <a class="wordmark" href="/">merchendice<span>.</span></a>
+      <div>
+        <a class="wordmark" href="/">merchendice<span>.</span></a>
+        <p>Draft privacy notice for the enquiry form.</p>
+      </div>
       <nav class="footer-nav" aria-label="Footer">
+        <p class="footer-label">EXPLORE</p>
+        <a href="/#how-it-works">How it works</a>
+        <a href="/examples/">Storefronts</a>
+        <a href="/">Homepage</a>
+      </nav>
+      <nav class="footer-nav" aria-label="Contact">
+        <p class="footer-label">CONTACT</p>
         <a href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>
         <a href="/privacy/" aria-current="page">Privacy notice (draft)</a>
         <a class="footer-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
       </nav>
     </footer>
+    <script src="/site.js" defer></script>
   </body>
 </html>
