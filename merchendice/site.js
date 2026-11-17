@@ -22,6 +22,11 @@ if (form) {
       name: String(values.get('name') || '').trim(),
       email: String(values.get('email') || '').trim(),
       platforms: values.getAll('platforms').map(String),
+      youtube: String(values.get('youtube') || '').trim(),
+      instagram: String(values.get('instagram') || '').trim(),
+      tiktok: String(values.get('tiktok') || '').trim(),
+      otherPlatforms: String(values.get('otherPlatforms') || '').trim(),
+      website: String(values.get('website') || '').trim(),
       description: String(values.get('description') || '').trim(),
     };
 

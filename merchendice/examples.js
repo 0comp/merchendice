@@ -77,6 +77,13 @@ function updateDirectory() {
   }
 }
 
+// The Real storefronts tab stays hidden until a card with data-kind="real" exists.
+// Add that card and the tab shows again. No other change is required.
+const realButton = filters.find((button) => button.dataset.filter === 'real');
+const hasRealListings = cards.some((card) => card.dataset.kind === 'real');
+if (realButton) realButton.hidden = !hasRealListings;
+if (!hasRealListings && activeFilter === 'real') activeFilter = 'example';
+
 syncFilterButtons();
 updateDirectory();
 window.addEventListener('pageshow', updateDirectory);

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://merchendice.com/sitemap.xml

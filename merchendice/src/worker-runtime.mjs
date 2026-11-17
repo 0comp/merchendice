@@ -1,4 +1,11 @@
 const PLATFORM_OPTIONS = new Set(['YouTube', 'Instagram', 'TikTok', 'Other platforms']);
+const OPTIONAL_LINES = [
+  ['youtube', 'YouTube'],
+  ['instagram', 'Instagram'],
+  ['tiktok', 'TikTok'],
+  ['otherPlatforms', 'Other platforms'],
+];
+const SLASH_REDIRECTS = new Set(['/enquiry', '/examples', '/privacy']);
 const MAX_ENQUIRY_BYTES = 40000;
 
 async function readEnquiry(request) {
@@ -32,15 +39,23 @@ function json(data, status = 200) {
   });
 }
 
-function textResponse(body, contentType, status = 200, { creatorExample = false } = {}) {
+function decodeAsset(asset) {
+  if (asset.encoding !== 'base64') return asset.body;
+  const binary = atob(asset.body);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function textResponse(body, contentType, status = 200, { creatorExample = false, scriptSrcExtra = '', cacheControl = 'no-cache' } = {}) {
   const contentSecurityPolicy = creatorExample
     ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images-api.printify.com; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
-    : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'";
+    : `default-src 'self'; script-src 'self'${scriptSrcExtra}; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'`;
   return new Response(body, {
     status,
     headers: {
       'content-type': contentType,
-      'cache-control': 'no-cache',
+      'cache-control': cacheControl,
       'x-content-type-options': 'nosniff',
       'referrer-policy': 'strict-origin-when-cross-origin',
       'x-frame-options': 'DENY',
@@ -49,21 +64,57 @@ function textResponse(body, contentType, status = 200, { creatorExample = false 
   });
 }
 
+function redirect(location) {
+  return new Response(null, {
+    status: 301,
+    headers: {
+      location,
+      'cache-control': 'no-cache',
+      'x-content-type-options': 'nosniff',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+    },
+  });
+}
+
 function validEmail(value) {
   return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function honeypotTripped(input) {
+  if (!input || typeof input !== 'object') return false;
+  const value = input.website;
+  if (typeof value === 'string') return value.trim() !== '';
+  return value != null;
+}
+
+function optionalLine(value) {
+  if (value == null || value === '') return '';
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length > 500) return undefined;
+  return trimmed.replace(/[\u0000-\u001F\u007F]+/g, ' ').replace(/ {2,}/g, ' ').trim();
 }
 
 export default {
   async fetch(request, env = {}) {
     const url = new URL(request.url);
+    if (['GET', 'HEAD'].includes(request.method) && SLASH_REDIRECTS.has(url.pathname)) {
+      return redirect(`${url.pathname}/${url.search}`);
+    }
     const isCreatorExample = url.pathname === '/examplepage.com'
       || url.pathname.startsWith('/examplepage.com/');
     if (['GET', 'HEAD'].includes(request.method) && (ASSETS[url.pathname] || isCreatorExample)) {
       const asset = ASSETS[url.pathname] || ASSETS['/examplepage.com/'];
-      return textResponse(request.method === 'HEAD' ? null : asset.body, asset.type, 200, { creatorExample: isCreatorExample });
+      return textResponse(request.method === 'HEAD' ? null : decodeAsset(asset), asset.type, 200, {
+        creatorExample: isCreatorExample,
+        scriptSrcExtra: asset.scriptSrcExtra || '',
+      });
     }
     if (request.method !== 'POST' || url.pathname !== '/api/enquiry') {
-      return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
+      if (['GET', 'HEAD'].includes(request.method) && !url.pathname.startsWith('/api/')) {
+        return textResponse(request.method === 'HEAD' ? null : NOT_FOUND_PAGE, 'text/html; charset=utf-8', 404, { cacheControl: 'no-store' });
+      }
+      return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8' } });
     }
 
     const origin = request.headers.get('origin');
@@ -76,6 +127,8 @@ export default {
         : json({ message: 'Please check the form and try again.' }, 400);
     }
 
+    if (honeypotTripped(input)) return json({ ok: true });
+
     const name = typeof input?.name === 'string' ? input.name.trim() : '';
     const email = typeof input?.email === 'string' ? input.email.trim() : '';
     const description = typeof input?.description === 'string' ? input.description.trim() : '';
@@ -84,6 +137,12 @@ export default {
       : [];
     if (!name || name.length > 160 || !validEmail(email) || !description || description.length > 5000) {
       return json({ message: 'Please check your name, email and project description, then try again.' }, 400);
+    }
+    const handles = {};
+    for (const [key] of OPTIONAL_LINES) {
+      const line = optionalLine(input?.[key]);
+      if (line === undefined) return json({ message: 'Please check the channel links or handles and try again.' }, 400);
+      handles[key] = line;
     }
 
     if (typeof env.sendMail !== 'function' || !env.MAIL_TO) {
@@ -96,6 +155,7 @@ export default {
       `Name: ${name}`,
       `Email: ${email}`,
       `Where to find them: ${platforms.length ? platforms.join(', ') : 'Not provided'}`,
+      ...OPTIONAL_LINES.map(([key, label]) => `${label}: ${handles[key] || 'Not provided'}`),
       '',
       'Project description:',
       description,

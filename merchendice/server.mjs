@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { brotliCompressSync, gzipSync } from 'node:zlib';
 import app from './dist/app.mjs';
 import { createEmailSender } from './src/mail.mjs';
 
@@ -59,6 +60,38 @@ export function createRateLimiter({ limit = 5, windowMs = 10 * 60 * 1000, maxCli
   };
 }
 
+function encodingQuality(header, name) {
+  let specific;
+  let wildcard;
+  for (const part of String(header || '').split(',')) {
+    const [rawName, ...params] = part.trim().split(';');
+    const token = rawName.trim().toLowerCase();
+    if (!token) continue;
+    let quality = 1;
+    for (const param of params) {
+      const match = /^q=((?:0(?:\.\d+)?)|(?:1(?:\.0+)?))$/i.exec(param.trim());
+      if (match) quality = Number(match[1]);
+    }
+    if (token === name) specific = quality;
+    else if (token === '*') wildcard = quality;
+  }
+  if (specific != null) return specific;
+  if (wildcard != null) return wildcard;
+  return 0;
+}
+
+function preferredEncoding(header) {
+  const brotli = encodingQuality(header, 'br');
+  const gzip = encodingQuality(header, 'gzip');
+  if (brotli > 0 && brotli >= gzip) return 'br';
+  if (gzip > 0) return 'gzip';
+  return '';
+}
+
+function headerMap(headers) {
+  return Object.fromEntries(headers);
+}
+
 export function createAppServer({ env = process.env, sendMail, rateLimiter = createRateLimiter() } = {}) {
   const rawOrigin = env.PUBLIC_ORIGIN || (env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
   let publicOrigin;
@@ -106,8 +139,23 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
       const body = ['GET', 'HEAD'].includes(incoming.method) ? undefined : await readBody(incoming);
       const request = new Request(url, { method: incoming.method, headers, ...(body ? { body } : {}) });
       const response = await app.fetch(request, runtimeEnv);
-      outgoing.writeHead(response.status, Object.fromEntries(response.headers));
-      outgoing.end(Buffer.from(await response.arrayBuffer()));
+      const responseHeaders = headerMap(response.headers);
+      let responseBody = Buffer.from(await response.arrayBuffer());
+      const type = String(responseHeaders['content-type'] || '');
+      const compressible = incoming.method === 'GET' && responseBody.length > 256
+        && /(text\/css|javascript)/i.test(type) && !responseHeaders['content-encoding'];
+      if (compressible) {
+        const encoding = preferredEncoding(incoming.headers['accept-encoding']);
+        if (encoding === 'br') responseBody = brotliCompressSync(responseBody);
+        else if (encoding === 'gzip') responseBody = gzipSync(responseBody);
+        if (encoding) responseHeaders['content-encoding'] = encoding;
+        responseHeaders.vary = responseHeaders.vary && !/accept-encoding/i.test(responseHeaders.vary)
+          ? `${responseHeaders.vary}, Accept-Encoding`
+          : (responseHeaders.vary || 'Accept-Encoding');
+        delete responseHeaders['content-length'];
+      }
+      outgoing.writeHead(response.status, responseHeaders);
+      outgoing.end(responseBody);
     } catch (error) {
       if (outgoing.destroyed) return;
       if (outgoing.headersSent) return outgoing.end();

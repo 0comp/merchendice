@@ -4,10 +4,28 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#335c67">
-    <meta name="description" content="Browse example and real creator merch storefronts in the Merchendice directory.">
+    <meta name="description" content="Sample merch storefronts from Merchendice. We build and run custom Shopify stores for creators, with print-on-demand production and shipping.">
     <title>Storefronts directory — Merchendice</title>
+    <link rel="canonical" href="https://merchendice.com/examples/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Merchendice">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://merchendice.com/examples/">
+    <meta property="og:title" content="Storefronts directory — Merchendice">
+    <meta property="og:description" content="Sample merch storefronts from Merchendice. We build and run custom Shopify stores for creators, with print-on-demand production and shipping.">
+    <meta property="og:image" content="https://merchendice.com/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Merchendice wordmark on a teal background">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Storefronts directory — Merchendice">
+    <meta name="twitter:description" content="Sample merch storefronts from Merchendice. We build and run custom Shopify stores for creators, with print-on-demand production and shipping.">
+    <meta name="twitter:image" content="https://merchendice.com/og.png">
+    <meta name="twitter:image:alt" content="Merchendice wordmark on a teal background">
     <link rel="preconnect" href="https://images-api.printify.com" crossorigin>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%23335c67'/%3E%3Cpath d='M10 29V12h4v3c1-2 3-3 5-3s4 1 5 3c1-2 3-3 5-3 4 0 6 3 6 7v10h-4V19c0-2-1-3-3-3s-4 2-4 4v9h-4V19c0-2-1-3-3-3s-3 2-3 4v9z' fill='%23fff3b0'/%3E%3C/svg%3E">
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="stylesheet" href="../site.css">
     <script src="../examples.js" defer></script>
   </head>
@@ -25,7 +43,7 @@
         <div class="examples-hero-inner">
           <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> MERCHENDICE / STOREFRONTS</p>
           <h1 id="directory-title">Storefront directory</h1>
-          <p>Browse examples and real creator storefronts. Use the tabs to switch between them.</p>
+          <p>Sample storefronts for the custom merch stores we build and run. Real creator stores will be listed here as they go live.</p>
         </div>
       </section>
       <section class="directory-content" aria-label="Browse storefronts">
@@ -37,7 +55,8 @@
           </div>
           <div class="directory-filters" role="group" aria-label="Choose example or real storefronts">
             <button type="button" class="directory-filter is-active" data-filter="example" aria-pressed="true">Example storefronts</button>
-            <button type="button" class="directory-filter" data-filter="real" aria-pressed="false">Real storefronts</button>
+            <!-- Hidden while no listing uses data-kind="real". examples.js shows this tab again when one does. -->
+            <button type="button" class="directory-filter" data-filter="real" aria-pressed="false" hidden>Real storefronts</button>
           </div>
         </div>
         <div class="directory-results-heading">
@@ -54,7 +73,7 @@
             <div class="listing-card-body">
               <div class="listing-card-meta">STOREFRONT</div>
               <h2>CREATOR</h2>
-              <p>A sample storefront showing one way a creator merch brand can be presented online.</p>
+              <p>A sample storefront showing one way a creator merch brand can be presented. It does not take orders.</p>
               <a class="button button-dark" href="/examplepage.com/" data-prefetch-example>View example website <span aria-hidden="true">↗</span></a>
             </div>
           </article>
@@ -63,14 +82,18 @@
       </section>
       <section class="directory-cta" aria-label="Start an enquiry">
         <div>
-          <h2>Let’s talk merch.</h2>
+          <h2>Ready for your own store?</h2>
         </div>
         <a class="button button-light" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
       </section>
     </main>
     <footer class="site-footer">
       <a class="wordmark" href="/#top">merchendice<span>.</span></a>
-      <a href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+      <nav class="footer-nav" aria-label="Footer">
+        <a href="mailto:merchendices@gmail.com">merchendices@gmail.com</a>
+        <a href="/privacy/">Privacy notice (draft)</a>
+        <a class="footer-cta" href="/enquiry/">Send an enquiry <span aria-hidden="true">↗</span></a>
+      </nav>
     </footer>
   </body>
 </html>

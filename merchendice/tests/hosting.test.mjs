@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { request as httpRequest } from 'node:http';
+import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 import { createAppServer, createRateLimiter } from '../server.mjs';
 import { createEmailSender, makeGmailMessage } from '../src/mail.mjs';
 
@@ -95,6 +97,58 @@ test('oversized enquiries and excess submissions are rejected before email is se
   assert.equal((await fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)})).status,200);
   assert.equal((await fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)})).status,429);
   assert.equal(fixture.sends(),1);
+});
+
+function rawGet(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(url, { headers }, (res) => {
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+test('css and javascript are gzip or brotli compressed when the client allows it', async t => {
+  const fixture = await serverFixture(t);
+  const plain = await rawGet(`${fixture.base}/site.css`);
+  const gzipped = await rawGet(`${fixture.base}/site.css`, { 'accept-encoding': 'gzip' });
+  assert.equal(gzipped.headers['content-encoding'], 'gzip');
+  assert.match(gzipped.headers.vary, /Accept-Encoding/);
+  assert.equal(gunzipSync(gzipped.body).toString('utf8'), plain.body.toString('utf8'));
+  const brotli = await rawGet(`${fixture.base}/site.js`, { 'accept-encoding': 'br, gzip' });
+  assert.equal(brotli.headers['content-encoding'], 'br');
+  assert.equal(brotliDecompressSync(brotli.body).toString('utf8'), (await rawGet(`${fixture.base}/site.js`)).body.toString('utf8'));
+  const gzipOnly = await rawGet(`${fixture.base}/examples.js`, { 'accept-encoding': 'br;q=0, gzip' });
+  assert.equal(gzipOnly.headers['content-encoding'], 'gzip');
+  const page = await rawGet(`${fixture.base}/`, { 'accept-encoding': 'gzip, br' });
+  assert.equal(page.headers['content-encoding'], undefined);
+});
+
+test('mail left unset returns the usual unavailable message', async t => {
+  const fixture = await serverFixture(t, { sendMail: null });
+  const response = await fetch(`${fixture.base}/api/enquiry`, {
+    method: 'POST',
+    headers: { origin: 'https://merchendice.example.test', 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { message: 'Enquiries are not available right now. Please try again later.' });
+  assert.equal(fixture.sends(), 0);
+});
+
+test('a filled website field is ignored before email is sent', async t => {
+  const fixture = await serverFixture(t);
+  const response = await fetch(`${fixture.base}/api/enquiry`, {
+    method: 'POST',
+    headers: { origin: 'https://merchendice.example.test', 'content-type': 'application/json' },
+    body: JSON.stringify({ ...input, website: 'https://spam.example' }),
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true });
+  assert.equal(fixture.sends(), 0);
 });
 
 test('production requires a valid fixed public origin', () => {

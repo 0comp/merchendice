@@ -15,7 +15,7 @@ const input = {name:'A creator',email:'creator@example.test',platforms:['YouTube
 const request = (value, headers={}) => new Request('https://site.example.test/api/enquiry', {method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(value)});
 
 test('all pages support GET and HEAD without exposing email configuration', async () => {
-  for (const route of ['/', '/examples', '/examples/', '/enquiry', '/enquiry/', '/examplepage.com', '/examplepage.com/']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/examplepage.com', '/examplepage.com/']) {
     const get = await worker.fetch(new Request(`https://site.example.test${route}`),env);
     assert.equal(get.status,200);
     assert.equal((await get.text()).includes(env.MAIL_TO),false);
@@ -23,6 +23,18 @@ test('all pages support GET and HEAD without exposing email configuration', asyn
     assert.equal(head.status,200);
     assert.equal(await head.text(),'');
     assert.equal(head.headers.get('content-type'),get.headers.get('content-type'));
+  }
+});
+
+test('directory, enquiry, and privacy paths redirect to the trailing slash', async () => {
+  for (const route of ['/examples', '/enquiry', '/privacy']) {
+    const response = await worker.fetch(new Request(`https://site.example.test${route}?ref=1`));
+    assert.equal(response.status, 301);
+    assert.equal(response.headers.get('location'), `${route}/?ref=1`);
+    const head = await worker.fetch(new Request(`https://site.example.test${route}`, { method: 'HEAD' }));
+    assert.equal(head.status, 301);
+    assert.equal(head.headers.get('location'), `${route}/`);
+    assert.equal(await head.text(), '');
   }
 });
 
@@ -39,6 +51,76 @@ test('CREATOR example is served on its Merchendice path with working inline layo
   const directory = await worker.fetch(new Request('https://site.example.test/examples/'));
   assert.match(await directory.text(), /href="\/examplepage\.com\/"/);
   assert.doesNotMatch(response.headers.get('content-security-policy'), /unsafe-eval/);
+});
+
+test('homepage explains the service and publishes only the public contact address', async () => {
+  const response = await worker.fetch(new Request('https://site.example.test/'));
+  const html = await response.text();
+  assert.match(html, /We build and run your merch store/);
+  assert.match(html, /Shopify/);
+  assert.match(html, /Printify/);
+  assert.match(html, /ShineOn/);
+  assert.match(html, /no inventory to hold/);
+  assert.match(html, /merchendices@gmail.com/);
+  assert.match(html, /rel="canonical" href="https:\/\/merchendice.com\/"/);
+  assert.match(html, /property="og:image"/);
+  assert.match(html, /application\/ld\+json/);
+  assert.doesNotMatch(html, /Webstudios|PolyVault|testimonial|\$\d/);
+  const jsonLd = html.match(/<script type="application\/ld\+json">([^<]*)<\/script>/)[1];
+  const digest = (await import('node:crypto')).createHash('sha256').update(jsonLd).digest('base64');
+  assert.ok(response.headers.get('content-security-policy').includes(`'sha256-${digest}'`));
+  assert.doesNotMatch(response.headers.get('content-security-policy'), /unsafe-inline/);
+  const parsed = JSON.parse(jsonLd);
+  assert.equal(parsed['@type'], 'Organization');
+  assert.equal(parsed.name, 'Merchendice');
+  assert.equal(parsed.email, 'merchendices@gmail.com');
+  assert.equal(parsed.address, undefined);
+  assert.equal(parsed.founder, undefined);
+});
+
+test('unknown pages use the branded not-found page', async () => {
+  const response = await worker.fetch(new Request('https://site.example.test/missing-page'));
+  assert.equal(response.status, 404);
+  assert.match(response.headers.get('content-type'), /text\/html/);
+  assert.match(await response.text(), /That page isn’t here/);
+  const icon = await worker.fetch(new Request('https://site.example.test/favicon.ico'));
+  assert.equal(icon.status, 200);
+  assert.match(icon.headers.get('content-type'), /icon/);
+  const bytes = new Uint8Array(await icon.arrayBuffer());
+  assert.equal(bytes[0], 0);
+  assert.equal(bytes[2], 1);
+  const robots = await worker.fetch(new Request('https://site.example.test/robots.txt'));
+  assert.match(await robots.text(), /Sitemap: https:\/\/merchendice.com\/sitemap.xml/);
+  const sitemap = await (await worker.fetch(new Request('https://site.example.test/sitemap.xml'))).text();
+  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/']) {
+    assert.match(sitemap, new RegExp(loc.replace(/[/.]/g, '\\$&')));
+  }
+});
+
+test('a filled website field is ignored and not emailed', async t => {
+  const provider = t.mock.method(globalThis, 'fetch', async () => Response.json({ id: 'receipt' }));
+  const trapped = await worker.fetch(request({ ...input, website: 'https://spam.example', email: 'not-an-email' }), env);
+  assert.equal(trapped.status, 200);
+  assert.deepEqual(await trapped.json(), { ok: true });
+  assert.equal(provider.mock.calls.length, 0);
+  const blank = await worker.fetch(request({ ...input, website: '   ' }), env);
+  assert.equal(blank.status, 200);
+  assert.equal(provider.mock.calls.length, 1);
+});
+
+test('optional channel links are included, and overlong ones are rejected', async t => {
+  const provider = t.mock.method(globalThis, 'fetch', async () => Response.json({ id: 'receipt' }));
+  const sent = await worker.fetch(request({ ...input, youtube: ' @creator ', instagram: '', tiktok: 'tiktok.com/@creator', otherPlatforms: 'newsletter.example' }), env);
+  assert.equal(sent.status, 200);
+  const message = JSON.parse(provider.mock.calls[0].arguments[1].body);
+  assert.match(message.text, /YouTube: @creator/);
+  assert.match(message.text, /Instagram: Not provided/);
+  assert.match(message.text, /TikTok: tiktok.com\/@creator/);
+  assert.match(message.text, /Other platforms: newsletter.example/);
+  assert.doesNotMatch(message.text, /Website:/);
+  const tooLong = await worker.fetch(request({ ...input, youtube: 'y'.repeat(501) }), env);
+  assert.equal(tooLong.status, 400);
+  assert.equal(provider.mock.calls.length, 1);
 });
 
 test('invalid enquiries and cross-site submissions never call the email provider', async t => {
@@ -139,6 +221,32 @@ test('repeated submit events do not send a second request while one is pending',
   assert.equal(calls,1);
   resolve(Response.json({ok:true}));
   await pending;
+});
+
+test('the empty real-storefront tab stays hidden and a saved real view falls back', async () => {
+  const html = await fs.readFile(new URL('../examples/index.html', import.meta.url), 'utf8');
+  assert.match(html, /data-filter="real"[^>]*hidden/);
+  const search = { value: '', addEventListener() {} };
+  const card = { dataset: { search: 'creator storefront merch sample', kind: 'example' }, hidden: false };
+  const button = () => ({ dataset: {}, hidden: false, classList: { toggle() {} }, setAttribute() {}, addEventListener() {} });
+  const exampleButton = button();
+  exampleButton.dataset.filter = 'example';
+  const realButton = button();
+  realButton.dataset.filter = 'real';
+  const count = {};
+  const kind = {};
+  const empty = {};
+  vm.runInNewContext(await fs.readFile(new URL('../examples.js', import.meta.url), 'utf8'), {
+    document: {
+      cookie: 'merchendice_storefront_view=real',
+      querySelector: (selector) => selector === '#exampleSearch' ? search : selector === '#directoryResultCount' ? count : selector === '#directoryResultKind' ? kind : empty,
+      querySelectorAll: (selector) => selector === '.listing-card' ? [card] : selector === '.directory-filter' ? [exampleButton, realButton] : [],
+    },
+    window: { addEventListener() {} },
+  });
+  assert.equal(realButton.hidden, true);
+  assert.equal(card.hidden, false);
+  assert.equal(kind.textContent, 'EXAMPLE STOREFRONTS');
 });
 
 test('directory matches multiple words in any order and restores the empty state', async () => {
