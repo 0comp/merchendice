@@ -204,46 +204,48 @@ main { display: block; }
   line-height: 1.3;
 }
 .hero-points { margin: 0 0 32px; padding: 0; list-style: none; }
-.hero-points li { position: relative; padding: 5px 0 5px 30px; color: var(--text); }
-.hero-points li::before { content: ""; position: absolute; left: 0; top: 1.05em; width: 16px; height: 1px; background: var(--ink); }
+.hero-points li { position: relative; padding: 5px 0 5px 30px; color: var(--text); text-wrap: pretty; }
+/* Whole-pixel offset so every dash renders at the same weight. */
+.hero-points li::before { content: ""; position: absolute; left: 0; top: 19px; width: 16px; height: 1px; background: var(--ink); }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
 
 .hero-mosaic {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
   grid-template-areas: "lead tote" "hood crew";
   gap: 16px;
-  padding-block: 32px 56px;
+  padding-block: 32px 40px;
 }
 .tile { position: relative; overflow: hidden; background: var(--bg-warm); }
 .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .tile-lead { grid-area: lead; }
-.tile-lead img { object-position: 50% 45%; }
+.tile-lead img { object-position: 50% 40%; }
 .tile-tote { grid-area: tote; }
 .tile-tote img { object-position: 50% 0; }
 .tile-hood { grid-area: hood; }
 .tile-crew { grid-area: crew; }
 
 /* Statement */
-.statement { padding-block: clamp(72px, 10vw, 140px); text-align: center; }
+.statement { padding-block: clamp(48px, 6vw, 88px) clamp(72px, 9vw, 128px); text-align: center; }
 .statement p { max-width: 30em; margin: 0 auto; color: var(--ink); font-family: var(--serif); font-size: clamp(27px, 2.7vw, 40px); font-weight: 500; line-height: 1.3; text-wrap: balance; }
 
 /* Goods */
 .goods {
   display: grid;
-  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
-  gap: clamp(32px, 6vw, 96px);
+  grid-template-columns: minmax(0, 460px) minmax(0, 560px);
+  justify-content: center;
+  gap: clamp(32px, 7vw, 120px);
   align-items: center;
   padding-bottom: clamp(72px, 9vw, 128px);
 }
 .goods-feature { overflow: hidden; background: var(--bg-warm); }
 .goods-feature img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .goods-copy .text-link { margin-top: 6px; }
-.goods-copy h2 { max-width: 17ch; text-wrap: wrap; }
+.goods-copy h2 { max-width: 20ch; }
 .goods-copy { padding-block: 24px 8px; }
 .goods-copy > p { max-width: 32em; margin-top: 22px; }
-.goods-copy > .goods-range { max-width: 32em; margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line-strong); color: var(--ink); font-family: var(--serif); font-size: 24px; line-height: 1.35; }
+.goods-copy > .goods-range { max-width: 32em; margin-top: 28px; color: var(--ink); font-family: var(--serif); font-size: 24px; line-height: 1.35; }
 
 /* How it works: five stages in a ruled two-column list */
 .process-section { padding-block: clamp(64px, 8vw, 112px); position: relative; }
@@ -254,6 +256,8 @@ main { display: block; }
 .process-step:nth-child(-n + 2) { border-top-color: var(--espresso); }
 .process-step h3 { margin-bottom: 10px; }
 .process-step p { max-width: 30em; margin: 0; }
+/* An odd last stage takes the full row, so the list never ends on an empty cell. */
+.process-step:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 /* Quality: one centred statement on the dark band */
 .quality { background: var(--espresso); color: var(--on-dark); }
@@ -272,13 +276,13 @@ main { display: block; }
 .showcase-image {
   display: flex;
   justify-content: center;
-  padding: clamp(36px, 4.5vw, 64px) 24px;
+  padding: clamp(32px, 3.5vw, 48px) 24px;
   background: var(--bg-warm);
   transition: transform .6s var(--spring);
 }
 .showcase-image:hover { transform: scale(1.01); }
-.showcase-image img { width: 340px; border: 1px solid var(--line-strong); }
-.showcase-copy h2 { max-width: 14ch; }
+.showcase-image img { width: 380px; border: 1px solid var(--line-strong); }
+.showcase-copy h2 { max-width: 16ch; }
 .showcase-copy p { margin: 20px 0 30px; max-width: 30em; }
 
 /* FAQ: a single centred column */
@@ -363,7 +367,7 @@ main { display: block; }
 .listing-art:hover { transform: scale(1.015); }
 .listing-art { border: 1px solid var(--line-strong); }
 .listing-art img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
-.listing-card-body h2 { font-size: clamp(32px, 3vw, 44px); letter-spacing: .14em; }
+.listing-card-body h2 { font-size: clamp(32px, 3vw, 44px); letter-spacing: .04em; }
 .listing-card-body p { margin: 14px 0 26px; max-width: 30em; }
 .directory-cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; padding-block: 36px 56px; position: relative; }
 .directory-cta::before { content: ""; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid var(--line); }
@@ -434,7 +438,7 @@ main { display: block; }
   /* One strong photo of the tee, edge to edge, straight after the button. */
   .hero-mosaic { display: block; margin-inline: calc(var(--gutter) * -1); padding: 0; }
   .hero-mosaic .tile-desktop { display: none; }
-  .tile-lead img { position: static; height: auto; aspect-ratio: 4 / 5; }
+  .tile-lead img { position: static; height: auto; }
   .goods-feature { max-width: 460px; }
   .showcase-image img { width: 280px; }
   .enquiry-image { display: none; }
@@ -476,6 +480,7 @@ main { display: block; }
   .hero-line { margin: 14px 0 12px; font-size: 23px; text-wrap: balance; }
   .hero-points { margin-bottom: 22px; }
   .hero-points li { padding: 4px 0 4px 28px; }
+  .hero-points li::before { top: 18px; }
   .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .faq-item summary { font-size: 22px; }
   .faq-item p { padding-right: 0; }

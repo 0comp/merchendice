@@ -304,14 +304,14 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.equal((html.match(/alt="[^"]*(T-shirt|tee)\b/gi) || []).length, 1);
   const mosaic = html.slice(html.indexOf('class="hero-mosaic'), html.indexOf('</section>'));
   assert.ok(mosaic.indexOf('hero-tee-') < mosaic.indexOf('tote-handles-'), 'the tee is the first hero photo');
-  assert.match(mosaic, /hero-tee-880\.webp[^>]*fetchpriority="high"/);
+  assert.match(mosaic, /hero-tee-1040\.webp[^>]*fetchpriority="high"/);
   // It's called a sample store once, in the showcase, with no other mockup or made-up-brand caveats.
   assert.equal((html.match(/A sample store, so you can see the finished standard\./g) || []).length, 1);
   assert.doesNotMatch(html, /made-up|[Mm]ockup|goods-note|Pictured:|service-strip|Totes and bags/);
   assert.match(html, /<p class="goods-range">Bags, apparel and small extras, chosen for your audience\.<\/p>/);
-  assert.match(html, /class="hero-mosaic[\s\S]*hero-tee-880\.webp[\s\S]*<\/div>\s*<\/section>/);
+  assert.match(html, /class="hero-mosaic[\s\S]*hero-tee-1040\.webp[\s\S]*<\/div>\s*<\/section>/);
   const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
-  assert.match(hero, /\/images\/hero-tee-880\.webp/);
+  assert.match(hero, /\/images\/hero-tee-1040\.webp/);
   assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
   // No eyebrow labels, accent words, italic flourishes or scroll cue.
