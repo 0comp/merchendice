@@ -160,7 +160,13 @@ test('the fonts are served from the site, and removed product mockups are not', 
   assert.match(preview.headers.get('content-type'), /image\/webp/);
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
-  for (const name of ['archivo', 'source-serif-4']) {
+  for (const old of ['archivo', 'source-serif-4']) assert.equal((await fetch(`${fixture.base}/fonts/${old}.woff2`)).status, 404, old);
+  for (const image of ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'totes']) {
+    const response = await fetch(`${fixture.base}/images/${image}.webp`);
+    assert.equal(response.status, 200, image);
+    assert.match(response.headers.get('content-type'), /image\/webp/);
+  }
+  for (const name of ['cormorant-garamond', 'dm-sans']) {
     const font = await fetch(`${fixture.base}/fonts/${name}.woff2`);
     assert.equal(font.status, 200, name);
     assert.match(font.headers.get('content-type'), /font\/woff2/);
