@@ -53,6 +53,23 @@ test('CREATOR example is served on its Merchendice path with working inline layo
   assert.doesNotMatch(response.headers.get('content-security-policy'), /unsafe-eval/);
 });
 
+test('example shop renders a product grid, labels it as an example, and loads no payment scripts', async () => {
+  const response = await worker.fetch(new Request('https://site.example.test/examplepage.com/'));
+  const html = await response.text();
+  assert.equal(response.status, 200);
+  assert.match(html, /<div[^>]*id="products"/);
+  assert.match(html, /<dialog[^>]*id="productDialog"/);
+  assert.match(html, /<dialog[^>]*id="bagDialog"/);
+  assert.match(html, /example prices/);
+  assert.match(html, /Purchases are not available/);
+  assert.match(html, /Built by Merchendice/);
+  const scriptSources = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual(scriptSources, []);
+  assert.doesNotMatch(html, /stripe|checkout\.session|paymentIntent|paypal|klarna/i);
+  assert.doesNotMatch(html, /\b(Printify|ShineOn|Webstudios|PolyVault)\b/);
+  assert.doesNotMatch(response.headers.get('content-security-policy'), /stripe/i);
+});
+
 test('homepage explains the service and publishes only the public contact address', async () => {
   const response = await worker.fetch(new Request('https://site.example.test/'));
   const html = await response.text();
