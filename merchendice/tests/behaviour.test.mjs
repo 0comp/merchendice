@@ -343,7 +343,7 @@ test('marketing pages use the cream and espresso theme with no green, terracotta
     assert.match(html, /<meta name="theme-color" content="#2e211d">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Only the homepage hero may show clothing; other marketing pages use the example store screenshot only.
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(example-store-accessories|tote-black-detail|sticker|totes)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(example-store-accessories|tote-natural|tote-black-detail|sticker)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });

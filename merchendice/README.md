@@ -20,9 +20,9 @@ Every photo on the marketing pages is a plain file in `images/`. To use your own
 | File | Size (px) | Shape | Where it shows |
 | --- | --- | --- | --- |
 | `hero-tee.webp` | 720 × 900 | 4:5 | Homepage photo mosaic (the only clothing on the marketing pages) |
-| `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic, share image |
+| `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic, enquiry page (desktop), share image |
 | `tote-black.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only) |
-| `tote-black-detail.webp` | 540 × 540 | 1:1 | Homepage mosaic (desktop only), enquiry page, share image |
+| `tote-black-detail.webp` | 540 × 540 | 1:1 | Homepage mosaic (desktop only), share image |
 | `sticker.webp` | 640 × 800 | 4:5 | Homepage mosaic, share image |
 | `sticker-camel.webp` | 640 × 800 | 4:5 | Homepage mosaic (desktop only) |
 | `goods-flatlay.webp` | 960 × 1200 | 4:5 | "A few good products" section |
