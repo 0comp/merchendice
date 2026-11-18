@@ -359,7 +359,7 @@ main { display: block; }
   white-space: nowrap;
   padding-left: .24em;
 }
-.footer-base { margin-bottom: 0; padding-top: 18px; border-top: 1px solid rgba(246, 238, 226, .25); color: var(--on-dark-muted); font-size: 14px; }
+.footer-base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; margin-bottom: 0; padding-top: 18px; border-top: 1px solid rgba(246, 238, 226, .25); color: var(--on-dark-muted); font-size: 14px; }
 
 /* Directory */
 .examples-hero { padding-top: clamp(48px, 7vw, 96px); padding-bottom: 36px; }

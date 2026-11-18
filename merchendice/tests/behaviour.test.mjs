@@ -309,7 +309,8 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
   assert.match(home, /influencers of any size/);
   assert.match(home, /Exclusive designs/);
   assert.match(home, /A store in your look, built and run for you/);
-  assert.doesNotMatch(home, /Based and designed in Sweden|mobile-cta|language|guide/i);
+  assert.match(home, /<span>Based and designed in Sweden<\/span>/);
+  assert.doesNotMatch(home, /mobile-cta|language|guide/i);
 });
 
 test('the About section uses Oscar’s approved words and the two names, and sits before the FAQ', async () => {
