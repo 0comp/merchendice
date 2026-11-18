@@ -15,7 +15,7 @@ function prefetchCreatorExample() {
   examplePrefetchStarted = true;
   const hint = document.createElement('link');
   hint.rel = 'prefetch';
-  hint.href = '/examplepage.com/';
+  hint.href = '/example-store/';
   hint.referrerPolicy = 'no-referrer';
   document.head.append(hint);
 }

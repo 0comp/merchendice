@@ -1,6 +1,6 @@
 # Deploy Merchendice on Contabo
 
-This copy runs on your private server. It has no OpenAI hosting dependency and contains no live credentials. It includes the homepage, the storefront directory at `/examples/`, the CREATOR storefront example at `/examplepage.com/`, and the enquiry page at `/enquiry/`.
+This copy runs on your private server. It has no OpenAI hosting dependency and contains no live credentials. It includes the homepage, the storefront directory at `/examples/`, the CREATOR storefront example at `/example-store/`, and the enquiry page at `/enquiry/`.
 
 ## 1. Server requirements
 
@@ -103,9 +103,17 @@ docker compose -f compose.yaml -f compose.https.yaml up -d --build
 docker compose -f compose.yaml -f compose.https.yaml logs --tail=50 app caddy
 ```
 
-Use `config --quiet`; the full `docker compose config` output can include your private settings. Open `https://merchendice.com` and check `/examples/`, `/examplepage.com/`, and `/enquiry/`. Then submit your own enquiry through the form and confirm it reaches the configured inbox. No test emails are sent during build or automated tests.
+Use `config --quiet`; the full `docker compose config` output can include your private settings. Open `https://merchendice.com` and check `/examples/`, `/example-store/`, and `/enquiry/`. Then submit your own enquiry through the form and confirm it reaches the configured inbox. No test emails are sent during build or automated tests.
 
 If the form says enquiries are unavailable, the selected mail provider's key/account/password is missing. If it cannot confirm sending, check the provider/account configuration and outbound connectivity. The form preserves entered details on error. The server accepts at most five enquiry attempts per client per ten minutes; the counter resets on restart and is intended for a single app instance.
+
+## HTTPS, HSTS and HTTP redirects
+
+TLS ends at the reverse proxy (Nginx Proxy Manager), and the app only sees plain HTTP from it. The app handles HTTPS like this:
+
+- **HSTS:** in production (`NODE_ENV=production`) with an `https://` `PUBLIC_ORIGIN`, every response carries `Strict-Transport-Security: max-age=31536000; includeSubDomains`. It is never sent when the request's host is `localhost` or `127.0.0.1`, so local previews are unaffected. Set `HSTS=0` to turn it off. `includeSubDomains` means every subdomain, including `www`, must serve valid HTTPS before you deploy this. Fix the `www` certificate in Nginx Proxy Manager first.
+- **HTTP to HTTPS redirect:** with `TRUST_PROXY=1` (already set in `compose.yaml`), a request that the proxy marks `X-Forwarded-Proto: http` gets a 301 to the same path on `PUBLIC_ORIGIN`. Requests with `X-Forwarded-Proto: https` or no header at all, such as direct health checks, are served normally, so this cannot loop. It is off outside production and for localhost. Set `FORCE_HTTPS=0` to turn it off.
+- In Nginx Proxy Manager, turning on **Force SSL** for the proxy host does the same redirect at the proxy, before the app is reached. Use either or both. Also make sure the proxy host forwards `X-Forwarded-Proto` (Nginx Proxy Manager does this by default).
 
 ## Updates and operations
 

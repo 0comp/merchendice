@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { request as httpRequest } from 'node:http';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 import { createAppServer, createRateLimiter } from '../server.mjs';
-import { createEmailSender, makeGmailMessage } from '../src/mail.mjs';
+import { createEmailSender, headerSafe, makeGmailMessage } from '../src/mail.mjs';
 
 const input = {name:'A creator',email:'creator@example.test',platforms:['YouTube'],description:'A merch idea'};
 const settings = {
@@ -169,4 +169,77 @@ test('production requires a valid fixed public origin', () => {
   for (const origin of ['', 'https://user:pass@site.example.test', 'https://site.example.test/path']) {
     assert.throws(()=>createAppServer({env:{NODE_ENV:'production',PUBLIC_ORIGIN:origin}}),/PUBLIC_ORIGIN/);
   }
+});
+
+function proxyGet(base, path, headers={}) {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest(`${base}${path}`, { headers }, res => { res.resume(); res.on('end', () => resolve(res)); });
+    req.on('error', reject); req.end();
+  });
+}
+
+test('HSTS is sent in production for the public host and never on localhost', async t => {
+  const fixture = await serverFixture(t);
+  const publicHost = await proxyGet(fixture.base, '/', { host: 'merchendice.example.test', 'x-forwarded-proto': 'https' });
+  assert.equal(publicHost.statusCode, 200);
+  assert.equal(publicHost.headers['strict-transport-security'], 'max-age=31536000; includeSubDomains');
+  const local = await proxyGet(fixture.base, '/', { host: '127.0.0.1' });
+  assert.equal(local.headers['strict-transport-security'], undefined);
+  const localName = await proxyGet(fixture.base, '/', { host: 'localhost:3000' });
+  assert.equal(localName.headers['strict-transport-security'], undefined);
+});
+
+test('HSTS and HTTPS redirects stay off outside production', async t => {
+  const fixture = await serverFixture(t, { env: { PUBLIC_ORIGIN: 'http://localhost:3000', MAIL_TO: settings.MAIL_TO, TRUST_PROXY: '1' } });
+  const response = await proxyGet(fixture.base, '/', { host: 'merchendice.example.test', 'x-forwarded-proto': 'http' });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['strict-transport-security'], undefined);
+});
+
+test('plain HTTP from the trusted proxy redirects to HTTPS once, without a loop', async t => {
+  const fixture = await serverFixture(t, { env: { NODE_ENV: 'production', PUBLIC_ORIGIN: 'https://merchendice.example.test', MAIL_TO: settings.MAIL_TO, TRUST_PROXY: '1' } });
+  const http = await proxyGet(fixture.base, '/enquiry/?a=1', { host: 'merchendice.example.test', 'x-forwarded-proto': 'http' });
+  assert.equal(http.statusCode, 301);
+  assert.equal(http.headers.location, 'https://merchendice.example.test/enquiry/?a=1');
+  const https = await proxyGet(fixture.base, '/enquiry/', { host: 'merchendice.example.test', 'x-forwarded-proto': 'https' });
+  assert.equal(https.statusCode, 200);
+  const noHeader = await proxyGet(fixture.base, '/healthz', { host: 'merchendice.example.test' });
+  assert.equal(noHeader.statusCode, 200);
+  const localHttp = await proxyGet(fixture.base, '/', { host: 'localhost', 'x-forwarded-proto': 'http' });
+  assert.equal(localHttp.statusCode, 200);
+});
+
+test('old /examplepage.com links redirect permanently to /example-store/', async t => {
+  const fixture = await serverFixture(t);
+  for (const [from, to] of [['/examplepage.com', '/example-store/'], ['/examplepage.com/', '/example-store/'], ['/examplepage.com/products/x?y=1', '/example-store/products/x?y=1']]) {
+    const response = await fetch(`${fixture.base}${from}`, { redirect: 'manual' });
+    assert.equal(response.status, 301, from);
+    assert.equal(response.headers.get('location'), to);
+  }
+  const page = await fetch(`${fixture.base}/example-store/`);
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /CREATOR — Storefront example/);
+});
+
+test('email headers strip CR/LF and are length-capped', async () => {
+  assert.equal(headerSafe('Hi\r\nBcc: evil@example.test'), 'Hi Bcc: evil@example.test');
+  assert.equal(headerSafe('x'.repeat(500), 150).length, 150);
+  assert.doesNotMatch(headerSafe('a\u0000b\u007fc\nd'), /[\u0000-\u001f\u007f]/);
+  const raw = makeGmailMessage({ to: 'inbox@example.test', replyTo: 'creator@example.test', subject: 'Hello\r\nBcc: evil@example.test', text: 'Body' }, 'sender@example.test');
+  const headers = Buffer.from(raw, 'base64url').toString('utf8').split('\r\n\r\n')[0];
+  assert.doesNotMatch(headers, /^Bcc:/m);
+  assert.match(headers, /^Subject: Hello Bcc: evil@example\.test$/m);
+  assert.throws(() => makeGmailMessage({ to: 'inbox@example.test', replyTo: 'creator@example.test\r\nBcc: evil@example.test', text: 'Body' }, 'sender@example.test'), /Reply address/);
+});
+
+test('SMTP passes only sanitised header values to the transport', async () => {
+  let sent;
+  const send = await createEmailSender({ EMAIL_PROVIDER: 'smtp', MAIL_TO: 'inbox@example.test', SMTP_USER: 'sender@example.test', SMTP_APP_PASSWORD: 'x' }, {
+    smtpTransport: { sendMail: async message => { sent = message; return { messageId: 'id', accepted: ['inbox@example.test'] }; } },
+  });
+  await send({ to: 'attacker@example.test', replyTo: 'creator@example.test', subject: 'Hi\r\nBcc: evil@example.test', text: 'Body', bcc: 'evil@example.test' });
+  assert.equal(sent.to, 'inbox@example.test');
+  assert.equal(sent.subject, 'Hi Bcc: evil@example.test');
+  assert.equal(sent.bcc, undefined);
+  await assert.rejects(send({ replyTo: 'a@b.test\nBcc: evil@example.test', subject: 'x', text: 'y' }), /Reply address/);
 });

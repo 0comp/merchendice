@@ -6,7 +6,7 @@ COPY scripts ./scripts
 COPY src ./src
 COPY index.html site.css site.js examples.js robots.txt sitemap.xml favicon.svg favicon.ico apple-touch-icon.png og.png 404.html ./
 COPY examples ./examples
-COPY examplepage.com ./examplepage.com
+COPY example-store ./example-store
 COPY enquiry ./enquiry
 COPY privacy ./privacy
 RUN npm run build

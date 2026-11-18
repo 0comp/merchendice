@@ -5,7 +5,7 @@ const OPTIONAL_LINES = [
   ['tiktok', 'TikTok'],
   ['otherPlatforms', 'Other platforms'],
 ];
-const SLASH_REDIRECTS = new Set(['/enquiry', '/examples', '/privacy']);
+const SLASH_REDIRECTS = new Set(['/enquiry', '/examples', '/privacy', '/example-store']);
 const MAX_ENQUIRY_BYTES = 40000;
 
 async function readEnquiry(request) {
@@ -101,10 +101,9 @@ export default {
     if (['GET', 'HEAD'].includes(request.method) && SLASH_REDIRECTS.has(url.pathname)) {
       return redirect(`${url.pathname}/${url.search}`);
     }
-    const isCreatorExample = url.pathname === '/examplepage.com'
-      || url.pathname.startsWith('/examplepage.com/');
+    const isCreatorExample = url.pathname.startsWith('/example-store/');
     if (['GET', 'HEAD'].includes(request.method) && (ASSETS[url.pathname] || isCreatorExample)) {
-      const asset = ASSETS[url.pathname] || ASSETS['/examplepage.com/'];
+      const asset = ASSETS[url.pathname] || ASSETS['/example-store/'];
       return textResponse(request.method === 'HEAD' ? null : decodeAsset(asset), asset.type, 200, {
         creatorExample: isCreatorExample,
         scriptSrcExtra: asset.scriptSrcExtra || '',

@@ -15,7 +15,7 @@ const input = {name:'A creator',email:'creator@example.test',platforms:['YouTube
 const request = (value, headers={}) => new Request('https://site.example.test/api/enquiry', {method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(value)});
 
 test('all pages support GET and HEAD without exposing email configuration', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/examplepage.com', '/examplepage.com/']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/example-store/']) {
     const get = await worker.fetch(new Request(`https://site.example.test${route}`),env);
     assert.equal(get.status,200);
     assert.equal((await get.text()).includes(env.MAIL_TO),false);
@@ -27,7 +27,7 @@ test('all pages support GET and HEAD without exposing email configuration', asyn
 });
 
 test('directory, enquiry, and privacy paths redirect to the trailing slash', async () => {
-  for (const route of ['/examples', '/enquiry', '/privacy']) {
+  for (const route of ['/examples', '/enquiry', '/privacy', '/example-store']) {
     const response = await worker.fetch(new Request(`https://site.example.test${route}?ref=1`));
     assert.equal(response.status, 301);
     assert.equal(response.headers.get('location'), `${route}/?ref=1`);
@@ -39,22 +39,22 @@ test('directory, enquiry, and privacy paths redirect to the trailing slash', asy
 });
 
 test('CREATOR example is served on its Merchendice path with working inline layout and images', async () => {
-  const response = await worker.fetch(new Request('https://site.example.test/examplepage.com/'));
+  const response = await worker.fetch(new Request('https://site.example.test/example-store/'));
   const html = await response.text();
   assert.equal(response.status, 200);
   assert.match(html, /CREATOR — Storefront example/);
   assert.match(html, /images-api\.printify\.com/);
   assert.match(response.headers.get('content-security-policy'), /script-src 'self' 'unsafe-inline'/);
   assert.match(response.headers.get('content-security-policy'), /img-src[^;]*images-api\.printify\.com/);
-  const nested = await worker.fetch(new Request('https://site.example.test/examplepage.com/products/sample'));
+  const nested = await worker.fetch(new Request('https://site.example.test/example-store/products/sample'));
   assert.equal(nested.status, 200);
   const directory = await worker.fetch(new Request('https://site.example.test/examples/'));
-  assert.match(await directory.text(), /href="\/examplepage\.com\/"/);
+  assert.match(await directory.text(), /href="\/example-store\/"/);
   assert.doesNotMatch(response.headers.get('content-security-policy'), /unsafe-eval/);
 });
 
 test('example shop renders a product grid, labels it as an example, and loads no payment scripts', async () => {
-  const response = await worker.fetch(new Request('https://site.example.test/examplepage.com/'));
+  const response = await worker.fetch(new Request('https://site.example.test/example-store/'));
   const html = await response.text();
   assert.equal(response.status, 200);
   assert.match(html, /<div[^>]*id="products"/);
@@ -112,7 +112,7 @@ test('unknown pages use the branded not-found page', async () => {
   const robots = await worker.fetch(new Request('https://site.example.test/robots.txt'));
   assert.match(await robots.text(), /Sitemap: https:\/\/merchendice.com\/sitemap.xml/);
   const sitemap = await (await worker.fetch(new Request('https://site.example.test/sitemap.xml'))).text();
-  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/']) {
+  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/', 'https://merchendice.com/example-store/', 'https://merchendice.com/privacy/']) {
     assert.match(sitemap, new RegExp(loc.replace(/[/.]/g, '\\$&')));
   }
 });
@@ -316,4 +316,28 @@ test('no marketing page shows the email address or section numbering', async () 
     assert.match(html, /Contact us/, route);
     assert.doesNotMatch(html, /<circle/, route);
   }
+});
+
+test('privacy notice is finished, indexable, and leaves the controller identity as an HTML TODO', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
+  assert.doesNotMatch(html, /noindex|\(draft\)|draft-banner/i);
+  assert.match(html, /<!-- TODO \(Oscar\):[^>]*controller/);
+  for (const field of ['Your name', 'Your email address', 'project description', 'How long it’s kept', 'deleted']) assert.match(html, new RegExp(field));
+  assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
+  assert.doesNotMatch(html, /gmail|Gmail/);
+  for (const page of ['/', '/examples/', '/enquiry/', '/missing-page']) {
+    assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${page}`))).text(), /Privacy notice \(draft\)/);
+  }
+});
+
+test('hero mark has no pointer parallax and the homepage keeps one merged how-it-works flow', async () => {
+  const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
+  assert.doesNotMatch(js, /pointermove|mousemove|--mx/);
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.match(html, /id="how-it-works"/);
+  assert.doesNotMatch(html, /id="what-you-get"|id="why"/);
+  const steps = [...html.matchAll(/<li class="process-step[^"]*">[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1]);
+  assert.deepEqual(steps, ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']);
+  assert.equal((html.match(/[Ss]amples?\b(?! shop)/g) || []).length, 2, 'samples appears only in the Samples step');
+  assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });

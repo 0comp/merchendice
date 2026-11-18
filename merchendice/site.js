@@ -98,7 +98,7 @@ if (navToggle && siteNav && typeof navToggle.addEventListener === 'function' && 
   });
 }
 
-// Presentation only: header state, scroll reveal, and a light parallax on the hero mark.
+// Presentation only: header state and scroll reveal.
 // Everything is optional, so the page stays fully readable if any of it is unavailable.
 (() => {
   if (typeof window === 'undefined' || typeof document.querySelectorAll !== 'function' || !document.documentElement) return;
@@ -141,22 +141,5 @@ if (navToggle && siteNav && typeof navToggle.addEventListener === 'function' && 
       if (rect.top < window.innerHeight * 0.92) item.classList.add('is-in');
       else observer.observe(item);
     }
-  }
-
-  const mark = document.querySelector('.hero-mark-body');
-  const hero = document.querySelector('.hero');
-  const finePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
-  if (mark && hero && finePointer && !reduceMotion) {
-    hero.addEventListener('pointermove', (event) => {
-      const box = hero.getBoundingClientRect();
-      const x = (event.clientX - box.left) / box.width - 0.5;
-      const y = (event.clientY - box.top) / box.height - 0.5;
-      mark.style.setProperty('--mx', `${(x * 18).toFixed(1)}px`);
-      mark.style.setProperty('--my', `${(y * 14).toFixed(1)}px`);
-    });
-    hero.addEventListener('pointerleave', () => {
-      mark.style.setProperty('--mx', '0px');
-      mark.style.setProperty('--my', '0px');
-    });
   }
 })();

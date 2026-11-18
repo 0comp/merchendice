@@ -7,6 +7,20 @@ import app from './dist/app.mjs';
 import { createEmailSender } from './src/mail.mjs';
 
 const MAX_BODY_BYTES = 40000;
+const HSTS_VALUE = 'max-age=31536000; includeSubDomains';
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+
+// The example store moved from /examplepage.com/ to /example-store/. Old links get a permanent redirect.
+export function legacyExampleRedirect(pathname) {
+  if (pathname === '/examplepage.com') return '/example-store/';
+  if (pathname.startsWith('/examplepage.com/')) return `/example-store/${pathname.slice('/examplepage.com/'.length)}`;
+  return null;
+}
+
+function requestHostname(incoming) {
+  const host = String(incoming.headers.host || '').toLowerCase();
+  return host.startsWith('[') ? host.slice(0, host.indexOf(']') + 1) : host.split(':')[0];
+}
 const invalidRequest = 'Please check the form and try again.';
 
 function sendJson(response, status, message) {
@@ -132,6 +146,14 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
     publicOrigin = parsed.origin;
   } catch { throw new Error('Set PUBLIC_ORIGIN to your website origin, such as https://merchendice.com.'); }
   const runtimeEnv = { MAIL_TO: env.MAIL_TO || 'merchendices@gmail.com', sendMail };
+  // TLS ends at the reverse proxy (Nginx Proxy Manager), so HTTPS handling is only on in production
+  // with an https PUBLIC_ORIGIN, and never for localhost requests.
+  const production = env.NODE_ENV === 'production';
+  const httpsOrigin = publicOrigin.startsWith('https:');
+  const useHsts = production && httpsOrigin && env.HSTS !== '0';
+  // Redirect only when a trusted proxy explicitly says the client used plain HTTP.
+  // Requests without the header (direct health checks) are never redirected, so there is no loop.
+  const forceHttps = production && httpsOrigin && env.TRUST_PROXY === '1' && env.FORCE_HTTPS !== '0';
 
   const server = createServer({ maxHeaderSize: 8192 }, async (incoming, outgoing) => {
     try {
@@ -139,6 +161,18 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
       if (url.origin !== publicOrigin || !incoming.url.startsWith('/')) {
         incoming.resume();
         return sendJson(outgoing, 400, { message: invalidRequest });
+      }
+      const local = LOCAL_HOSTS.has(requestHostname(incoming));
+      if (forceHttps && !local && String(incoming.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase() === 'http') {
+        incoming.resume();
+        outgoing.writeHead(301, { location: `${publicOrigin}${url.pathname}${url.search}`, 'cache-control': 'no-cache' });
+        return outgoing.end();
+      }
+      if (useHsts && !local) outgoing.setHeader('strict-transport-security', HSTS_VALUE);
+      const legacy = ['GET', 'HEAD'].includes(incoming.method) && legacyExampleRedirect(url.pathname);
+      if (legacy) {
+        outgoing.writeHead(301, { location: `${legacy}${url.search}`, 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
+        return outgoing.end();
       }
       if (['GET', 'HEAD'].includes(incoming.method) && serveStatic(url.pathname, incoming.method, outgoing)) return;
       if (['GET', 'HEAD'].includes(incoming.method) && url.pathname === '/healthz') {

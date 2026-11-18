@@ -3,6 +3,12 @@ import { Buffer } from 'node:buffer';
 const validAddress = (value) => typeof value === 'string'
   && value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
+// Header values never contain CR, LF or other control characters, and are capped in length,
+// so nothing can add or split an email header.
+export function headerSafe(value, max = 200) {
+  return String(value ?? '').replace(/[\u0000-\u001F\u007F]+/g, ' ').replace(/ {2,}/g, ' ').trim().slice(0, max);
+}
+
 function requireAddress(value, label) {
   if (!validAddress(value)) throw new Error(`${label} must be a valid email address.`);
   return value;
@@ -12,13 +18,15 @@ export function makeGmailMessage(message, from) {
   const to = requireAddress(message.to, 'MAIL_TO');
   const replyTo = requireAddress(message.replyTo, 'Reply address');
   requireAddress(from, 'COMPOSIO_FROM_EMAIL');
-  // Addresses and the subject are controlled by the server, never by form fields.
+  // Addresses and the subject are controlled by the server. The reply address comes from the form,
+  // but it is validated (no whitespace) and passed through headerSafe as a second guard.
+  const subject = headerSafe(message.subject || 'New Merchendice enquiry', 150);
   const content = Buffer.from(message.text, 'utf8').toString('base64').match(/.{1,76}/g).join('\r\n');
   return Buffer.from([
-    `From: Merchendice <${from}>`,
-    `To: ${to}`,
-    `Reply-To: ${replyTo}`,
-    'Subject: New Merchendice enquiry',
+    `From: Merchendice <${headerSafe(from, 254)}>`,
+    `To: ${headerSafe(to, 254)}`,
+    `Reply-To: ${headerSafe(replyTo, 254)}`,
+    `Subject: ${subject}`,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=utf-8',
     'Content-Transfer-Encoding: base64',
@@ -69,7 +77,13 @@ export async function createEmailSender(env, { fetchImpl = (...args) => fetch(..
   });
   return async (message, { signal } = {}) => {
     signal?.throwIfAborted();
-    const receipt = await transport.sendMail({ ...message, from: `Merchendice <${from}>`, to: env.MAIL_TO });
+    const receipt = await transport.sendMail({
+      text: String(message.text ?? ''),
+      subject: headerSafe(message.subject || 'New Merchendice enquiry', 150),
+      replyTo: headerSafe(requireAddress(message.replyTo, 'Reply address'), 254),
+      from: `Merchendice <${from}>`,
+      to: env.MAIL_TO,
+    });
     if (!receipt?.messageId || !receipt.accepted?.includes(env.MAIL_TO)) {
       throw new Error('Email provider did not accept the enquiry.');
     }
