@@ -161,7 +161,7 @@ test('the fonts are served from the site, and removed product mockups are not', 
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
   for (const old of ['archivo', 'source-serif-4']) assert.equal((await fetch(`${fixture.base}/fonts/${old}.woff2`)).status, 404, old);
-  for (const image of ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'totes']) {
+  for (const image of ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'goods-flatlay', 'store-banner']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
@@ -280,7 +280,7 @@ test('every response carries the permissions and opener policies, and hashed ass
   const fixture = await serverFixture(t);
   const home = await fetch(`${fixture.base}/`);
   const html = await home.text();
-  for (const response of [home, await fetch(`${fixture.base}/images/totes.webp`), await fetch(`${fixture.base}/missing`)]) {
+  for (const response of [home, await fetch(`${fixture.base}/images/goods-flatlay.webp`), await fetch(`${fixture.base}/missing`)]) {
     assert.equal(response.headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');
     assert.equal(response.headers.get('cross-origin-opener-policy'), 'same-origin');
   }

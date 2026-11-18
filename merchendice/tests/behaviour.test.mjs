@@ -90,7 +90,7 @@ test('homepage explains the service and sends contact to the enquiry page instea
   const response = await worker.fetch(new Request('https://site.example.test/'));
   const html = await response.text();
   assert.match(html.replace(/<[^>]+>/g, ''), /Merch that looks like it came from you\./);
-  assert.match(html, /Tell us your idea/);
+  assert.match(html, /Start a project/);
   assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
   assert.match(html, /href="\/enquiry\/"/);
   assert.match(html, /Shopify/);
@@ -286,7 +286,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /src="\/images\/[a-z-]+\.webp"/, tag);
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
-  const allowed = ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'totes', 'example-store-accessories'];
+  const allowed = ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'goods-flatlay', 'store-banner'];
   const names = tags.map(tag => tag.match(/\/images\/([a-z-]+)\.webp/)[1]);
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
@@ -305,8 +305,9 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/">${platform}<`));
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
-  assert.match(html, /<h2 id="quality-title">“Will my merch look cheap or off-brand\?”<\/h2>/);
-  assert.match(html, /No generic templates/);
+  assert.match(html, /<h2 id="quality-title">We’d rather say no to a product than sell a bad one\.<\/h2>/);
+  assert.match(html, /cheap or off-brand/, 'the quality section still names the fear it answers');
+  assert.doesNotMatch(html, /class="closer|example-store-accessories/, 'no closer section and no store screenshot on the homepage');
   assert.doesNotMatch(html, /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
@@ -397,4 +398,31 @@ test('the only cost wording is the approved FAQ answer, with no prices, fees, sp
     const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
   }
+});
+
+test('one call-to-action label, and each idea said only once across the site', async () => {
+  const pages = {};
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    pages[route] = html.slice(html.indexOf('<body'), html.indexOf('</body>')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  }
+  // Buttons and links that lead to the enquiry form say "Start a project" (or "Contact us" in the header and footer).
+  for (const [route, html] of Object.entries(pages)) {
+    assert.doesNotMatch(html, /Tell us your idea|Send us a note|Send an enquiry|Start your enquiry|Ask what would suit/, route);
+  }
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  for (const label of [...home.matchAll(/<a class="button[^"]*" href="\/enquiry\/">([^<]+)<\/a>/g)].map(m => m[1])) assert.equal(label, 'Start a project');
+  const enquiry = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
+  assert.match(enquiry, /<button class="button button-primary button-submit" type="submit"><span>Start a project<\/span><\/button>/);
+  const all = Object.values(pages).join(' ');
+  const count = (re) => (all.match(re) || []).length;
+  assert.equal(count(/Commercial terms are agreed/g), 1, 'terms wording lives in the FAQ only');
+  assert.equal(count(/doesn’t take orders/g), 1);
+  assert.equal(count(/in your look/g), 1);
+  assert.equal(count(/[Pp]hysical samples/g), 1);
+  assert.equal(count(/a few directions/g), 1);
+  assert.equal(count(/\bjoke/g), 1);
+  // The homepage ends on the FAQ, and the footer carries the contact line.
+  assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<\/main>/);
+  assert.match(home, /<p class="footer-contact">[^<]*<a href="\/enquiry\/">Contact us<\/a><\/p>/);
 });

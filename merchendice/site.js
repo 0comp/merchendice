@@ -69,7 +69,7 @@ if (form) {
     } finally {
       clearTimeout(timeout);
       submitButton.disabled = false;
-      submitButton.querySelector('span:first-child').textContent = 'Send an enquiry';
+      submitButton.querySelector('span:first-child').textContent = 'Start a project';
       status.focus();
     }
   });
