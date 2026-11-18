@@ -285,27 +285,49 @@ test('directory matches multiple words in any order and restores the empty state
   assert.equal(card.hidden,false); assert.equal(empty.hidden,true);
 });
 
-test('homepage keeps the redesigned structure, a broad audience and no product imagery', async () => {
+test('homepage keeps the redesigned structure, a broad audience and only the approved hero illustration', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  // The only images are accessory crops (tote and sticker) inside the example-shop preview card.
+  // The hero is a hand-made inline SVG of three products (Oscar approved the tee for this illustration only).
+  const hero = html.match(/<svg class="hero-illustration"[\s\S]*?<\/svg>/);
+  assert.ok(hero, 'hero illustration is present');
+  for (const piece of ['art-tee', 'art-tote', 'art-necklace']) assert.match(hero[0], new RegExp(`class="art-piece ${piece}"`));
+  assert.doesNotMatch(hero[0], /<text|<image|href=|url\(/, 'the illustration is plain shapes, with no text, images or external references');
+  const rest = html.replace(hero[0], '');
+  // Outside that illustration the only images are accessory crops (tote and sticker) inside the example-shop preview card.
   const images = [...html.matchAll(/<img\b[^>]*src="([^"]+)"/g)].map(m => m[1]);
   assert.deepEqual(images.sort(), ['/images/shop-preview-1.webp', '/images/shop-preview-1.webp', '/images/shop-preview-2.webp', '/images/shop-preview-2.webp', '/images/shop-preview-3.webp']);
-  assert.doesNotMatch(html, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
-  assert.doesNotMatch(html, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
+  assert.doesNotMatch(rest, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
+  assert.doesNotMatch(rest, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
   for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/">${platform}<`));
-  assert.doesNotMatch(html, /<circle/);
+  assert.doesNotMatch(rest, /<circle/);
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
-  assert.match(html, /look cheap or <span class="grad nowrap">off-brand\?/);
+  assert.match(html, /look cheap or <span class="accent nowrap">off-brand\?/);
   assert.match(html, /No generic templates/);
-  for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(platform));
-  assert.doesNotMatch(html, /jewel|tote|clothing|fashion|beauty|lifestyle|\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
+  assert.doesNotMatch(rest, /jewel|tote|clothing|fashion|beauty|lifestyle|\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.match(html, /Let’s make your/);
   assert.match(html, /class="scroll-cue"/);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\/fonts\/archivo\.woff2/);
+  assert.match(css, /\/fonts\/instrument-serif-regular\.woff2/);
+  assert.match(css, /font-display: swap/);
+});
+
+test('marketing pages use the warm cream and terracotta theme with no gradient text or glows', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /--bg: #f7f2ea/);
+  assert.match(css, /--accent: #b5553a/);
+  assert.doesNotMatch(css, /\.grad\b|glow|#7cc8d9|#9a8be8|#ecd27f|background-clip: text/i);
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/instrument-serif-regular\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<meta name="theme-color" content="#f7f2ea">/, route);
+    // No clothing photos on marketing pages: the only raster images are the shop-preview accessory crops.
+    for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/shop-preview-[123]\.webp$/, route);
+  }
 });
 
 test('no marketing page shows the email address or section numbering', async () => {
@@ -338,6 +360,18 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.doesNotMatch(html, /id="what-you-get"|id="why"/);
   const steps = [...html.matchAll(/<li class="process-step[^"]*">[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1]);
   assert.deepEqual(steps, ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']);
-  assert.equal((html.match(/[Ss]amples?\b(?! shop)/g) || []).length, 2, 'samples appears only in the Samples step');
+  const withoutCostFaq = html.replace('There’s nothing to pay while we shape the idea, design and sample.', '');
+  assert.equal((withoutCostFaq.match(/[Ss]amples?\b(?! shop)/g) || []).length, 2, 'samples appears only in the Samples step (and the approved cost answer)');
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
+});
+
+test('the only cost wording is the approved FAQ answer, with no prices, fees, splits or payouts', async () => {
+  const approved = 'There’s nothing to pay while we shape the idea, design and sample. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.match(home, /<summary>What does it cost to get started\?<\/summary>/);
+  assert.ok(home.includes(`<p>${approved}</p>`));
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '');
+    assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
+  }
 });

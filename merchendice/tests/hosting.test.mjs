@@ -151,16 +151,18 @@ test('a filled website field is ignored before email is sent', async t => {
   assert.equal(fixture.sends(), 0);
 });
 
-test('the display font is served from the site, and removed product mockups are not', async t => {
+test('the fonts are served from the site, and removed product mockups are not', async t => {
   const fixture = await serverFixture(t);
   assert.equal((await fetch(`${fixture.base}/images/tee.webp`)).status, 404);
   const preview = await fetch(`${fixture.base}/images/shop-preview-1.webp`);
   assert.equal(preview.status, 200);
   assert.match(preview.headers.get('content-type'), /image\/webp/);
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
-  const font = await fetch(`${fixture.base}/fonts/archivo.woff2`);
-  assert.equal(font.status, 200);
-  assert.match(font.headers.get('content-type'), /font\/woff2/);
+  for (const name of ['archivo', 'instrument-serif-regular', 'instrument-serif-italic']) {
+    const font = await fetch(`${fixture.base}/fonts/${name}.woff2`);
+    assert.equal(font.status, 200, name);
+    assert.match(font.headers.get('content-type'), /font\/woff2/);
+  }
   assert.equal((await fetch(`${fixture.base}/images/../server.mjs`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/OFL.txt`)).status, 404);
 });

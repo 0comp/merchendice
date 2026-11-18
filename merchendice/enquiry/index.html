@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0b0c0c">
+    <meta name="theme-color" content="#f7f2ea">
     <meta name="description" content="Send Merchendice a short note about your idea. We help creators turn their own ideas into merch, and we reply by email.">
     <title>Send an enquiry — Merchendice</title>
     <link rel="canonical" href="https://merchendice.com/enquiry/">
@@ -16,16 +16,17 @@
     <meta property="og:image" content="https://merchendice.com/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Merchendice M lettermark beside the line: We help creators turn their own ideas into merch.">
+    <meta property="og:image:alt" content="Merchendice wordmark and the line “We help creators turn their own ideas into merch.” beside a flat drawing of three products.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Send an enquiry — Merchendice">
     <meta name="twitter:description" content="Send Merchendice a short note about your idea. We help creators turn their own ideas into merch, and we reply by email.">
     <meta name="twitter:image" content="https://merchendice.com/og.png">
-    <meta name="twitter:image:alt" content="Merchendice M lettermark beside the line: We help creators turn their own ideas into merch.">
+    <meta name="twitter:image:alt" content="Merchendice wordmark and the line “We help creators turn their own ideas into merch.” beside a flat drawing of three products.">
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="preload" href="/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/instrument-serif-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="../site.css">
     <script src="../site.js" defer></script>
   </head>
@@ -47,15 +48,17 @@
     </header>
     <main id="main">
       <section class="enquiry-layout" aria-labelledby="enquiry-title">
-        <div class="page-glow" aria-hidden="true"></div>
         <div class="enquiry-intro">
           <p class="kicker">Get in touch</p>
           <h1 id="enquiry-title">Send us a short note about your idea.</h1>
           <p>Tell us who you are and what you’re picturing. A rough idea is fine. We’ll reply by email, and commercial terms are agreed before any work begins.</p>
-          <svg class="enquiry-mark" viewBox="0 0 220 240" aria-hidden="true">
-            <defs><linearGradient id="enquiryStroke" gradientUnits="userSpaceOnUse" x1="40" y1="40" x2="180" y2="190"><stop offset="0" stop-color="#7cc8d9"/><stop offset=".55" stop-color="#9a8be8"/><stop offset="1" stop-color="#ecd27f"/></linearGradient></defs>
-            <path d="M44 184 57 52 110 158 163 52 176 184"/>
-            <path class="enquiry-mark-rule" d="M24 208h172"/>
+          <svg class="enquiry-mark" viewBox="0 0 200 220" aria-hidden="true" focusable="false">
+            <path d="M40 22c10 78 42 116 60 116s50-38 60-116" fill="none" stroke="#1c1a17" stroke-width="1.8" stroke-dasharray=".5 5" stroke-linecap="round"/>
+            <path d="M100 136v8" stroke="#1c1a17" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M100 144c9 0 15 7 15 16 0 11-9 19-15 24-6-5-15-13-15-24 0-9 6-16 15-16z" fill="#b5553a"/>
+            <path d="M95 156c1.6-3.4 4-5 7.5-5" stroke="#f6eadb" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+            <path d="M34 16h12M154 16h12" stroke="#1c1a17" stroke-width="3" stroke-linecap="round"/>
+            <path d="M20 206h160" stroke="#dccbb3" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </div>
         <div class="form-wrap">
@@ -73,8 +76,8 @@
                 </div>
               </div>
               <fieldset class="platform-field">
-                <legend>Where can we find you?</legend>
-                <p class="field-hint">Optional — choose any platforms you use.</p>
+                <legend>Where can we find you? <span class="optional">Optional</span></legend>
+                <p class="field-hint">Tick any platforms you use.</p>
                 <div class="platform-options">
                   <label class="check-option"><input type="checkbox" name="platforms" value="YouTube"><span>YouTube</span></label>
                   <label class="check-option"><input type="checkbox" name="platforms" value="Instagram"><span>Instagram</span></label>
@@ -82,7 +85,7 @@
                   <label class="check-option"><input type="checkbox" name="platforms" value="Other platforms"><span>Other platforms</span></label>
                 </div>
               </fieldset>
-              <p class="field-hint">Optional — add your channel links or handles so we can find your work.</p>
+              <p class="field-hint field-hint-links">Add links or handles for any of them, so we can see your work.</p>
               <div class="form-row social-links">
                 <div class="field"><label for="youtube">YouTube</label><input id="youtube" name="youtube" type="text" maxlength="500" placeholder="Channel link or handle"></div>
                 <div class="field"><label for="instagram">Instagram</label><input id="instagram" name="instagram" type="text" maxlength="500" placeholder="Profile link or handle"></div>
@@ -120,7 +123,7 @@
         <a href="#enquiryForm">Contact us</a>
         <a href="/privacy/">Privacy notice</a>
       </nav>
-      <p class="footer-base">© Merchendice</p>
+      <p class="footer-base">© 2026 Merchendice</p>
     </footer>
   </body>
 </html>
