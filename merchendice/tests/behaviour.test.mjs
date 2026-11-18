@@ -287,40 +287,31 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   // Every image is self-hosted under /images/, and has explicit dimensions so nothing shifts while it loads.
   const tags = [...html.matchAll(/<img\b[^>]*>/g)].map(m => m[0]);
   assert.ok(tags.length >= 6, 'the page is image-rich');
-  for (const tag of tags) {
-    assert.match(tag, /src="\/images\/[a-z-]+\.webp"/, tag);
-    assert.match(tag, /width="\d+" height="\d+"/, tag);
-  }
-  const allowed = ['hero-tee', 'tote-natural', 'canvas-sand', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner'];
-  // Desktop-only tiles use <picture>. Count the designed photo once (the min-width source, or the img if there isn't one).
-  const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
-  for (const figure of figures) {
-    const desktop = figure.match(/<source media="\(min-width: 901px\)" srcset="\/images\/([a-z-]+)\.webp"/);
-    const img = figure.match(/<img\b[^>]*src="\/images\/([a-z-]+)\.webp"/);
-    names.push((desktop || img)[1]);
-  }
   for (const tag of tags) {
-    if (figures.some(figure => figure.includes(tag))) continue;
-    names.push(tag.match(/\/images\/([a-z-]+)\.webp/)[1]);
+    assert.match(tag, /src="\/images\/[a-z-]+-\d+\.webp"/, tag);
+    assert.match(tag, /width="\d+" height="\d+"/, tag);
+    names.push(tag.match(/src="\/images\/([a-z-]+)-\d+\.webp"/)[1]);
   }
+  // Native-size exports of the example-store mockups and store captures; nothing is upscaled.
+  const allowed = ['hero-tee', 'tote-handles', 'hoodie-sand', 'crew-grey', 'hoodie-black', 'store-phone'];
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
-  // The colourful songbird (the cartoon bird from the tote and sticker) may appear on at most three homepage images.
-  const songbird = names.filter(name => ['tote-natural', 'sticker', 'goods-flatlay'].includes(name));
-  assert.ok(songbird.length <= 3, `songbird images: ${songbird.join(', ')}`);
-  assert.deepEqual(songbird, ['sticker', 'tote-natural', 'goods-flatlay']);
-  // Blank-tote photos are gone; product shots mention the print, texture tiles mention the weave.
-  assert.doesNotMatch(html, /tote-black/);
-  assert.match(html, /Natural canvas tote with a colourful songbird print/);
-  assert.match(html, /Black canvas tote with a colourful songbird print/);
-  assert.equal((html.match(/Close-up of natural canvas weave/g) || []).length, 2);
-  assert.match(html, /Pictured: product mockups from our example store/);
-  // The hero mosaic has exactly one tee; the store preview uses a different unedited store product.
-  assert.equal((html.match(/\/images\/hero-tee\.webp/g) || []).length, 1);
-  assert.match(html, /class="hero-mosaic"[\s\S]*hero-tee\.webp[\s\S]*<\/div>\s*<\/section>/);
+  // The colourful songbird appears once on the homepage: on the crewneck in the example-store capture.
+  assert.deepEqual(names.filter(name => ['store-phone'].includes(name)), ['store-phone']);
+  assert.doesNotMatch(html, /songbird|goods-flatlay|sticker\.webp|canvas-(black|natural|sand)|store-banner|tote-natural/i);
+  // The swallow tee leads the hero and is the only tee on the page.
+  assert.equal((html.match(/alt="[^"]*(T-shirt|tee)\b/gi) || []).length, 1);
+  const mosaic = html.slice(html.indexOf('class="hero-mosaic'), html.indexOf('</section>'));
+  assert.ok(mosaic.indexOf('hero-tee-') < mosaic.indexOf('tote-handles-'), 'the tee is the first hero photo');
+  assert.match(mosaic, /hero-tee-880\.webp[^>]*fetchpriority="high"/);
+  // It's called a sample store once, in the showcase, with no other mockup or made-up-brand caveats.
+  assert.equal((html.match(/A sample store, so you can see the finished standard\./g) || []).length, 1);
+  assert.doesNotMatch(html, /made-up|[Mm]ockup|goods-note|Pictured:|service-strip|Totes and bags/);
+  assert.match(html, /<p class="goods-range">Bags, apparel and small extras, chosen for your audience\.<\/p>/);
+  assert.match(html, /class="hero-mosaic[\s\S]*hero-tee-880\.webp[\s\S]*<\/div>\s*<\/section>/);
   const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
-  assert.match(hero, /\/images\/hero-tee\.webp/);
+  assert.match(hero, /\/images\/hero-tee-880\.webp/);
   assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
   // No eyebrow labels, accent words, italic flourishes or scroll cue.
@@ -347,7 +338,12 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.match(css, /font-display: swap/);
   assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.kicker|\.accent\b/);
   assert.match(css, /@keyframes rise-in/);
-  assert.match(css, /body \{[^}]*font-size: 17px/);
+  assert.match(css, /body \{[^}]*font-size: 18px;\s*line-height: 1\.6;/);
+  // Uppercase tracking is kept for the navigation only; the hero line is sentence case.
+  const heroLine = css.slice(css.indexOf('.hero-line {'), css.indexOf('}', css.indexOf('.hero-line {')));
+  assert.doesNotMatch(heroLine, /uppercase|letter-spacing/);
+  assert.doesNotMatch(css, /\.service-strip|\.goods-note|\.mosaic-col/);
+  assert.doesNotMatch(css, /margin-top: -\d+px|margin-block: -\d+px/, 'no tile is pulled up under the header');
   const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
   assert.match(js, /IntersectionObserver/);
   assert.match(js, /unobserve/);
@@ -364,7 +360,7 @@ test('JSON-LD and the visible hero line both say creators and influencers', asyn
 
 test('the primary Start a project button sits in the hero under the bullets, and the hero text is top-aligned', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('service-strip'));
+  const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
   const bullets = hero.indexOf('class="hero-points"');
   const actions = hero.indexOf('class="hero-actions');
   const button = hero.indexOf('href="/enquiry/"');
@@ -374,8 +370,11 @@ test('the primary Start a project button sits in the hero under the bullets, and
   assert.equal((hero.match(/Start a project/g) || []).length, 1);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   const heroRule = css.slice(css.indexOf('\n.hero {'), css.indexOf('.hero-copy'));
-  assert.match(heroRule, /align-items: start/);
-  assert.doesNotMatch(heroRule, /align-items: center/);
+  // The text column starts at the top of the hero with Oscar's 96px of space; the photos stretch to its height.
+  assert.match(heroRule, /align-items: stretch/);
+  assert.match(heroRule, /min-height: 560px/);
+  assert.doesNotMatch(heroRule, /align-items: center|\bheight: clamp/);
+  assert.match(css, /\.hero-copy \{ padding-block: 96px/);
 });
 
 test('no sentence is repeated across the homepage', async () => {
@@ -399,8 +398,8 @@ test('marketing pages use the cream and espresso theme with no green, terracotta
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<meta name="theme-color" content="#2e211d">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
-    // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-banner|tote-natural)\.webp$/, route);
+    // Other marketing pages only use the natural tote (enquiry) or the unedited example-store capture (examples).
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -474,7 +473,8 @@ test('one call-to-action label, and each idea said only once across the site', a
   const all = Object.values(pages).join(' ');
   const count = (re) => (all.match(re) || []).length;
   assert.equal(count(/Commercial terms are agreed/g), 1, 'terms wording lives in the FAQ only');
-  assert.equal(count(/A preview store, built to show the finished standard/g), 1);
+  assert.equal(count(/A sample store, so you can see the finished standard/g), 1);
+  assert.equal(count(/made-up/g), 0);
   assert.equal(count(/in your look/g), 1);
   assert.equal(count(/[Pp]hysical samples/g), 1);
   assert.equal(count(/a few directions/g), 1);
@@ -515,5 +515,27 @@ test('load-in motion has a reduced-motion path and a no-JS fallback, and does no
     assert.doesNotMatch(csp, /unsafe-inline/, route);
     // Without the js class, the markup itself does not start hidden.
     assert.doesNotMatch(html, /style="[^"]*opacity:\s*0/, route);
+  }
+});
+
+test('every marketing image declares its true pixel size, and srcset widths match the files, so nothing is upscaled by mistake', async () => {
+  const { readFileSync } = await import('node:fs');
+  const webpSize = (file) => {
+    const b = readFileSync(new URL(`..${file}`, import.meta.url));
+    const kind = b.toString('ascii', 12, 16);
+    if (kind === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+    if (kind === 'VP8L') { const v = b.readUInt32LE(21); return [(v & 0x3fff) + 1, ((v >> 14) & 0x3fff) + 1]; }
+    return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+  };
+  for (const route of ['/', '/examples/']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
+      const src = tag.match(/src="([^"]+)"/)[1];
+      const [w, h] = webpSize(src);
+      assert.equal(+tag.match(/width="(\d+)"/)[1], w, `${route} ${src} width`);
+      assert.equal(+tag.match(/height="(\d+)"/)[1], h, `${route} ${src} height`);
+      const srcset = tag.match(/srcset="([^"]+)"/);
+      if (srcset) for (const [, file, declared] of srcset[1].matchAll(/(\S+) (\d+)w/g)) assert.equal(webpSize(file)[0], +declared, file);
+    }
   }
 });
