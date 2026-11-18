@@ -28,6 +28,16 @@ if (form) {
     field.addEventListener('input', () => field.setCustomValidity(''));
   }
 
+  // After a confirmed send, a small modal dialog says what happens next. showModal() keeps focus inside it;
+  // Esc, the Close button, or a click outside closes it, and focus goes back to the form's button.
+  const dialog = document.getElementById?.('sentDialog');
+  const closeButton = dialog?.querySelector('[data-dialog-close]');
+  if (dialog) {
+    closeButton?.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => submitButton.focus());
+  }
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (submitButton.disabled) return;
@@ -63,6 +73,7 @@ if (form) {
     submitButton.querySelector('span:first-child').textContent = 'Sending…';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45000);
+    let sent = false;
     try {
       const response = await fetch('/api/enquiry', {
         method: 'POST',
@@ -75,7 +86,8 @@ if (form) {
       if (result?.ok !== true) throw new Error('We couldn’t confirm that your enquiry was sent. Please refresh the page and try again.');
       form.reset();
       status.dataset.state = 'success';
-      status.textContent = 'Your enquiry has been sent. We’ll reply to the email you provided.';
+      status.textContent = 'Your message is sent. We’ll answer by email.';
+      sent = true;
     } catch (error) {
       status.dataset.state = 'error';
       status.textContent = error.name === 'AbortError'
@@ -87,7 +99,12 @@ if (form) {
       clearTimeout(timeout);
       submitButton.disabled = false;
       submitButton.querySelector('span:first-child').textContent = 'Start a project';
-      status.focus();
+      if (sent && typeof dialog?.showModal === 'function') {
+        dialog.showModal();
+        closeButton?.focus();
+      } else {
+        status.focus();
+      }
     }
   });
 }

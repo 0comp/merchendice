@@ -98,7 +98,8 @@ test('homepage explains the service and sends contact to the enquiry page instea
   assert.match(html, /Start a project/);
   assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
   assert.match(html, /href="\/enquiry\/"/);
-  assert.match(html, /Shopify/);
+  // Shopify is never named; print on demand is described in plain words.
+  assert.doesNotMatch(html, /Shopify/i);
   assert.match(html, /print-on-demand/);
   assert.match(html, /printed on demand/);
   assert.doesNotMatch(html, /Printify|ShineOn|\/images\/tee|images-api\.printify\.com/);
@@ -210,7 +211,7 @@ test('delivery is confirmed only when the provider returns a receipt', async t =
 });
 
 const formScript=await fs.readFile(new URL('../site.js',import.meta.url),'utf8');
-function formHarness(fetch, values=input) {
+function formHarness(fetch, values=input, dialog=null) {
   const fields={};
   for (const name of ['name','email','description']) {
     const field={value:values[name],error:'',addEventListener(){},setCustomValidity(value){this.error=value;}};
@@ -218,7 +219,7 @@ function formHarness(fetch, values=input) {
     fields[name]=field;
   }
   const label={textContent:''};
-  const button={disabled:false,querySelector:()=>label};
+  const button={disabled:false,querySelector:()=>label,focused:0,focus(){this.focused++;}};
   const status={textContent:'',dataset:{},removeAttribute(){delete this.dataset.state;},focus(){}};
   let submit;
   const form={
@@ -232,7 +233,7 @@ function formHarness(fetch, values=input) {
     getAll(){return [];}
   }
   vm.runInNewContext(formScript,{
-    document:{querySelector:selector=>selector==='#enquiryForm'?form:status},
+    document:{querySelector:selector=>selector==='#enquiryForm'?form:status,getElementById:id=>id==='sentDialog'?dialog:null},
     FormData:FormDataStub,fetch,AbortController,setTimeout,clearTimeout,Error,TypeError,
   });
   return {form,status,button,submit:()=>submit({preventDefault(){}})};
@@ -253,6 +254,79 @@ test('confirmed responses clear the form and show success', async () => {
   await h.submit();
   assert.equal(h.form.didReset,true);
   assert.equal(h.status.dataset.state,'success');
+});
+
+function dialogStub() {
+  const handlers={};
+  const closeButton={focused:0,addEventListener:(name,fn)=>{handlers['close-button:'+name]=fn;},focus(){this.focused++;}};
+  return {
+    open:false,shown:0,closeButton,handlers,
+    querySelector:selector=>selector==='[data-dialog-close]'?closeButton:null,
+    addEventListener(name,fn){handlers[name]=fn;},
+    showModal(){this.open=true;this.shown++;},
+    close(){this.open=false;handlers.close?.();},
+  };
+}
+
+test('a confirmed send opens the sent dialog, focuses its close button, and returns focus when it closes', async () => {
+  const dialog=dialogStub();
+  const h=formHarness(async()=>Response.json({ok:true}),input,dialog);
+  await h.submit();
+  assert.equal(dialog.open,true);
+  assert.equal(dialog.closeButton.focused,1);
+  // The close button, the backdrop and Esc (the native close event) all return focus to the submit button.
+  dialog.handlers['close-button:click']();
+  assert.equal(dialog.open,false);
+  assert.equal(h.button.focused,1);
+  dialog.showModal();
+  dialog.handlers.click({target:dialog});
+  assert.equal(dialog.open,false);
+  assert.equal(h.button.focused,2);
+});
+
+test('a failed send never opens the sent dialog', async () => {
+  const dialog=dialogStub();
+  const h=formHarness(async()=>Response.json({}),input,dialog);
+  await h.submit();
+  assert.equal(dialog.shown,0);
+  assert.equal(h.status.dataset.state,'error');
+});
+
+test('the sent dialog markup is a labelled native dialog with the approved wording and a close button', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
+  assert.match(html, /<dialog class="sent-dialog" id="sentDialog" aria-labelledby="sentTitle" aria-describedby="sentText">\s*<h2 id="sentTitle">Thanks, your message is sent\.<\/h2>\s*<p id="sentText">We’ll answer by email, usually within one or two days\.<\/p>\s*<button class="button button-primary" type="button" data-dialog-close>Close<\/button>\s*<\/dialog>/);
+});
+
+test('marketing pages never mention samples, quality checks or Shopify, and list jewellery', async () => {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    assert.doesNotMatch(html, /sample|quality|shopify/i, route);
+    assert.doesNotMatch(html.replace(/<[^>]+>/g, ' '), /\bcolor|\bfavorite|jewelry|\bcenter\b/i, route);
+  }
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.match(home, /<li>Jewellery<\/li>/);
+  assert.match(home, /Bags, apparel, jewellery and small extras, chosen for your audience\./);
+  assert.match(home, /influencers of any size/);
+  assert.match(home, /Exclusive designs/);
+  assert.match(home, /A store in your look, built and run for you/);
+  assert.doesNotMatch(home, /Based and designed in Sweden|mobile-cta|language|guide/i);
+});
+
+test('the About section uses Oscar’s approved words and the two names, and sits before the FAQ', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.match(html, /<section class="about-section rise" id="about" aria-labelledby="about-title">\s*<h2 id="about-title">Who we are<\/h2>\s*<p>We watched creators try to launch their own merch and saw how often it fell flat\. Merchendice exists to make it simple, so any creator can launch merch their audience actually wants\.<\/p>\s*<p class="about-names">Oscar Thomas and Oscar Rodhelius<\/p>\s*<\/section>/);
+  assert.ok(html.indexOf('id="about"') < html.indexOf('id="faq"'));
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const page = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    assert.match(page, /href="(\/)?#about"/, route);
+  }
+});
+
+test('log retention configs keep about 30 days', async () => {
+  const read = (path) => fs.readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+  assert.match(await read('Caddyfile'), /roll_keep_for 720h/);
+  assert.match(await read('deploy/logrotate-merchendice'), /rotate 30/);
+  assert.match(await read('compose.yaml'), /max-size/);
 });
 
 test('client rejects the same incomplete email address as the server', async () => {
@@ -288,34 +362,34 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   const tags = [...html.matchAll(/<img\b[^>]*>/g)].map(m => m[0]);
   assert.ok(tags.length >= 6, 'the page is image-rich');
   for (const tag of tags) {
-    assert.match(tag, /src="\/images\/[a-z-]+\.webp"/, tag);
+    assert.match(tag, /src="\/images\/[a-z0-9-]+\.webp"/, tag);
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
-  const allowed = ['hero-tee', 'tote-natural', 'canvas-sand', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner'];
+  const allowed = ['hero-tee', 'tote-natural', 'sticker', 'photo-jewellery-720', 'photo-tote-720', 'photo-crewneck-720', 'hoodie-black-496', 'store-phone-780'];
   // Desktop-only tiles use <picture>. Count the designed photo once (the min-width source, or the img if there isn't one).
   const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
   for (const figure of figures) {
-    const desktop = figure.match(/<source media="\(min-width: 901px\)" srcset="\/images\/([a-z-]+)\.webp"/);
-    const img = figure.match(/<img\b[^>]*src="\/images\/([a-z-]+)\.webp"/);
+    const desktop = figure.match(/<source media="\(min-width: 901px\)" srcset="\/images\/([a-z0-9-]+)\.webp"/);
+    const img = figure.match(/<img\b[^>]*src="\/images\/([a-z0-9-]+)\.webp"/);
     names.push((desktop || img)[1]);
   }
   for (const tag of tags) {
     if (figures.some(figure => figure.includes(tag))) continue;
-    names.push(tag.match(/\/images\/([a-z-]+)\.webp/)[1]);
+    names.push(tag.match(/\/images\/([a-z0-9-]+)\.webp/)[1]);
   }
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
   // The colourful songbird (the cartoon bird from the tote and sticker) may appear on at most three homepage images.
   const songbird = names.filter(name => ['tote-natural', 'sticker', 'goods-flatlay'].includes(name));
-  assert.ok(songbird.length <= 3, `songbird images: ${songbird.join(', ')}`);
-  assert.deepEqual(songbird, ['sticker', 'tote-natural', 'goods-flatlay']);
-  // Blank-tote photos are gone; product shots mention the print, texture tiles mention the weave.
-  assert.doesNotMatch(html, /tote-black/);
+  assert.deepEqual(songbird, ['sticker', 'tote-natural']);
+  // The fabric close-ups are gone; the hero mixes three stock product photos with the store mockups.
+  assert.doesNotMatch(html, /tote-black|canvas-(black|natural|sand)|canvas weave|goods-flatlay|store-banner/);
   assert.match(html, /Natural canvas tote with a colourful songbird print/);
-  assert.match(html, /Black canvas tote with a colourful songbird print/);
-  assert.equal((html.match(/Close-up of natural canvas weave/g) || []).length, 2);
-  assert.match(html, /Pictured: product mockups from our example store/);
+  for (const name of ['jewellery', 'tote', 'crewneck']) {
+    assert.match(html, new RegExp(`srcset="/images/photo-${name}-360\\.webp 360w, /images/photo-${name}-720\\.webp 720w"`), name);
+  }
+  assert.doesNotMatch(html, /Pictured:/);
   // The hero mosaic has exactly one tee; the store preview uses a different unedited store product.
   assert.equal((html.match(/\/images\/hero-tee\.webp/g) || []).length, 1);
   assert.match(html, /class="hero-mosaic"[\s\S]*hero-tee\.webp[\s\S]*<\/div>\s*<\/section>/);
@@ -331,10 +405,8 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /—/, 'no em dashes in the copy');
   assert.doesNotMatch(html, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
   assert.doesNotMatch(html, /class="platforms"|platform-link|mid-size creators on/, 'platform line removed at Oscar\'s request');
-  for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
-  assert.match(html, /id="quality"/);
-  assert.match(html, /<h2 id="quality-title">We only launch products that pass our sample check\.<\/h2>/);
-  assert.match(html, /We point you towards items that print well, and nothing launches until you’ve signed it off\./);
+  for (const step of ['Idea', 'Designs', 'Products', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
+  assert.doesNotMatch(html, /id="quality"|href="#quality"|sample check|signed it off/);
   assert.doesNotMatch(html, /Every design starts from what you post|Worried your merch will look cheap/);
   assert.doesNotMatch(html, /Mugs|Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
@@ -400,7 +472,7 @@ test('marketing pages use the cream and espresso theme with no green, terracotta
     assert.match(html, /<meta name="theme-color" content="#2e211d">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-banner|tote-natural)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -422,8 +494,11 @@ test('privacy notice is finished and indexable, and open items live in an unserv
     assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${route}`))).text(), /<!--/, route);
   }
   const notes = await fs.readFile(new URL('../TODO.md', import.meta.url), 'utf8');
-  assert.match(notes, /controller/);
-  assert.match(notes, /access logs/);
+  // The controller line and the 30-day log line are now in the notice itself; TODO.md keeps only the NPM deploy step.
+  assert.doesNotMatch(notes, /\*\*Data controller|\*\*Access logs/);
+  assert.match(notes, /Nginx Proxy Manager/);
+  assert.match(html, /Oscar Thomas is the data controller for the details described here\. To reach him about your data, use the form\./);
+  assert.match(html, /Server and proxy logs are kept for 30 days and then deleted\./);
   assert.equal((await worker.fetch(new Request('https://site.example.test/TODO.md'))).status, 404);
   for (const field of ['Your name', 'Your email address', 'project description', 'How long it’s kept', 'deleted']) assert.match(html, new RegExp(field));
   assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
@@ -440,14 +515,12 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.match(html, /id="how-it-works"/);
   assert.doesNotMatch(html, /id="what-you-get"|id="why"/);
   const steps = [...html.matchAll(/<li class="process-step[^"]*">[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1]);
-  assert.deepEqual(steps, ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']);
-  const withoutCostFaq = html.replace('There’s nothing to pay while we shape the idea, design and sample.', '').replace(/<head>[\s\S]*<\/head>/, '');
-  assert.ok((withoutCostFaq.match(/[Ss]amples?\b(?! shop)/g) || []).length <= 4, 'samples is mentioned in the hero list, the strip, the Samples step and its text only');
+  assert.deepEqual(steps, ['Idea', 'Designs', 'Products', 'Your store', 'Launch']);
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 
 test('the only cost wording is the approved FAQ answer, with no prices, fees, splits or payouts', async () => {
-  const approved = 'There’s nothing to pay while we shape the idea, design and sample. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
+  const approved = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.match(home, /<summary>What does it cost to get started\?<\/summary>/);
   assert.ok(home.includes(`<p>${approved}</p>`));
@@ -474,13 +547,11 @@ test('one call-to-action label, and each idea said only once across the site', a
   const all = Object.values(pages).join(' ');
   const count = (re) => (all.match(re) || []).length;
   assert.equal(count(/Commercial terms are agreed/g), 1, 'terms wording lives in the FAQ only');
-  assert.equal(count(/A preview store, built to show the finished standard/g), 1);
+  assert.equal(count(/A demo store, so you can see the finished standard/g), 1);
   assert.equal(count(/in your look/g), 1);
-  assert.equal(count(/[Pp]hysical samples/g), 1);
-  assert.equal(count(/a few directions/g), 1);
   assert.equal(count(/\bjoke/g), 2, "statement line plus the approved enquiry-step wording");
-  // The homepage ends on the FAQ, and the footer carries the contact line.
-  assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<\/main>/);
+  // The homepage ends on the closing call to action after the FAQ, and the footer carries the contact line.
+  assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<section class="closing-cta rise" aria-labelledby="closing-title">\s*<h2 id="closing-title">Let’s make your first drop\.<\/h2>\s*<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>\s*<\/section>\s*<\/main>/);
   assert.match(home, /<p class="footer-contact">[^<]*<a href="\/enquiry\/">Contact us<\/a><\/p>/);
 });
 

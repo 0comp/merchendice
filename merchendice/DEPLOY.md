@@ -116,6 +116,15 @@ TLS ends at the reverse proxy (Nginx Proxy Manager), and the app only sees plain
 - In Nginx Proxy Manager, turning on **Force SSL** for the proxy host does the same redirect at the proxy, before the app is reached. Use either or both. Also make sure the proxy host forwards `X-Forwarded-Proto` (Nginx Proxy Manager does this by default).
 - **www must redirect to the apex domain at the proxy.** The enquiry form only accepts submissions whose browser `Origin` matches `PUBLIC_ORIGIN` (`https://merchendice.com`). A visitor who stays on `https://www.merchendice.com` would get "Please submit the form from this website." In Nginx Proxy Manager, add `www.merchendice.com` as a **Redirection Host** that sends a 301 to `https://merchendice.com` (preserve path, Force SSL on, with its own certificate). Do not serve the site on both names.
 
+## Log retention (30 days)
+
+The Privacy notice says server and proxy logs are deleted after 30 days. Match that wherever the logs live:
+
+- **App container:** it logs only start-up lines and errors, never visitor IPs. `compose.yaml` caps them with Docker's `json-file` options (3 × 10 MB); Docker cannot rotate by age.
+- **Caddy overlay:** the `Caddyfile` writes access logs to `/data/logs/access.log` and deletes rolled files after 720 hours (30 days).
+- **Plain nginx host:** install `deploy/logrotate-merchendice` as `/etc/logrotate.d/merchendice` (daily, 30 kept, `maxage 30`).
+- **Nginx Proxy Manager (production):** its rotation is not in this repo. It runs logrotate inside its own container for the logs under its `/data/logs` volume. At deploy time, check that config (`/etc/logrotate.d/nginx-proxy-manager` inside the container) and set the proxy-host access and error logs to `daily`, `rotate 30`, `maxage 30`, or turn access logging off for the merchendice.com proxy host. Re-check after NPM upgrades, which can reset it.
+
 ## Local preview
 
 Outside production you don't need `PUBLIC_ORIGIN`. The server uses the address it listens on (`HOST`, default `127.0.0.1`, and `PORT`, default `3000`) and accepts form posts from `http://localhost:PORT`, `http://127.0.0.1:PORT` and `http://[::1]:PORT`. Run `npm run build` then `PORT=3000 HOST=127.0.0.1 node server.mjs`.
