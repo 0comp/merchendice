@@ -159,10 +159,10 @@ test('the fonts are served from the site, and removed product mockups are not', 
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
   for (const old of ['archivo', 'source-serif-4']) assert.equal((await fetch(`${fixture.base}/fonts/${old}.woff2`)).status, 404, old);
-  for (const gone of ['tote-black-detail', 'sticker-camel', 'example-store-accessories']) {
+  for (const gone of ['tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand']) {
     assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   }
-  for (const image of ['hero-tee', 'tote-natural', 'tote-black', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner']) {
+  for (const image of ['hero-tee', 'tote-natural', 'canvas-sand', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);

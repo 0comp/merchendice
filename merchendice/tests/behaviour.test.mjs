@@ -291,7 +291,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /src="\/images\/[a-z-]+\.webp"/, tag);
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
-  const allowed = ['hero-tee', 'tote-natural', 'tote-black', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner'];
+  const allowed = ['hero-tee', 'tote-natural', 'canvas-sand', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner'];
   // Desktop-only tiles use <picture>. Count the designed photo once (the min-width source, or the img if there isn't one).
   const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
@@ -306,10 +306,19 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   }
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
-  const bird = names.filter(name => name === 'hero-tee' || name === 'sticker');
-  assert.equal(bird.length, 2, 'at most two bird images on the home page');
-  // Clothing appears exactly once on the marketing pages: the shirt tile in the hero mosaic.
+  // The colourful songbird (the cartoon bird from the tote and sticker) may appear on at most three homepage images.
+  const songbird = names.filter(name => ['tote-natural', 'sticker', 'goods-flatlay'].includes(name));
+  assert.ok(songbird.length <= 3, `songbird images: ${songbird.join(', ')}`);
+  assert.deepEqual(songbird, ['sticker', 'tote-natural', 'goods-flatlay']);
+  // Blank-tote photos are gone; product shots mention the print, texture tiles mention the weave.
+  assert.doesNotMatch(html, /tote-black/);
+  assert.match(html, /Natural canvas tote with a colourful songbird print/);
+  assert.match(html, /Black canvas tote with a colourful songbird print/);
+  assert.equal((html.match(/Close-up of natural canvas weave/g) || []).length, 2);
+  assert.match(html, /Pictured: product mockups from our example store/);
+  // The hero mosaic has exactly one tee; the store preview uses a different unedited store product.
   assert.equal((html.match(/\/images\/hero-tee\.webp/g) || []).length, 1);
+  assert.match(html, /class="hero-mosaic"[\s\S]*hero-tee\.webp[\s\S]*<\/div>\s*<\/section>/);
   const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
   assert.match(hero, /\/images\/hero-tee\.webp/);
   assert.doesNotMatch(hero, /See the example store/);
@@ -345,6 +354,30 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(js, /reveal/);
 });
 
+test('JSON-LD and the visible hero line both say creators and influencers', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  const json = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
+  assert.match(json.description, /creators and influencers/);
+  assert.match(json.audience.audienceType, /Creators and influencers/);
+  assert.match(html, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
+});
+
+test('the primary Start a project button sits in the hero under the bullets, and the hero text is top-aligned', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('service-strip'));
+  const bullets = hero.indexOf('class="hero-points"');
+  const actions = hero.indexOf('class="hero-actions');
+  const button = hero.indexOf('href="/enquiry/"');
+  assert.ok(bullets > 0 && actions > bullets, 'actions follow the bullets');
+  assert.ok(button > actions, 'the enquiry button is inside hero-actions');
+  assert.match(hero, /<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/);
+  assert.equal((hero.match(/Start a project/g) || []).length, 1);
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  const heroRule = css.slice(css.indexOf('\n.hero {'), css.indexOf('.hero-copy'));
+  assert.match(heroRule, /align-items: start/);
+  assert.doesNotMatch(heroRule, /align-items: center/);
+});
+
 test('no sentence is repeated across the homepage', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const body = html.slice(html.indexOf('<main'), html.indexOf('</main>')).replace(/<!--[\s\S]*?-->/g, '').replace(/<span class="sr-only">[^<]*<\/span>/g, '');
@@ -366,7 +399,7 @@ test('marketing pages use the cream and espresso theme with no green, terracotta
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<meta name="theme-color" content="#2e211d">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
-    // Only the homepage hero may show clothing; other marketing pages use the example store screenshot only.
+    // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
     if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-banner|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
