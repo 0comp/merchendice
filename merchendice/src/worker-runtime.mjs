@@ -116,12 +116,12 @@ export default {
     }
 
     const origin = request.headers.get('origin');
-    if (origin && origin !== url.origin) return json({ message: 'Please submit the form from this website.' }, 403);
+    if (origin && origin !== url.origin) return json({ message: 'Something went wrong sending your message. Please refresh the page and try again.' }, 403);
     let input;
     try { input = await readEnquiry(request); }
     catch (error) {
       return error instanceof RangeError
-        ? json({ message: 'Your enquiry is too long. Please shorten it and try again.' }, 413)
+        ? json({ message: 'Your message is too long. Please shorten it and try again.' }, 413)
         : json({ message: 'Please check the form and try again.' }, 400);
     }
 
@@ -131,13 +131,13 @@ export default {
     const email = typeof input?.email === 'string' ? input.email.trim() : '';
     const description = typeof input?.description === 'string' ? input.description.trim() : '';
     if (!name || name.length > 160 || !validEmail(email) || !description || description.length > 5000) {
-      return json({ message: 'Please check your name, email and project description, then try again.' }, 400);
+      return json({ message: 'Please check your name, email, and idea, then try again.' }, 400);
     }
     const channels = optionalLine(input?.channels, MAX_CHANNELS_LENGTH);
     if (channels === undefined) return json({ message: 'Please shorten the links to your channels and try again.' }, 400);
 
     if (typeof env.sendMail !== 'function' || !env.MAIL_TO) {
-      return json({ message: 'Enquiries are not available right now. Please try again later.' }, 503);
+      return json({ message: 'Messages can’t be sent right now. Please try again later.' }, 503);
     }
 
     const body = [
@@ -147,7 +147,7 @@ export default {
       `Email: ${email}`,
       `Links to their channels: ${channels || 'Not provided'}`,
       '',
-      'Project description:',
+      'Their idea:',
       description,
     ].join('\n');
 
@@ -166,11 +166,11 @@ export default {
           reject(new DOMException('Email confirmation timed out', 'AbortError'));
         }, { once: true })),
       ]);
-      if (!receipt || typeof receipt.id !== 'string' || !receipt.id) return json({ message: 'We couldn’t confirm that your enquiry was sent. Please try again later.' }, 502);
+      if (!receipt || typeof receipt.id !== 'string' || !receipt.id) return json({ message: 'We couldn’t confirm that your message was sent. Please try again later.' }, 502);
       return json({ ok: true });
     } catch (error) {
       return error.name === 'AbortError'
-        ? json({ message: 'We couldn’t confirm whether your enquiry was sent. Please try again later.' }, 504)
+        ? json({ message: 'We couldn’t confirm whether your message was sent. Please try again later.' }, 504)
         : json({ message: 'We couldn’t connect to our email service. Please try again later.' }, 502);
     } finally { clearTimeout(timeout); }
   },

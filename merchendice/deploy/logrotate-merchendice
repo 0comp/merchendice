@@ -1,0 +1,16 @@
+# Keeps nginx access and error logs for 30 days, matching the Privacy Policy.
+# Install on a plain nginx host as /etc/logrotate.d/merchendice (adjust the path to your log files).
+# Not needed with the Caddy overlay (see Caddyfile) or Nginx Proxy Manager (see DEPLOY.md).
+/var/log/nginx/*.log {
+    daily
+    rotate 30
+    maxage 30
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    postrotate
+        [ -s /run/nginx.pid ] && kill -USR1 "$(cat /run/nginx.pid)"
+    endscript
+}

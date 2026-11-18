@@ -35,6 +35,7 @@
   --ease: cubic-bezier(.25, .1, .25, 1);
   --spring: cubic-bezier(.32, .72, 0, 1);
   --hover-dur: .45s;
+  --press: cubic-bezier(.2, 0, 0, 1);
   --radius: 0;
 }
 
@@ -133,9 +134,11 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   font-weight: 500;
   letter-spacing: .02em;
   text-decoration: none;
-  transition: transform var(--hover-dur) var(--spring), background-color .35s var(--ease), color .35s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 150ms var(--press), color 150ms var(--press), transform 100ms var(--press);
 }
-.nav-cta:hover { background: var(--on-dark); color: var(--espresso); transform: scale(1.03); }
+.nav-cta:hover { background: var(--on-dark); color: var(--espresso); }
+.nav-cta:active { transform: scale(.97); background: var(--bg-warm); color: var(--espresso); transition-duration: 80ms; }
 .nav-toggle { display: none; }
 
 /* Buttons and links */
@@ -155,12 +158,15 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   letter-spacing: .02em;
   text-decoration: none;
   cursor: pointer;
-  transition: transform var(--hover-dur) var(--spring), background-color .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 150ms var(--press), color 150ms var(--press), border-color 150ms var(--press), transform 100ms var(--press);
 }
-.button:hover { transform: scale(1.03); background: var(--espresso); color: var(--on-dark); }
-.button:active { transform: scale(.99); }
+.button:hover { background: var(--espresso); color: var(--on-dark); }
 .button-primary { background: var(--espresso); color: var(--on-dark); }
 .button-primary:hover { background: var(--espresso-soft); border-color: var(--espresso-soft); }
+/* Press feedback shows on touch-down too (site.js registers a passive touchstart listener). */
+.button:active { transform: scale(.97); background: var(--espresso-soft); border-color: var(--espresso-soft); color: var(--on-dark); transition-duration: 80ms; }
 .text-link {
   display: inline-flex;
   align-items: center;
@@ -177,7 +183,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 
 /* Layout */
 main { display: block; }
-.hero, .statement, .goods, .process-section, .quality-inner, .showcase, .faq-section, .missing-hero, .site-footer, .examples-page > section, .enquiry-layout, .privacy-page {
+.hero, .statement, .goods, .process-section, .quality-inner, .showcase, .about, .faq-section, .missing-hero, .site-footer, .examples-page > section, .enquiry-layout, .privacy-page {
   width: 100%;
   max-width: calc(var(--wrap) + var(--gutter) * 2);
   margin-inline: auto;
@@ -334,7 +340,7 @@ main { display: block; }
 .footer-top { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px 48px; align-items: start; }
 .footer-about p { margin: 0 0 6px; color: var(--on-dark-muted); font-size: 15px; }
 .footer-about .footer-contact { color: var(--on-dark); font-family: var(--serif); font-size: 26px; line-height: 1.25; margin-bottom: 10px; }
-.footer-contact a { color: var(--on-dark); text-underline-offset: 6px; text-decoration-thickness: 1px; }
+.footer-contact a { display: inline-flex; align-items: center; min-height: 44px; color: var(--on-dark); text-underline-offset: 6px; text-decoration-thickness: 1px; }
 .footer-nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0 6px; }
 .footer-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--on-dark); font-size: 13px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; text-underline-offset: 6px; }
 .footer-nav a:hover, .footer-nav a[aria-current="page"] { text-decoration: underline; }
@@ -353,7 +359,7 @@ main { display: block; }
   white-space: nowrap;
   padding-left: .24em;
 }
-.footer-base { margin-bottom: 0; padding-top: 18px; border-top: 1px solid rgba(246, 238, 226, .25); color: var(--on-dark-muted); font-size: 14px; }
+.footer-base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 24px; margin-bottom: 0; padding-top: 18px; border-top: 1px solid rgba(246, 238, 226, .25); color: var(--on-dark-muted); font-size: 14px; }
 
 /* Directory */
 .examples-hero { padding-top: clamp(48px, 7vw, 96px); padding-bottom: 36px; }
@@ -399,9 +405,14 @@ main { display: block; }
 .field-hint { margin: 0; color: var(--muted); font-size: 15px; }
 .field-hint-links { margin: 4px 0 12px; }
 .optional { color: var(--muted); font-weight: 400; margin-left: 0.35em; }
-.required-note { margin: 4px 0 6px; color: var(--muted); font-size: 15px; }
-.form-privacy { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 22px; color: var(--muted); font-size: 15px; }
-.form-privacy a { color: var(--ink); font-weight: 500; text-underline-offset: 4px; }
+.form-smallprint { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+.form-smallprint a { color: var(--ink); font-weight: 500; text-underline-offset: 4px; }
+.field-error { margin: 2px 0 0; color: #8a2e1f; font-size: 15px; font-weight: 500; }
+.field-error:empty { display: none; }
+.field input[aria-invalid="true"], .field textarea[aria-invalid="true"] { border-color: #8a2e1f; }
+.form-thanks { outline: none; }
+.form-thanks h2 { font-size: clamp(32px, 3vw, 42px); }
+.form-thanks p { margin: 14px 0 26px; max-width: 30em; }
 .button-submit { width: 100%; }
 .button-submit:disabled { opacity: .6; cursor: progress; transform: none; }
 .form-status { margin: 16px 0 0; font-size: 15px; }
@@ -444,28 +455,35 @@ main { display: block; }
   .enquiry-image { display: none; }
   .enquiry-intro { position: static; }
 }
-@media (max-width: 760px) {
-  :root { --header: 60px; }
+/* Below 900px the main links fold into the menu button, so the header never overflows. */
+@media (max-width: 900px) {
   .site-header { gap: 10px; }
-  .wordmark { font-size: 20px; letter-spacing: .12em; }
   .main-nav {
-    display: none;
     position: absolute;
     top: var(--header);
     left: 0;
     right: 0;
     flex-direction: column;
     gap: 0;
+    max-height: calc(100svh - var(--header));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 8px var(--gutter) 18px;
     background: var(--espresso);
     border-top: 1px solid rgba(246, 238, 226, .2);
+    /* Closed: faded, lifted 8px, and hidden from focus and clicks once the fade ends. */
+    opacity: 0;
+    transform: translateY(-8px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 250ms cubic-bezier(.05, .7, .1, 1), transform 250ms cubic-bezier(.05, .7, .1, 1), visibility 0s linear 250ms;
   }
-  .main-nav.is-open { display: flex; }
+  .main-nav.is-open { opacity: 1; transform: none; visibility: visible; pointer-events: auto; transition-delay: 0s; }
   .nav-backdrop { display: block; position: fixed; inset: var(--header) 0 0; z-index: 40; background: rgba(46, 33, 29, .55); }
   .nav-backdrop[hidden] { display: none; }
   body.nav-open { overflow: hidden; }
   .main-nav a { min-height: 50px; padding: 0; font-size: 14px; border-bottom: 1px solid rgba(246, 238, 226, .15); }
-  .nav-cta { margin-left: auto; padding: 0 14px; font-size: 12px; letter-spacing: .1em; }
+  .nav-cta { margin-left: auto; padding: 0 12px; font-size: 13px; letter-spacing: 0; white-space: nowrap; }
   .nav-toggle { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--on-dark); cursor: pointer; }
   .nav-toggle-bars, .nav-toggle-bars::before, .nav-toggle-bars::after { display: block; width: 22px; height: 1.5px; background: currentColor; transition: transform .3s var(--ease); }
   .nav-toggle-bars { position: relative; }
@@ -475,6 +493,10 @@ main { display: block; }
   .nav-toggle[aria-expanded="true"] .nav-toggle-bars { background: transparent; }
   .nav-toggle[aria-expanded="true"] .nav-toggle-bars::before { transform: translateY(7px) rotate(45deg); }
   .nav-toggle[aria-expanded="true"] .nav-toggle-bars::after { transform: translateY(-7px) rotate(-45deg); }
+}
+@media (max-width: 760px) {
+  :root { --header: 60px; }
+  .wordmark { font-size: 20px; letter-spacing: .08em; }
   body { font-size: 17px; }
   .hero h1 { font-size: clamp(40px, 10.5vw, 52px); }
   .hero-line { margin: 14px 0 12px; font-size: 23px; text-wrap: balance; }
@@ -487,7 +509,72 @@ main { display: block; }
 }
 
 @media (hover: none) {
-  .button:hover, .nav-cta:hover, .showcase-image:hover, .listing-art:hover { transform: none; }
+  .showcase-image:hover, .listing-art:hover { transform: none; }
+}
+
+/* FAQ: answers ease open where the browser can animate to auto height; elsewhere they simply open. */
+@supports selector(::details-content) {
+  .faq-item { interpolate-size: allow-keywords; }
+  .faq-item::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition: block-size 250ms var(--press), content-visibility 250ms allow-discrete;
+  }
+  .faq-item[open]::details-content { block-size: auto; }
+}
+
+/* About: the co-founders. Words only for now. To add photos later, put
+   <div class="about-photos"><figure><img …></figure><figure><img …></figure></div>
+   after .about-copy; the section then becomes words beside photos (see README "Image slots"). */
+.about { position: relative; padding-block: clamp(64px, 8vw, 112px); }
+.about::before { content: ""; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid var(--line); }
+.about-copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 16px clamp(32px, 5vw, 80px); align-items: start; }
+.about-copy h2 { grid-row: span 2; }
+.about-copy p { margin: 0; max-width: 34em; }
+.about-copy .about-lead { font-family: var(--serif); font-size: clamp(26px, 2.4vw, 34px); line-height: 1.25; color: var(--ink); }
+.about:has(.about-photos) { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); align-items: center; }
+.about:has(.about-photos) .about-copy { grid-template-columns: minmax(0, 1fr); }
+.about:has(.about-photos) .about-copy h2 { grid-row: auto; }
+.about-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.about-photos figure { margin: 0; aspect-ratio: 4 / 5; overflow: hidden; background: var(--bg-warm); }
+.about-photos img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 900px) {
+  .about-copy, .about:has(.about-photos) { grid-template-columns: minmax(0, 1fr); }
+  .about-copy h2 { grid-row: auto; }
+}
+
+/* Closing call to action, after the FAQ */
+.closing-cta { position: relative; width: 100%; max-width: calc(var(--wrap) + var(--gutter) * 2); margin-inline: auto; padding: clamp(48px, 5vw, 72px) var(--gutter) clamp(64px, 8vw, 112px); text-align: center; }
+.closing-cta::before { content: ""; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid var(--line); }
+.closing-cta h2 { max-width: 18ch; margin: 0 auto 28px; }
+
+/* Sticky Start a project bar on phones; site.js shows it between the hero button and the closing call to action. */
+.mobile-cta { display: none; }
+@media (max-width: 900px) {
+  .mobile-cta {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg);
+    box-shadow: 0 -8px 24px rgba(46, 33, 29, .08);
+    border-top: 1px solid var(--line-strong);
+    transform: translateY(110%);
+    visibility: hidden;
+    transition: transform 300ms cubic-bezier(.2, 0, 0, 1), visibility 0s linear 300ms;
+  }
+  .mobile-cta.is-shown { transform: none; visibility: visible; transition-delay: 0s; }
+  body.nav-open .mobile-cta { transform: translateY(110%); visibility: hidden; }
+  .mobile-cta .button, .closing-cta .button { width: 100%; }
+}
+
+/* Page transitions between pages of the site */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 250ms; }
 }
 
 /* Load-in: only when JS has marked the document, and only if motion is allowed.
@@ -523,6 +610,7 @@ main { display: block; }
 }
 
 @media print {
+  .mobile-cta, .nav-toggle, .nav-backdrop { display: none !important; }
   html.js .hero-rise,
   html.js-io .rise,
   html.js-io .rise:not(.is-in) {
@@ -534,6 +622,8 @@ main { display: block; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .faq-item::details-content { transition: none; }
+  .main-nav, .mobile-cta { transition: none; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   html.js .hero-rise,
   html.js-io .rise {

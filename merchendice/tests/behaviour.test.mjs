@@ -79,7 +79,9 @@ test('example shop renders a product grid, labels it as an example, and loads no
   assert.match(html, /<dialog[^>]*id="productDialog"/);
   assert.match(html, /<dialog[^>]*id="bagDialog"/);
   assert.doesNotMatch(html, /\bkr\b|SEK|\$\d|example prices|card-price|qv-price/);
-  assert.match(html, /Purchases are not available/);
+  // One 'not available' notice, in the bag; no Limited badge, nothing claims embroidery.
+  assert.equal((html.match(/not available/g) || []).length, 1);
+  assert.match(html, /<div class="bag-foot">[\s\S]*Checkout and purchases are not available/);
   assert.match(html, /Built by Merchendice/);
   const scriptSources = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map(m => m[1]);
   assert.equal(scriptSources.length, 1);
@@ -96,8 +98,8 @@ test('homepage explains the service and sends contact to the enquiry page instea
   const html = await response.text();
   assert.match(html.replace(/<[^>]+>/g, ''), /Merch that looks like it came from you\./);
   assert.match(html, /Start a project/);
-  assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
-  assert.match(html, /href="\/enquiry\/"/);
+  assert.match(html, /<p class="footer-contact">Got an idea\? <a href="\/enquiry\/">Start a project<\/a><\/p>/);
+  assert.match(html, /<a class="nav-cta" href="\/enquiry\/">Start a project<\/a>/);
   assert.match(html, /Shopify/);
   assert.match(html, /print-on-demand/);
   assert.match(html, /printed on demand/);
@@ -210,57 +212,104 @@ test('delivery is confirmed only when the provider returns a receipt', async t =
 });
 
 const formScript=await fs.readFile(new URL('../site.js',import.meta.url),'utf8');
-function formHarness(fetch, values=input) {
-  const fields={};
-  for (const name of ['name','email','description']) {
-    const field={value:values[name],error:'',addEventListener(){},setCustomValidity(value){this.error=value;}};
-    Object.defineProperty(field,'validity',{get:()=>({valid:!field.error && Boolean(field.value)})});
-    fields[name]=field;
+function element(extra={}) {
+  return {
+    attrs:{},dataset:{},children:[],textContent:'',
+    setAttribute(k,v){this.attrs[k]=String(v);},getAttribute(k){return this.attrs[k] ?? null;},removeAttribute(k){delete this.attrs[k];},
+    addEventListener(name,handler){(this.handlers ||= {})[name]=handler;},
+    append(...kids){this.children.push(...kids);},focus(){this.focused=true;},
+    ...extra,
+  };
+}
+function formHarness(fetch, values=input, {stored=null}={}) {
+  const fields={}, errors={};
+  for (const name of ['name','email','channels','description']) {
+    fields[name]=element({value:values[name] ?? '',maxLength:5000});
+    errors[`${name}Error`]=element();
   }
-  const label={textContent:''};
+  const label={textContent:'Send message'};
   const button={disabled:false,querySelector:()=>label};
-  const status={textContent:'',dataset:{},removeAttribute(){delete this.dataset.state;},focus(){}};
-  let submit;
+  const status=element({removeAttribute(){delete this.dataset.state;}});
+  const store=new Map(stored?[['merchendice-message-draft',JSON.stringify(stored)]]:[]);
+  const localStorage={getItem:k=>store.get(k) ?? null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
+  let submit, input;
   const form={
     elements:{namedItem:name=>fields[name]},querySelector:()=>button,
-    addEventListener:(name,handler)=>{if(name==='submit')submit=handler;},
-    reportValidity:()=>Object.values(fields).every(f=>f.validity.valid),
-    reset(){this.didReset=true;},didReset:false,
+    addEventListener:(name,handler)=>{if(name==='submit')submit=handler;if(name==='input')input=handler;},
+    replaceWith(node){this.replacedWith=node;},
   };
-  class FormDataStub {
-    get(name){return fields[name]?.value;}
-    getAll(){return [];}
-  }
+  class FormDataStub { get(name){return fields[name]?.value;} getAll(){return [];} }
   vm.runInNewContext(formScript,{
-    document:{querySelector:selector=>selector==='#enquiryForm'?form:status},
-    FormData:FormDataStub,fetch,AbortController,setTimeout,clearTimeout,Error,TypeError,
+    document:{
+      querySelector:selector=>selector==='#enquiryForm'?form:selector==='#formStatus'?status:null,
+      getElementById:id=>errors[id] ?? null,
+      createElement:()=>element(),
+      addEventListener(){},
+    },
+    window:{localStorage},location:{pathname:'/enquiry/'},
+    FormData:FormDataStub,fetch,AbortController,setTimeout:(fn)=>{fn();return 0;},clearTimeout(){},Error,TypeError,JSON,
   });
-  return {form,status,button,submit:()=>submit({preventDefault(){}})};
+  return {form,fields,errors,status,button,label,store,submit:()=>submit({preventDefault(){}}),input:()=>input?.()};
 }
 
-test('HTML or incomplete success responses do not clear the form or claim delivery', async () => {
+test('HTML or incomplete success responses keep the form and its draft, and never claim delivery', async () => {
   for (const response of [new Response('<html>Sign in</html>'),Response.json({}),Response.json(null)]) {
     const h=formHarness(async()=>response);
+    h.input();
     await h.submit();
-    assert.equal(h.form.didReset,false);
+    assert.equal(h.form.replacedWith,undefined);
     assert.equal(h.status.dataset.state,'error');
     assert.equal(h.button.disabled,false);
+    assert.equal(h.label.textContent,'Send message');
+    assert.ok(h.store.has('merchendice-message-draft'), 'the draft survives a failed send');
   }
 });
 
-test('confirmed responses clear the form and show success', async () => {
-  const h=formHarness(async()=>Response.json({ok:true}));
+test('a confirmed send says Sent, clears the draft, and swaps the form for a thank-you panel with the email as text', async () => {
+  const email='creator+<b>x</b>@example.test';
+  const h=formHarness(async()=>Response.json({ok:true}),{...input,email});
+  h.input();
+  assert.ok(h.store.has('merchendice-message-draft'));
   await h.submit();
-  assert.equal(h.form.didReset,true);
-  assert.equal(h.status.dataset.state,'success');
+  assert.equal(h.label.textContent,'Sent');
+  assert.equal(h.store.has('merchendice-message-draft'),false);
+  const panel=h.form.replacedWith;
+  assert.ok(panel, 'the form is replaced');
+  const [heading,note,link]=panel.children;
+  assert.equal(heading.textContent,'Thanks.');
+  assert.equal(note.textContent,`We’ve got your note and will reply to ${email}.`);
+  assert.equal(note.innerHTML,undefined, 'the email is never inserted as HTML');
+  assert.equal(link.href,'/example-store/');
+  assert.ok(panel.focused);
 });
 
-test('client rejects the same incomplete email address as the server', async () => {
+test('a saved draft is restored on load', async () => {
+  const h=formHarness(async()=>{},{name:'',email:'',channels:'',description:''},{stored:{name:'Saved',email:'saved@example.test',channels:'',description:'Idea'}});
+  assert.equal(h.fields.name.value,'Saved');
+  assert.equal(h.fields.description.value,'Idea');
+});
+
+test('submit shows every field error at once, marks the fields invalid, and focuses the first one', async () => {
   let calls=0;
-  const h=formHarness(async()=>{calls++;},{...input,email:'a@host'});
+  const h=formHarness(async()=>{calls++;},{name:'',email:'a@host',channels:'',description:''});
   await h.submit();
   assert.equal(calls,0);
-  assert.equal(h.status.dataset.state,'error');
+  for (const name of ['name','email','description']) {
+    assert.equal(h.fields[name].attrs['aria-invalid'],'true',name);
+    assert.ok(h.errors[`${name}Error`].textContent,name);
+  }
+  assert.ok(h.fields.name.focused);
+  assert.equal(h.fields.email.focused,undefined);
+});
+
+test('blurring a filled field validates it, and fixing it clears the error', async () => {
+  const h=formHarness(async()=>{},{...input,email:'a@host'});
+  h.fields.email.handlers.blur();
+  assert.equal(h.fields.email.attrs['aria-invalid'],'true');
+  h.fields.email.value='a@host.test';
+  h.fields.email.handlers.input();
+  assert.equal(h.fields.email.attrs['aria-invalid'],undefined);
+  assert.equal(h.errors.emailError.textContent,'');
 });
 
 test('repeated submit events do not send a second request while one is pending', async () => {
@@ -293,8 +342,11 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /width="\d+" height="\d+"/, tag);
     names.push(tag.match(/src="\/images\/([a-z-]+)-\d+\.webp"/)[1]);
   }
-  // Native-size exports of the example-store mockups and store captures; nothing is upscaled.
-  const allowed = ['hero-tee', 'tote-handles', 'hoodie-sand', 'crew-grey', 'hoodie-black', 'store-phone'];
+  // Native-size exports of the example-store mockups and store captures, plus three free stock mood photos
+  // (packaging and fabric, credited in the README) that carry no products, people, or logos; nothing is upscaled.
+  const allowed = ['hero-tee', 'packaging-bag', 'fabric-folds', 'fabric-edge', 'hoodie-black', 'store-phone'];
+  // Stock mood photos are decorative: empty alt, so they are never described as Merchendice products or work.
+  for (const tag of tags.filter(tag => /packaging-bag|fabric-/.test(tag))) assert.match(tag, /alt=""/, tag);
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
   // The colourful songbird appears once on the homepage: on the crewneck in the example-store capture.
@@ -303,12 +355,12 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   // The swallow tee leads the hero and is the only tee on the page.
   assert.equal((html.match(/alt="[^"]*(T-shirt|tee)\b/gi) || []).length, 1);
   const mosaic = html.slice(html.indexOf('class="hero-mosaic'), html.indexOf('</section>'));
-  assert.ok(mosaic.indexOf('hero-tee-') < mosaic.indexOf('tote-handles-'), 'the tee is the first hero photo');
+  assert.ok(mosaic.indexOf('hero-tee-') < mosaic.indexOf('packaging-bag-'), 'the tee is the first hero photo');
   assert.match(mosaic, /hero-tee-1040\.webp[^>]*fetchpriority="high"/);
   // It's called a sample store once, in the showcase, with no other mockup or made-up-brand caveats.
   assert.equal((html.match(/A sample store, so you can see the finished standard\./g) || []).length, 1);
   assert.doesNotMatch(html, /made-up|[Mm]ockup|goods-note|Pictured:|service-strip|Totes and bags/);
-  assert.match(html, /<p class="goods-range">Bags, apparel and small extras, chosen for your audience\.<\/p>/);
+  assert.match(html, /<p class="goods-range">Bags, apparel, and small extras, chosen for your audience\.<\/p>/);
   assert.match(html, /class="hero-mosaic[\s\S]*hero-tee-1040\.webp[\s\S]*<\/div>\s*<\/section>/);
   const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
   assert.match(hero, /\/images\/hero-tee-1040\.webp/);
@@ -366,7 +418,7 @@ test('the primary Start a project button sits in the hero under the bullets, and
   const button = hero.indexOf('href="/enquiry/"');
   assert.ok(bullets > 0 && actions > bullets, 'actions follow the bullets');
   assert.ok(button > actions, 'the enquiry button is inside hero-actions');
-  assert.match(hero, /<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/);
+  assert.match(hero, /<a class="button button-primary" href="\/enquiry\/" data-hero-cta>Start a project<\/a>/);
   assert.equal((hero.match(/Start a project/g) || []).length, 1);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   const heroRule = css.slice(css.indexOf('\n.hero {'), css.indexOf('.hero-copy'));
@@ -409,7 +461,9 @@ test('no marketing page shows the email address or section numbering', async () 
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /merchendices@gmail\.com|mailto:/, route);
     assert.doesNotMatch(html, /Step 0\d|service-num|quality-num|process-num/, route);
-    assert.match(html, /Contact us/, route);
+    // Every page offers a way to the message form, and none uses the old header label.
+    assert.match(html, /href="(\/enquiry\/|#enquiryForm)"/, route);
+    assert.match(html, /<a class="nav-cta" href="[^"]+"( aria-current="page")?>Start a project<\/a>/, route);
     assert.doesNotMatch(html, /<circle/, route);
   }
 });
@@ -424,8 +478,9 @@ test('privacy notice is finished and indexable, and open items live in an unserv
   assert.match(notes, /controller/);
   assert.match(notes, /access logs/);
   assert.equal((await worker.fetch(new Request('https://site.example.test/TODO.md'))).status, 404);
-  for (const field of ['Your name', 'Your email address', 'project description', 'How long it’s kept', 'deleted']) assert.match(html, new RegExp(field));
-  assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
+  for (const field of ['Your name', 'Your email address', 'Your idea', 'How long it’s kept', 'deleted', 'Updated November 18, 2026', '<h1 class="hero-rise">Privacy Policy</h1>', '<title>Privacy Policy \\| Merchendice</title>']) assert.match(html, new RegExp(field));
+  assert.match(html, /<a href="\/enquiry\/">Send us a message<\/a>/);
+  assert.doesNotMatch(html, /network address|enquir(y|ies)\b(?![\/"])/i);
   assert.doesNotMatch(html, /gmail|Gmail/);
   for (const page of ['/', '/examples/', '/enquiry/', '/missing-page']) {
     assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${page}`))).text(), /Privacy notice \(draft\)/);
@@ -462,14 +517,16 @@ test('one call-to-action label, and each idea said only once across the site', a
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     pages[route] = html.slice(html.indexOf('<body'), html.indexOf('</body>')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   }
-  // Buttons and links that lead to the enquiry form say "Start a project" (or "Contact us" in the header and footer).
+  // Buttons and links that lead to the message form say "Start a project"; the form's own submit button is the exception.
   for (const [route, html] of Object.entries(pages)) {
     assert.doesNotMatch(html, /Tell us your idea|Send us a note|Send an enquiry|Start your enquiry|Ask what would suit/, route);
   }
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  for (const label of [...home.matchAll(/<a class="button[^"]*" href="\/enquiry\/">([^<]+)<\/a>/g)].map(m => m[1])) assert.equal(label, 'Start a project');
+  for (const label of [...home.matchAll(/<a class="button[^"]*" href="\/enquiry\/"[^>]*>([^<]+)<\/a>/g)].map(m => m[1])) assert.equal(label, 'Start a project');
   const enquiry = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
-  assert.match(enquiry, /<button class="button button-primary button-submit" type="submit"><span>Start a project<\/span><\/button>/);
+  assert.match(enquiry, /<button class="button button-primary button-submit" type="submit"><span>Send message<\/span><\/button>/);
+  assert.match(enquiry, /<p class="form-smallprint">Fields marked \* are required\. See how we use your details in our <a href="\/privacy\/">Privacy Policy<\/a>\.<\/p>/);
+  assert.doesNotMatch(enquiry, /class="footer-contact"/, 'no footer contact line on the form page');
   const all = Object.values(pages).join(' ');
   const count = (re) => (all.match(re) || []).length;
   assert.equal(count(/Commercial terms are agreed/g), 1, 'terms wording lives in the FAQ only');
@@ -478,10 +535,10 @@ test('one call-to-action label, and each idea said only once across the site', a
   assert.equal(count(/in your look/g), 1);
   assert.equal(count(/[Pp]hysical samples/g), 1);
   assert.equal(count(/a few directions/g), 1);
-  assert.equal(count(/\bjoke/g), 2, "statement line plus the approved enquiry-step wording");
-  // The homepage ends on the FAQ, and the footer carries the contact line.
-  assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<\/main>/);
-  assert.match(home, /<p class="footer-contact">[^<]*<a href="\/enquiry\/">Contact us<\/a><\/p>/);
+  assert.equal(count(/\bjoke/g), 3, 'statement line, the Idea step, and the Your idea hint');
+  // After the FAQ comes one closing call to action, and the footer carries the contact line.
+  assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<section class="closing-cta[^"]*"[^>]*>\s*<h2 id="closing-title">[^<]+<\/h2>\s*<a class="button button-primary" href="\/enquiry\/" data-closing-cta>Start a project<\/a>\s*<\/section>\s*<\/main>/);
+  assert.match(home, /<p class="footer-contact">Got an idea\? <a href="\/enquiry\/">Start a project<\/a><\/p>/);
 });
 
 test('load-in motion has a reduced-motion path and a no-JS fallback, and does not hide content without JS', async () => {
@@ -538,4 +595,120 @@ test('every marketing image declares its true pixel size, and srcset widths matc
       if (srcset) for (const [, file, declared] of srcset[1].matchAll(/(\S+) (\d+)w/g)) assert.equal(webpSize(file)[0], +declared, file);
     }
   }
+});
+
+test('buttons press instead of grow, and the menu, FAQ, sticky bar and page transitions animate with reduced-motion fallbacks', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
+  assert.doesNotMatch(css, /\.(button|nav-cta):hover \{[^}]*scale/);
+  assert.match(css, /\.button:active \{ transform: scale\(\.97\);[^}]*transition-duration: 80ms/);
+  assert.match(css, /-webkit-tap-highlight-color: transparent/);
+  assert.match(css, /transition: background-color 150ms var\(--press\)[^;]*transform 100ms/);
+  assert.match(js, /addEventListener\('touchstart', \(\) => \{\}, \{ passive: true \}\)/);
+  // Mobile menu: faded and lifted while closed, not focusable or clickable, scroll contained.
+  assert.match(css, /\.main-nav \{[^}]*opacity: 0;[^}]*translateY\(-8px\);[^}]*visibility: hidden;[^}]*pointer-events: none;/);
+  assert.match(css, /overscroll-behavior: contain/);
+  assert.match(css, /cubic-bezier\(\.05, \.7, \.1, 1\)/);
+  // FAQ answers ease open only where supported.
+  assert.match(css, /@supports selector\(::details-content\)[\s\S]*interpolate-size: allow-keywords[\s\S]*block-size 250ms/);
+  // Page transitions only when motion is allowed.
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\) \{\s*@view-transition \{ navigation: auto; \}/);
+  const reduce = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+  assert.match(reduce, /details-content \{ transition: none; \}/);
+  assert.match(reduce, /\.main-nav, \.mobile-cta \{ transition: none; \}/);
+  // Sticky bar: phones only, hidden and inert until the hero button has gone, absent from the form page.
+  assert.match(css, /\.mobile-cta \{ display: none; \}/);
+  assert.match(css, /transform: translateY\(110%\);[\s\S]*transition: transform 300ms cubic-bezier\(\.2, 0, 0, 1\)/);
+  assert.match(css, /padding: 12px 16px calc\(12px \+ env\(safe-area-inset-bottom\)\)/);
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.match(home, /<div class="mobile-cta" data-mobile-cta inert>\s*<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/);
+  assert.match(js, /IntersectionObserver[\s\S]*data-hero-cta[\s\S]*mobileCta\.inert = !show/);
+  const enquiry = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
+  assert.doesNotMatch(enquiry, /mobile-cta/);
+  // Hero photos load straight away; footer links are full-size touch targets.
+  const hero = home.slice(home.indexOf('<section class="hero"'), home.indexOf('</section>'));
+  assert.doesNotMatch(hero, /loading="lazy"/);
+  assert.match(css, /\.footer-contact a \{ display: inline-flex; align-items: center; min-height: 44px;/);
+  assert.match(css, /\.footer-nav a \{ display: inline-flex; align-items: center; min-height: 44px;/);
+  // Form errors are tied to their fields.
+  for (const name of ['name', 'email', 'description']) {
+    assert.match(enquiry, new RegExp(`id="${name}"[^>]*aria-describedby="[^"]*${name}Error`));
+    assert.match(enquiry, new RegExp(`<p class="field-error" id="${name}Error"></p>`));
+  }
+  assert.match(css, /\[aria-invalid="true"\] \{ border-color: #8a2e1f; \}/);
+});
+
+test('visible copy uses US spelling, Oxford commas and message rather than enquiry', async () => {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page', '/example-store/']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    const text = html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/(href|src|srcset|id|class|for|aria-controls|aria-labelledby)="[^"]*"/g, '').replace(/[a-z:-]+="https?:[^"]*"/g, '');
+    assert.doesNotMatch(text, /colour|recognis|favourite|\bgrey\b/i, route);
+    assert.doesNotMatch(text, /Instagram and YouTube/, route);
+    assert.doesNotMatch(text, /\benquir(y|ies)\b/i, route);
+  }
+  const store = await (await worker.fetch(new Request('https://site.example.test/example-store/'))).text();
+  const scriptSrc = store.match(/<script[^>]*\bsrc="([^"]+)"/)[1];
+  const storeJs = await (await worker.fetch(new Request(`https://site.example.test${scriptSrc}`))).text();
+  assert.doesNotMatch(storeJs, /Limited|embroider|>Colour|aria-label="Colour|colours"/);
+  assert.match(storeJs, /Sport Grey/);
+  assert.doesNotMatch(store, /drawer/);
+  assert.match(store, /Made for everyday wear\./);
+  const examples = await (await worker.fetch(new Request('https://site.example.test/examples/'))).text();
+  assert.match(examples, /<title>Example store \| Merchendice<\/title>/);
+  assert.match(examples, /<h2>Want a store like this for your audience\?<\/h2>/);
+});
+
+test('favicons share the serif M on espresso, and the share image is 1200 by 630', async () => {
+  const svg = await fs.readFile(new URL('../favicon.svg', import.meta.url), 'utf8');
+  assert.match(svg, /<rect[^>]*fill="#2e211d"/);
+  assert.match(svg, /<path fill="#f6eee2"[^>]* d="M/);
+  assert.doesNotMatch(svg, /<text|font-family/, 'outlined glyph, no font dependency');
+  const ico = await fs.readFile(new URL('../favicon.ico', import.meta.url));
+  assert.equal(ico.readUInt16LE(2), 1);
+  assert.equal(ico.readUInt16LE(4), 3, '16, 32, and 48 pixel sizes');
+  const og = await fs.readFile(new URL('../og.png', import.meta.url));
+  assert.equal(og.readUInt32BE(16), 1200);
+  assert.equal(og.readUInt32BE(20), 630);
+  const privacy = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
+  assert.match(privacy, /keeps a draft of it in local storage on your own device/);
+});
+
+test('About names the co-founders without invented claims, and the footer says where we are based', async () => {
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  const about = home.slice(home.indexOf('<section class="about'), home.indexOf('</section>', home.indexOf('<section class="about')));
+  assert.match(about, /<h2 id="about-title">Who we are<\/h2>/);
+  assert.match(about, /<p class="about-lead">Merchendice is run by co-founders Oscar Thomas and Oscar Rodhelius\.<\/p>/);
+  assert.match(about, /<p>They draw the designs and build and run each store together with the creator\.<\/p>/);
+  assert.equal((about.match(/<p\b/g) || []).length, 2, 'two lines only, no backstory');
+  assert.doesNotMatch(about, /<img|placeholder|founded in|years|since \d/i, 'no photos yet and no invented claims');
+  assert.ok(home.indexOf('id="about"') < home.indexOf('id="faq"'), 'About comes before the FAQ');
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    assert.match(html, /<p class="footer-base"><span>© 2026 Merchendice<\/span> <span>Based and designed in Sweden<\/span><\/p>/, route);
+    assert.match(html, /<nav class="main-nav"[\s\S]*?<a href="\/?#about">About<\/a>[\s\S]*?<\/nav>/, route);
+    // Form only: no email address or social profile links anywhere.
+    assert.doesNotMatch(html, /mailto:|[\w.-]+@[\w-]+\.[a-z]{2,}|instagram\.com|tiktok\.com|youtube\.com|facebook\.com|linkedin\.com|x\.com\//i, route);
+  }
+});
+
+test('the FAQ has one Who is this for? item covering size and topic', async () => {
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.equal((home.match(/<summary>Who is this for\?<\/summary>/g) || []).length, 1);
+  assert.doesNotMatch(home, /What kind of creators do you work with\?/);
+  assert.match(home, /<summary>Who is this for\?<\/summary>\s*<p>Creators of every size, on any topic\. What matters is an audience that knows your style\.<\/p>/);
+  assert.equal((home.match(/<details class="faq-item"/g) || []).length, 4);
+});
+
+test('the Privacy Policy names the controller and a 30-day log period, and the repo rotates logs to match', async () => {
+  const privacy = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
+  assert.match(privacy, /Oscar Thomas, co-founder of Merchendice, is the data controller/);
+  assert.match(privacy, /These logs are deleted after 30 days\./);
+  assert.doesNotMatch(privacy, /may keep standard access logs/);
+  const read = (file) => fs.readFile(new URL(`../${file}`, import.meta.url), 'utf8');
+  assert.match(await read('Caddyfile'), /roll_keep_for 720h/);
+  assert.match(await read('deploy/logrotate-merchendice'), /rotate 30[\s\S]*maxage 30/);
+  assert.match(await read('compose.yaml'), /logging:\s*\n\s*driver: json-file/);
+  const todo = await read('TODO.md');
+  assert.doesNotMatch(todo, /Privacy notice, controller|Privacy notice, access logs/);
+  assert.match(todo, /Nginx Proxy Manager/);
 });

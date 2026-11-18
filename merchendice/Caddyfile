@@ -1,4 +1,12 @@
 {$SITE_HOSTNAME} {
+    # Access logs are kept for 30 days, as the Privacy Policy says. Rolled files older than
+    # 720 hours are deleted; the small roll size keeps the live file from holding much older lines.
+    log {
+        output file /data/logs/access.log {
+            roll_size 1MiB
+            roll_keep_for 720h
+        }
+    }
     encode zstd gzip
     reverse_proxy app:3000 {
         header_up X-Real-IP {remote_host}
