@@ -16,14 +16,6 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
-    # The app logs only start-up lines and errors, never visitor IPs. Docker's json-file driver can only
-    # rotate by size, so this caps the app's own logs at about 30 MB. Access-log retention (30 days, as the
-    # Privacy Policy says) is set at the reverse proxy: see Caddyfile, deploy/logrotate-merchendice and DEPLOY.md.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s

@@ -135,7 +135,7 @@ test('mail left unset returns the usual unavailable message', async t => {
     body: JSON.stringify(input),
   });
   assert.equal(response.status, 503);
-  assert.deepEqual(await response.json(), { message: 'Messages can’t be sent right now. Please try again later.' });
+  assert.deepEqual(await response.json(), { message: 'Enquiries are not available right now. Please try again later.' });
   assert.equal(fixture.sends(), 0);
 });
 
@@ -159,10 +159,10 @@ test('the fonts are served from the site, and removed product mockups are not', 
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
   for (const old of ['archivo', 'source-serif-4']) assert.equal((await fetch(`${fixture.base}/fonts/${old}.woff2`)).status, 404, old);
-  for (const gone of ['tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand', 'store-banner', 'goods-flatlay', 'canvas-black', 'canvas-natural', 'canvas-sand', 'sticker', 'hero-tee', 'hero-tee-880', 'hero-tee-560', 'tote-handles-416', 'hoodie-sand-424', 'crew-grey-400']) {
+  for (const gone of ['tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand']) {
     assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   }
-  for (const image of ['hero-tee-1040', 'hero-tee-640', 'packaging-bag-448', 'packaging-bag-224', 'fabric-folds-624', 'fabric-folds-312', 'fabric-edge-448', 'fabric-edge-224', 'hoodie-black-496', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960', 'tote-natural', 'tote-natural-360']) {
+  for (const image of ['hero-tee', 'tote-natural', 'canvas-sand', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
@@ -281,7 +281,7 @@ test('every response carries the permissions and opener policies, and hashed ass
   const fixture = await serverFixture(t);
   const home = await fetch(`${fixture.base}/`);
   const html = await home.text();
-  for (const response of [home, await fetch(`${fixture.base}/images/hoodie-black-496.webp`), await fetch(`${fixture.base}/missing`)]) {
+  for (const response of [home, await fetch(`${fixture.base}/images/goods-flatlay.webp`), await fetch(`${fixture.base}/missing`)]) {
     assert.equal(response.headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');
     assert.equal(response.headers.get('cross-origin-opener-policy'), 'same-origin');
   }

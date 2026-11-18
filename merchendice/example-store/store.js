@@ -2,7 +2,7 @@
   {id:'dove-tee',name:'Dove Line Tee',category:'T-shirts',badge:'New',model:'6aa829f98282e23ff70c2186',design:'97933',slug:'dove-line-drawing-tee-minimal-bird-chest-print',camera:'front',colors:[['White','22073'],['Light Pink','21897'],['Sand','22009'],['Light Blue','21889'],['Carolina Blue','21761'],['Indigo Blue','22145'],['Royal','21985'],['Dark Heather','21809'],['Navy','21929'],['Charcoal','21769']],sizes:['S','M','L','XL','2XL','3XL'],description:'A clean, vintage-feel cotton tee with a small, hand-drawn swallow sketch at the chest.'},
   {id:'bird-hoodie',name:'Finch Hoodie',category:'Sweatshirts',badge:'New',model:'6aa835e16fe418097a0114c1',design:'98424',slug:'bird-on-branch-hoodie-minimal-colorful-finch-graphic-sweatshirt',camera:'front',colors:[['White','32912'],['Sand','42166'],['Sport Grey','32904'],['Navy','32896'],['Black','32920']],sizes:['S','M','L','XL','2XL','3XL','4XL','5XL'],description:'A soft midweight hoodie with a small, colorful bird design and an easy everyday fit.'},
   {id:'canvas-tote',name:'Songbird Canvas Tote',category:'Accessories',badge:'',model:'6aa835e18875f83d480655a4',design:'93895',slug:'canvas-tote-bag-minimal-colorful-bird-illustration-eco-shopper',camera:'front',colors:[['Natural','101409'],['Black','103598']],sizes:['15” × 16”'],description:'A sturdy cotton canvas tote with a small bird detail and long shoulder handles.'},
-  {id:'crewneck',name:'Songbird Crewneck',category:'Sweatshirts',badge:'',model:'6aa835e25cd33d8be101b8d7',design:'98502',slug:'minimal-colorful-bird-crewneck-sweatshirt',camera:'front',colors:[['White','25458'],['Sand','25456'],['Sport Grey','25457'],['Navy','25450'],['Black','25459']],sizes:['S','M','L','XL','2XL','3XL','4XL','5XL'],description:'A soft crewneck sweatshirt with a small, cheerful songbird printed on the chest.'},
+  {id:'crewneck',name:'Songbird Crewneck',category:'Sweatshirts',badge:'Limited',model:'6aa835e25cd33d8be101b8d7',design:'98502',slug:'minimal-colorful-bird-crewneck-sweatshirt',camera:'front',colors:[['White','25458'],['Sand','25456'],['Sport Grey','25457'],['Navy','25450'],['Black','25459']],sizes:['S','M','L','XL','2XL','3XL','4XL','5XL'],description:'A soft crewneck sweatshirt with a small, cheerful songbird embroidered on the chest.'},
   {id:'songbird-tee',name:'Branch Tee',category:'T-shirts',badge:'',model:'6aa835e2c492123c6000fc1a',design:'102044',slug:'bird-on-branch-tshirt-colorful-minimalist-songbird-tee',camera:'front-2',colors:[['White','18542'],['Natural','18390'],['Athletic Heather','18078'],['Navy','18398'],['Black','18102']],sizes:['XS','S','M','L','XL','2XL','3XL','4XL','5XL'],description:'A soft, breathable tee featuring a small colorful bird over the heart.'},
   {id:'bird-sticker',name:'Songbird Sticker',category:'Accessories',badge:'',model:'6aa835e1d77e10b4e00e2899',design:'16655',slug:'colorful-bird-kiss-cut-sticker-cute-tropical-songbird-laptop-decal',camera:'front',primary:'45750',colors:[],sizes:['2” × 2”','3” × 3”','4” × 4”','6” × 6”'],description:'A glossy, colorful songbird sticker for laptops, journals, and other smooth surfaces.'},
   {id:'vintage-swallow',name:'Vintage Swallow Tee',category:'T-shirts',badge:'New',model:'6aa82814534b45b40e00300e',design:'108041',slug:'vintage-swallow-bird-tee-short-sleeve-shirt',camera:'front',colors:[['White','83039'],['Sand','91227'],['Silver','83035'],['Vegas Gold','91219'],['Grey Concrete','83489'],['Carolina Blue','83025'],['Atomic Blue','83023'],['Coyote Brown','96271'],['Olive Drab Green','96279'],['Iron Grey','83027'],['Woodland Brown','96287']],sizes:['XS','S','M','L','XL','2XL','3XL','4XL'],description:'A lightweight tee with a softly sketched swallow and a relaxed, everyday feel.'},
@@ -24,7 +24,7 @@ function dots(p){
   if(!p.colors.length) return '<span class="dots"><small>One design</small></span>';
   const shown=p.colors.slice(0,5).map(([n])=>`<i class="dot" title="${esc(n)}" data-hex="${colorHex[n]||'#9b968d'}"></i>`).join('');
   const more=p.colors.length>5?`<small>+${p.colors.length-5}</small>`:'';
-  return `<span class="dots" aria-label="${p.colors.length} colors">${shown}${more}</span>`;
+  return `<span class="dots" aria-label="${p.colors.length} colours">${shown}${more}</span>`;
 }
 function visible(){
   let list=products.filter(p=>filter==='All'||p.category===filter);
@@ -49,7 +49,7 @@ function renderProducts(){
       </div>
       <div class="card-body">
         ${dots(p)}
-        ${p.badge?`<span class="tag">${esc(p.badge)}</span>`:''}
+        ${p.badge?`<span class="tag${p.badge==='Limited'?' tag--limited':''}">${esc(p.badge)}</span>`:''}
         <button class="card-name" type="button" data-open="${esc(p.id)}">${esc(p.name)}</button>
         <p class="card-colour">${p.colors[0]?esc(p.colors[0][0]):'One design'}</p>
       </div>
@@ -79,10 +79,11 @@ function openProduct(id){
     <div class="qv-info">
       <p class="kicker">CREATOR · Collection 001</p>
       <h2 id="detailName">${esc(p.name)}</h2>
-      ${p.colors.length?`<p class="opt-label">Color <span id="selectedColor">${esc(activeColor[0])}</span></p><div class="swatches" role="group" aria-label="Color">${p.colors.map(c=>`<button class="swatch" type="button" data-color="${esc(c[0])}" aria-pressed="${c===activeColor}" aria-label="${esc(c[0])}" title="${esc(c[0])}"><i data-hex="${colorHex[c[0]]||'#9b968d'}"></i></button>`).join('')}</div>`:''}
+      ${p.colors.length?`<p class="opt-label">Colour <span id="selectedColor">${esc(activeColor[0])}</span></p><div class="swatches" role="group" aria-label="Colour">${p.colors.map(c=>`<button class="swatch" type="button" data-color="${esc(c[0])}" aria-pressed="${c===activeColor}" aria-label="${esc(c[0])}" title="${esc(c[0])}"><i data-hex="${colorHex[c[0]]||'#9b968d'}"></i></button>`).join('')}</div>`:''}
       <p class="opt-label">Size <span id="selectedSize">${activeSize?esc(activeSize):'Choose a size'}</span></p>
       <div class="sizes" role="group" aria-label="Size">${p.sizes.map(s=>`<button class="size" type="button" data-size="${esc(s)}" aria-pressed="${s===activeSize}">${esc(s)}</button>`).join('')}</div>
       <button class="primary" id="addToBag" type="button">Add to bag</button>
+      <p class="demo-note"><strong>Example storefront</strong>Checkout and purchases are not available.</p>
       <p class="qv-desc">${esc(p.description)}</p>
     </div></div>`;
   paint($('#detail'));

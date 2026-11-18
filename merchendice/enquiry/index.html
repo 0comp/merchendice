@@ -16,12 +16,12 @@
     <meta property="og:image" content="https://merchendice.com/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="The Merchendice wordmark and the line “Merch that looks like it came from you.” beside a tote, a T-shirt, a crewneck, and a hoodie with bird designs">
+    <meta property="og:image:alt" content="The Merchendice wordmark above the line “Merch that looks like it came from you.”">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Start a project | Merchendice">
     <meta name="twitter:description" content="Send Merchendice a short note about the merch you’d like to make. A rough idea is fine, and we reply by email.">
     <meta name="twitter:image" content="https://merchendice.com/og.png">
-    <meta name="twitter:image:alt" content="The Merchendice wordmark and the line “Merch that looks like it came from you.” beside a tote, a T-shirt, a crewneck, and a hoodie with bird designs">
+    <meta name="twitter:image:alt" content="The Merchendice wordmark above the line “Merch that looks like it came from you.”">
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -39,10 +39,9 @@
         <a href="/#how-it-works">How it works</a>
         <a href="/#quality">Quality</a>
         <a href="/examples/">Storefronts</a>
-        <a href="/#about">About</a>
         <a href="/#faq">FAQ</a>
       </nav>
-      <a class="nav-cta" href="#enquiryForm" aria-current="page">Start a project</a>
+      <a class="nav-cta" href="#enquiryForm" aria-current="page">Contact us</a>
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
         <span class="nav-toggle-bars" aria-hidden="true"></span>
         <span class="sr-only">Menu</span>
@@ -52,8 +51,8 @@
       <section class="enquiry-layout" aria-labelledby="enquiry-title">
         <div class="enquiry-intro">
           <h1 id="enquiry-title" class="hero-rise">Tell us what you’d like to make</h1>
-          <p class="hero-rise hero-rise-2">A few lines will do: who you are, where you post, and what you’re picturing. We reply by email.</p>
-          <figure class="enquiry-image"><img src="/images/tote-natural.webp" srcset="/images/tote-natural-360.webp 360w, /images/tote-natural.webp 720w" sizes="(max-width: 900px) 1px, 340px" alt="Natural canvas tote with a colorful songbird print, on a camel background" width="720" height="960" decoding="async"></figure>
+          <p class="hero-rise hero-rise-2">A few lines is enough: who you are, where you post and what you’re picturing, even if it’s still rough. We reply by email.</p>
+          <figure class="enquiry-image"><img src="/images/tote-natural.webp" alt="Natural canvas tote with a colourful songbird print, on a camel background" width="720" height="960" loading="lazy" decoding="async"></figure>
         </div>
         <div class="form-wrap">
           <div class="form-panel rise">
@@ -62,28 +61,26 @@
               <div class="form-row">
                 <div class="field">
                   <label for="name">Name <span>*</span></label>
-                  <input id="name" name="name" type="text" autocomplete="name" maxlength="160" required aria-describedby="nameError">
-                  <p class="field-error" id="nameError"></p>
+                  <input id="name" name="name" type="text" autocomplete="name" maxlength="160" required>
                 </div>
                 <div class="field">
                   <label for="email">Email <span>*</span></label>
-                  <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required aria-describedby="emailError">
-                  <p class="field-error" id="emailError"></p>
+                  <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
                 </div>
               </div>
               <div class="field">
                 <label for="channels">Links to your channels <span class="optional">(optional)</span></label>
-                <p class="field-hint" id="channelsHint">TikTok, Instagram, YouTube, or anywhere else you post. Links or handles are both fine.</p>
+                <p class="field-hint" id="channelsHint">TikTok, Instagram, YouTube or anywhere else you post. Links or handles are both fine.</p>
                 <input id="channels" name="channels" type="text" maxlength="1000" aria-describedby="channelsHint">
               </div>
               <div class="field description-field">
-                <label for="description">Your idea <span>*</span></label>
-                <p class="field-hint" id="descriptionHint">The kind of merch, the feel, a phrase or joke your audience would know.</p>
-                <textarea id="description" name="description" rows="4" maxlength="5000" aria-describedby="descriptionHint descriptionError" required></textarea>
-                <p class="field-error" id="descriptionError"></p>
+                <label for="description">Project description <span>*</span></label>
+                <p class="field-hint" id="descriptionHint">What you have in mind, in your own words: the kind of merch and the feel you’re after.</p>
+                <textarea id="description" name="description" rows="4" maxlength="5000" aria-describedby="descriptionHint" required></textarea>
               </div>
-              <button class="button button-primary button-submit" type="submit"><span>Send message</span></button>
-              <p class="form-smallprint">Fields marked * are required. See how we use your details in our <a href="/privacy/">Privacy Policy</a>.</p>
+              <p class="required-note">Required fields are marked with an asterisk.</p>
+              <p class="form-privacy"><a href="/privacy/">Privacy notice</a><span>What this form collects, and why.</span></p>
+              <button class="button button-primary button-submit" type="submit"><span>Start a project</span></button>
               <p class="form-status" id="formStatus" role="status" aria-live="polite" tabindex="-1"></p>
             </form>
           </div>
@@ -93,19 +90,19 @@
     <footer class="site-footer">
       <div class="footer-top">
         <div class="footer-about">
-          <p>Merch design and Shopify stores for creators on TikTok, Instagram, and YouTube.</p>
+          <p class="footer-contact">Got an idea, or just a channel? <a href="#enquiryForm">Contact us</a></p>
+          <p>Merch design and Shopify stores for creators on TikTok, Instagram and YouTube.</p>
         </div>
         <nav class="footer-nav" aria-label="Footer">
           <a href="/#how-it-works">How it works</a>
           <a href="/#quality">Quality</a>
           <a href="/examples/">Storefronts</a>
-          <a href="/#about">About</a>
           <a href="/#faq">FAQ</a>
-          <a href="/privacy/">Privacy Policy</a>
+          <a href="/privacy/">Privacy notice</a>
         </nav>
       </div>
       <a class="footer-wordmark" href="/" aria-label="Merchendice home">Merchendice</a>
-      <p class="footer-base"><span>© 2026 Merchendice</span> <span>Based and designed in Sweden</span></p>
+      <p class="footer-base">© 2026 Merchendice</p>
     </footer>
   </body>
 </html>

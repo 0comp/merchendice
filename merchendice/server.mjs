@@ -198,18 +198,18 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
       if (incoming.method === 'POST' && url.pathname === '/api/enquiry') {
         if (incoming.headers.origin && incoming.headers.origin !== url.origin) {
           incoming.resume();
-          return sendJson(outgoing, 403, { message: 'Something went wrong sending your message. Please refresh the page and try again.' });
+          return sendJson(outgoing, 403, { message: 'Please submit the form from this website.' });
         }
         const ip = env.TRUST_PROXY === '1'
           ? incoming.headers['x-real-ip'] || incoming.socket.remoteAddress
           : incoming.socket.remoteAddress;
         if (!rateLimiter.allow(String(ip))) {
           incoming.resume();
-          return sendJson(outgoing, 429, { message: 'Too many messages. Please try again later.' });
+          return sendJson(outgoing, 429, { message: 'Too many enquiries. Please try again later.' });
         }
         if (Number(incoming.headers['content-length']) > MAX_BODY_BYTES) {
           incoming.resume();
-          return sendJson(outgoing, 413, { message: 'Your message is too long. Please shorten it and try again.' });
+          return sendJson(outgoing, 413, { message: 'Your enquiry is too long. Please shorten it and try again.' });
         }
       }
       const headers = new Headers();
@@ -241,8 +241,8 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
       if (outgoing.headersSent) return outgoing.end();
       sendJson(outgoing, error.status || 500, {
         message: error.status === 413
-          ? 'Your message is too long. Please shorten it and try again.'
-          : error.status === 400 ? invalidRequest : 'We couldn’t process your message. Please try again later.',
+          ? 'Your enquiry is too long. Please shorten it and try again.'
+          : error.status === 400 ? invalidRequest : 'We couldn’t process your enquiry. Please try again later.',
       });
     }
   });
