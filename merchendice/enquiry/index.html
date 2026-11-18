@@ -16,12 +16,12 @@
     <meta property="og:image" content="https://merchendice.com/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="The Merchendice wordmark above the line “Merch your audience would buy even without your name on it.”">
+    <meta property="og:image:alt" content="The Merchendice wordmark above the line “Merch that looks like it came from you.”">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Send an enquiry | Merchendice">
     <meta name="twitter:description" content="Send Merchendice a short note about the merch you’d like to make. A rough idea is fine, and we reply by email.">
     <meta name="twitter:image" content="https://merchendice.com/og.png">
-    <meta name="twitter:image:alt" content="The Merchendice wordmark above the line “Merch your audience would buy even without your name on it.”">
+    <meta name="twitter:image:alt" content="The Merchendice wordmark above the line “Merch that looks like it came from you.”">
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -68,22 +68,10 @@
                   <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
                 </div>
               </div>
-              <fieldset class="platform-field">
-                <legend>Where can we find you? <span class="optional">Optional</span></legend>
-                <p class="field-hint">Tick any platforms you use.</p>
-                <div class="platform-options">
-                  <label class="check-option"><input type="checkbox" name="platforms" value="YouTube"><span>YouTube</span></label>
-                  <label class="check-option"><input type="checkbox" name="platforms" value="Instagram"><span>Instagram</span></label>
-                  <label class="check-option"><input type="checkbox" name="platforms" value="TikTok"><span>TikTok</span></label>
-                  <label class="check-option"><input type="checkbox" name="platforms" value="Other platforms"><span>Other platforms</span></label>
-                </div>
-              </fieldset>
-              <p class="field-hint field-hint-links">Add links or handles for any of them, so we can see your work.</p>
-              <div class="form-row social-links">
-                <div class="field"><label for="youtube">YouTube</label><input id="youtube" name="youtube" type="text" maxlength="500" placeholder="Channel link or handle"></div>
-                <div class="field"><label for="instagram">Instagram</label><input id="instagram" name="instagram" type="text" maxlength="500" placeholder="Profile link or handle"></div>
-                <div class="field"><label for="tiktok">TikTok</label><input id="tiktok" name="tiktok" type="text" maxlength="500" placeholder="Profile link or handle"></div>
-                <div class="field"><label for="otherPlatforms">Other platforms</label><input id="otherPlatforms" name="otherPlatforms" type="text" maxlength="500" placeholder="Other links or handles"></div>
+              <div class="field">
+                <label for="channels">Links to your channels <span class="optional">Optional</span></label>
+                <p class="field-hint" id="channelsHint">TikTok, Instagram, YouTube or anywhere else you post. Links or handles are both fine.</p>
+                <input id="channels" name="channels" type="text" maxlength="1000" aria-describedby="channelsHint">
               </div>
               <div class="field description-field">
                 <label for="description">Project description <span>*</span></label>

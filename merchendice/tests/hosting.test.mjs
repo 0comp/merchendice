@@ -5,7 +5,7 @@ import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 import { createAppServer, createRateLimiter } from '../server.mjs';
 import { createEmailSender, headerSafe, makeGmailMessage } from '../src/mail.mjs';
 
-const input = {name:'A creator',email:'creator@example.test',platforms:['YouTube'],description:'A merch idea'};
+const input = {name:'A creator',email:'creator@example.test',description:'A merch idea'};
 const settings = {
   EMAIL_PROVIDER:'composio', MAIL_TO:'inbox@example.test',
   COMPOSIO_API_KEY:'test-secret', COMPOSIO_CONNECTED_ACCOUNT_ID:'test-connected-account',
@@ -121,7 +121,7 @@ test('css and javascript are gzip or brotli compressed when the client allows it
   const brotli = await rawGet(`${fixture.base}/site.js`, { 'accept-encoding': 'br, gzip' });
   assert.equal(brotli.headers['content-encoding'], 'br');
   assert.equal(brotliDecompressSync(brotli.body).toString('utf8'), (await rawGet(`${fixture.base}/site.js`)).body.toString('utf8'));
-  const gzipOnly = await rawGet(`${fixture.base}/examples.js`, { 'accept-encoding': 'br;q=0, gzip' });
+  const gzipOnly = await rawGet(`${fixture.base}/example-store/store.js`, { 'accept-encoding': 'br;q=0, gzip' });
   assert.equal(gzipOnly.headers['content-encoding'], 'gzip');
   const page = await rawGet(`${fixture.base}/`, { 'accept-encoding': 'gzip, br' });
   assert.equal(page.headers['content-encoding'], undefined);
@@ -230,7 +230,7 @@ test('old /examplepage.com links redirect permanently to /example-store/', async
   }
   const page = await fetch(`${fixture.base}/example-store/`);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /CREATOR — Storefront example/);
+  assert.match(await page.text(), /CREATOR \| Storefront example/);
 });
 
 test('email headers strip CR/LF and are length-capped', async () => {
@@ -254,4 +254,42 @@ test('SMTP passes only sanitised header values to the transport', async () => {
   assert.equal(sent.subject, 'Hi Bcc: evil@example.test');
   assert.equal(sent.bcc, undefined);
   await assert.rejects(send({ replyTo: 'a@b.test\nBcc: evil@example.test', subject: 'x', text: 'y' }), /Reply address/);
+});
+
+test('outside production the form works from localhost and 127.0.0.1 on any port', async t => {
+  const fixture = await serverFixture(t, { env: { MAIL_TO: settings.MAIL_TO } });
+  const port = new URL(fixture.base).port;
+  const { request: httpRequest } = await import('node:http');
+  for (const host of [`localhost:${port}`, `127.0.0.1:${port}`]) {
+    const status = await new Promise((resolve, reject) => {
+      const req = httpRequest(`${fixture.base}/api/enquiry`, { method: 'POST', headers: { host, origin: `http://${host}`, 'content-type': 'application/json' } }, res => { res.resume(); resolve(res.statusCode); });
+      req.on('error', reject);
+      req.end(JSON.stringify(input));
+    });
+    assert.equal(status, 200, host);
+  }
+  const foreign = await fetch(`${fixture.base}/api/enquiry`, {
+    method: 'POST',
+    headers: { origin: 'http://evil.example.test', 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  assert.equal(foreign.status, 403);
+});
+
+test('every response carries the permissions and opener policies, and hashed assets cache for a year', async t => {
+  const fixture = await serverFixture(t);
+  const home = await fetch(`${fixture.base}/`);
+  const html = await home.text();
+  for (const response of [home, await fetch(`${fixture.base}/images/totes.webp`), await fetch(`${fixture.base}/missing`)]) {
+    assert.equal(response.headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');
+    assert.equal(response.headers.get('cross-origin-opener-policy'), 'same-origin');
+  }
+  const css = html.match(/href="(\/site\.[0-9a-f]{10}\.css)"/)[1];
+  const js = html.match(/src="(\/site\.[0-9a-f]{10}\.js)"/)[1];
+  for (const asset of [css, js]) {
+    const response = await fetch(`${fixture.base}${asset}`);
+    assert.equal(response.status, 200, asset);
+    assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  }
+  assert.equal((await fetch(`${fixture.base}/site.css`)).headers.get('cache-control'), 'no-cache');
 });

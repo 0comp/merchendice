@@ -11,7 +11,7 @@ const env = {
     return response.json();
   },
 };
-const input = {name:'A creator',email:'creator@example.test',platforms:['YouTube'],description:'A merch idea'};
+const input = {name:'A creator',email:'creator@example.test',description:'A merch idea'};
 const request = (value, headers={}) => new Request('https://site.example.test/api/enquiry', {method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(value)});
 
 test('all pages support GET and HEAD without exposing email configuration', async () => {
@@ -38,19 +38,32 @@ test('directory, enquiry, and privacy paths redirect to the trailing slash', asy
   }
 });
 
-test('CREATOR example is served on its Merchendice path with working inline layout and images', async () => {
+test('CREATOR example is served on its Merchendice path with self-hosted images and no inline code', async () => {
   const response = await worker.fetch(new Request('https://site.example.test/example-store/'));
   const html = await response.text();
   assert.equal(response.status, 200);
-  assert.match(html, /CREATOR — Storefront example/);
-  assert.match(html, /images-api\.printify\.com/);
-  assert.match(response.headers.get('content-security-policy'), /script-src 'self' 'unsafe-inline'/);
-  assert.match(response.headers.get('content-security-policy'), /img-src[^;]*images-api\.printify\.com/);
+  assert.match(html, /<title>CREATOR \| Storefront example/);
+  assert.match(html, /<meta name="robots" content="noindex">/);
+  assert.equal(response.headers.get('x-robots-tag'), 'noindex');
+  assert.doesNotMatch(html, /printify|images-api/i);
+  assert.doesNotMatch(html, /<style|<script>|\sstyle="|\son[a-z]+="/);
+  const csp = response.headers.get('content-security-policy');
+  assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval|https:/);
+  assert.match(csp, /img-src 'self' data:;/);
+  const script = html.match(/<script src="(\/example-store\/store\.[0-9a-f]{10}\.js)" defer><\/script>/)[1];
+  const js = await (await worker.fetch(new Request(`https://site.example.test${script}`))).text();
+  assert.match(js, /\/images\/store\//);
+  assert.doesNotMatch(js, /printify|https?:\/\/|style="/i);
+  // Every product and colour the script can show has a self-hosted mockup.
+  const products = new vm.Script(`(${js.slice(js.indexOf('const products=[') + 15, js.indexOf('];', js.indexOf('const products=[')) + 1)})`).runInNewContext();
+  for (const p of products) for (const id of p.colors.length ? p.colors.map(c => c[1]) : [p.primary]) {
+    await fs.access(new URL(`../images/store/${p.id}-${id}.webp`, import.meta.url));
+  }
+  assert.match(html, /<link rel="stylesheet" href="\/example-store\/store\.[0-9a-f]{10}\.css">/);
   const nested = await worker.fetch(new Request('https://site.example.test/example-store/products/sample'));
   assert.equal(nested.status, 200);
   const directory = await worker.fetch(new Request('https://site.example.test/examples/'));
   assert.match(await directory.text(), /href="\/example-store\/"/);
-  assert.doesNotMatch(response.headers.get('content-security-policy'), /unsafe-eval/);
 });
 
 test('example shop renders a product grid, labels it as an example, and loads no payment scripts', async () => {
@@ -60,11 +73,14 @@ test('example shop renders a product grid, labels it as an example, and loads no
   assert.match(html, /<div[^>]*id="products"/);
   assert.match(html, /<dialog[^>]*id="productDialog"/);
   assert.match(html, /<dialog[^>]*id="bagDialog"/);
-  assert.match(html, /example prices/);
+  assert.doesNotMatch(html, /\bkr\b|SEK|\$\d|example prices|card-price|qv-price/);
   assert.match(html, /Purchases are not available/);
   assert.match(html, /Built by Merchendice/);
   const scriptSources = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map(m => m[1]);
-  assert.deepEqual(scriptSources, []);
+  assert.equal(scriptSources.length, 1);
+  assert.match(scriptSources[0], /^\/example-store\/store\.[0-9a-f]{10}\.js$/);
+  const js = await (await worker.fetch(new Request(`https://site.example.test${scriptSources[0]}`))).text();
+  assert.doesNotMatch(js, /money\(|Intl\.NumberFormat|price/);
   assert.doesNotMatch(html, /stripe|checkout\.session|paymentIntent|paypal|klarna/i);
   assert.doesNotMatch(html, /\b(Printify|ShineOn|Webstudios|PolyVault)\b/);
   assert.doesNotMatch(response.headers.get('content-security-policy'), /stripe/i);
@@ -113,9 +129,10 @@ test('unknown pages use the branded not-found page', async () => {
   const robots = await worker.fetch(new Request('https://site.example.test/robots.txt'));
   assert.match(await robots.text(), /Sitemap: https:\/\/merchendice.com\/sitemap.xml/);
   const sitemap = await (await worker.fetch(new Request('https://site.example.test/sitemap.xml'))).text();
-  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/', 'https://merchendice.com/example-store/', 'https://merchendice.com/privacy/']) {
-    assert.match(sitemap, new RegExp(loc.replace(/[/.]/g, '\\$&')));
+  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/', 'https://merchendice.com/privacy/']) {
+    assert.match(sitemap, new RegExp(`<loc>${loc.replace(/[/.]/g, '\\$&')}</loc><lastmod>\\d{4}-\\d{2}-\\d{2}</lastmod>`));
   }
+  assert.doesNotMatch(sitemap, /example-store/, 'the noindex example store is left out of the sitemap');
 });
 
 test('a filled website field is ignored and not emailed', async t => {
@@ -129,19 +146,26 @@ test('a filled website field is ignored and not emailed', async t => {
   assert.equal(provider.mock.calls.length, 1);
 });
 
-test('optional channel links are included, and overlong ones are rejected', async t => {
+test('the optional channel links are included, and overlong ones are rejected', async t => {
   const provider = t.mock.method(globalThis, 'fetch', async () => Response.json({ id: 'receipt' }));
-  const sent = await worker.fetch(request({ ...input, youtube: ' @creator ', instagram: '', tiktok: 'tiktok.com/@creator', otherPlatforms: 'newsletter.example' }), env);
+  const sent = await worker.fetch(request({ ...input, channels: ' tiktok.com/@creator, @creator on YouTube ' }), env);
   assert.equal(sent.status, 200);
   const message = JSON.parse(provider.mock.calls[0].arguments[1].body);
-  assert.match(message.text, /YouTube: @creator/);
-  assert.match(message.text, /Instagram: Not provided/);
-  assert.match(message.text, /TikTok: tiktok.com\/@creator/);
-  assert.match(message.text, /Other platforms: newsletter.example/);
-  assert.doesNotMatch(message.text, /Website:/);
-  const tooLong = await worker.fetch(request({ ...input, youtube: 'y'.repeat(501) }), env);
+  assert.match(message.text, /Links to their channels: tiktok.com\/@creator, @creator on YouTube\n/);
+  assert.doesNotMatch(message.text, /Website:|Where to find them|Other platforms/);
+  const empty = await worker.fetch(request(input), env);
+  assert.equal(empty.status, 200);
+  assert.match(JSON.parse(provider.mock.calls[1].arguments[1].body).text, /Links to their channels: Not provided/);
+  const tooLong = await worker.fetch(request({ ...input, channels: 'y'.repeat(1001) }), env);
   assert.equal(tooLong.status, 400);
-  assert.equal(provider.mock.calls.length, 1);
+  assert.equal(provider.mock.calls.length, 2);
+});
+
+test('the enquiry form asks for channels once, in a single optional field', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
+  assert.match(html, /<label for="channels">Links to your channels/);
+  assert.doesNotMatch(html, /name="platforms"|name="youtube"|name="instagram"|name="tiktok"|name="otherPlatforms"/);
+  assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /We read every note/);
 });
 
 test('invalid enquiries and cross-site submissions never call the email provider', async t => {
@@ -244,46 +268,13 @@ test('repeated submit events do not send a second request while one is pending',
   await pending;
 });
 
-test('the empty real-storefront tab stays hidden and a saved real view falls back', async () => {
-  const html = await fs.readFile(new URL('../examples/index.html', import.meta.url), 'utf8');
-  assert.match(html, /data-filter="real"[^>]*hidden/);
-  const search = { value: '', addEventListener() {} };
-  const card = { dataset: { search: 'creator storefront merch sample', kind: 'example' }, hidden: false };
-  const button = () => ({ dataset: {}, hidden: false, classList: { toggle() {} }, setAttribute() {}, addEventListener() {} });
-  const exampleButton = button();
-  exampleButton.dataset.filter = 'example';
-  const realButton = button();
-  realButton.dataset.filter = 'real';
-  const count = {};
-  const kind = {};
-  const empty = {};
-  vm.runInNewContext(await fs.readFile(new URL('../examples.js', import.meta.url), 'utf8'), {
-    document: {
-      cookie: 'merchendice_storefront_view=real',
-      querySelector: (selector) => selector === '#exampleSearch' ? search : selector === '#directoryResultCount' ? count : selector === '#directoryResultKind' ? kind : empty,
-      querySelectorAll: (selector) => selector === '.listing-card' ? [card] : selector === '.directory-filter' ? [exampleButton, realButton] : [],
-    },
-    window: { addEventListener() {} },
-  });
-  assert.equal(realButton.hidden, true);
-  assert.equal(card.hidden, false);
-  assert.equal(kind.textContent, 'EXAMPLE STOREFRONTS');
-});
-
-test('directory matches multiple words in any order and restores the empty state', async () => {
-  const search={value:'merch CREATOR',addEventListener(name,handler){this.update=handler;}};
-  const card={dataset:{search:'creator storefront merch sample',kind:'example'},hidden:false};
-  const count={},kind={},empty={};
-  vm.runInNewContext(await fs.readFile(new URL('../examples.js',import.meta.url),'utf8'),{
-    document:{cookie:'',querySelector:s=>s==='#exampleSearch'?search:s==='#directoryResultCount'?count:s==='#directoryResultKind'?kind:empty,querySelectorAll:s=>s==='.listing-card'?[card]:[]},
-    window:{addEventListener(){}},
-  });
-  assert.equal(card.hidden,false);
-  assert.equal(count.textContent,'1 storefront');
-  search.value='unlisted'; search.update();
-  assert.equal(card.hidden,true); assert.equal(empty.hidden,false);
-  search.value=''; search.update();
-  assert.equal(card.hidden,false); assert.equal(empty.hidden,true);
+test('the storefront directory has no search or filter for a single store, and sets no cookie', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/examples/'))).text();
+  assert.doesNotMatch(html, /directory-toolbar|exampleSearch|data-filter|examples\.js/);
+  assert.match(html, /href="\/example-store\/"/);
+  const privacy = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
+  assert.doesNotMatch(privacy, /merchendice_storefront_view/);
+  assert.equal((await worker.fetch(new Request('https://site.example.test/examples.js'))).status, 404);
 });
 
 test('homepage is image-led with self-hosted mockups, one shirt in the hero, and none of the template tells', async () => {
@@ -366,10 +357,16 @@ test('no marketing page shows the email address or section numbering', async () 
   }
 });
 
-test('privacy notice is finished, indexable, and leaves the controller identity as an HTML TODO', async () => {
+test('privacy notice is finished and indexable, and open items live in an unserved TODO.md', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
   assert.doesNotMatch(html, /noindex|\(draft\)|draft-banner/i);
-  assert.match(html, /<!-- TODO \(Oscar\):[^>]*controller/);
+  for (const route of ['/', '/privacy/', '/enquiry/', '/examples/', '/example-store/', '/missing-page']) {
+    assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${route}`))).text(), /<!--/, route);
+  }
+  const notes = await fs.readFile(new URL('../TODO.md', import.meta.url), 'utf8');
+  assert.match(notes, /controller/);
+  assert.match(notes, /access logs/);
+  assert.equal((await worker.fetch(new Request('https://site.example.test/TODO.md'))).status, 404);
   for (const field of ['Your name', 'Your email address', 'project description', 'How long it’s kept', 'deleted']) assert.match(html, new RegExp(field));
   assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
   assert.doesNotMatch(html, /gmail|Gmail/);

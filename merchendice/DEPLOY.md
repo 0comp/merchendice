@@ -114,6 +114,11 @@ TLS ends at the reverse proxy (Nginx Proxy Manager), and the app only sees plain
 - **HSTS:** in production (`NODE_ENV=production`) with an `https://` `PUBLIC_ORIGIN`, every response carries `Strict-Transport-Security: max-age=31536000; includeSubDomains`. It is never sent when the request's host is `localhost` or `127.0.0.1`, so local previews are unaffected. Set `HSTS=0` to turn it off. `includeSubDomains` means every subdomain, including `www`, must serve valid HTTPS before you deploy this. Fix the `www` certificate in Nginx Proxy Manager first.
 - **HTTP to HTTPS redirect:** with `TRUST_PROXY=1` (already set in `compose.yaml`), a request that the proxy marks `X-Forwarded-Proto: http` gets a 301 to the same path on `PUBLIC_ORIGIN`. Requests with `X-Forwarded-Proto: https` or no header at all, such as direct health checks, are served normally, so this cannot loop. It is off outside production and for localhost. Set `FORCE_HTTPS=0` to turn it off.
 - In Nginx Proxy Manager, turning on **Force SSL** for the proxy host does the same redirect at the proxy, before the app is reached. Use either or both. Also make sure the proxy host forwards `X-Forwarded-Proto` (Nginx Proxy Manager does this by default).
+- **www must redirect to the apex domain at the proxy.** The enquiry form only accepts submissions whose browser `Origin` matches `PUBLIC_ORIGIN` (`https://merchendice.com`). A visitor who stays on `https://www.merchendice.com` would get "Please submit the form from this website." In Nginx Proxy Manager, add `www.merchendice.com` as a **Redirection Host** that sends a 301 to `https://merchendice.com` (preserve path, Force SSL on, with its own certificate). Do not serve the site on both names.
+
+## Local preview
+
+Outside production you don't need `PUBLIC_ORIGIN`. The server uses the address it listens on (`HOST`, default `127.0.0.1`, and `PORT`, default `3000`) and accepts form posts from `http://localhost:PORT`, `http://127.0.0.1:PORT` and `http://[::1]:PORT`. Run `npm run build` then `PORT=3000 HOST=127.0.0.1 node server.mjs`.
 
 ## Updates and operations
 

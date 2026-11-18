@@ -10,5 +10,5 @@
     "dev": "node scripts/build.mjs && node --env-file-if-exists=.env server.mjs",
     "test": "node scripts/build.mjs && node --test tests/*.test.mjs"
   },
-  "dependencies": { "nodemailer": "10.0.13" }
+  "dependencies": { "nodemailer": "10.6.0" }
 }

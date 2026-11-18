@@ -16,12 +16,12 @@
     <meta property="og:image" content="https://merchendice.com/og.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="The Merchendice wordmark above the line “Merch your audience would buy even without your name on it.”">
+    <meta property="og:image:alt" content="The Merchendice wordmark above the line “Merch that looks like it came from you.”">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Storefronts directory | Merchendice">
     <meta name="twitter:description" content="Storefronts built by Merchendice, a merch studio for creators. Start with CREATOR, a sample shop for a made-up brand that you can click through like a customer.">
     <meta name="twitter:image" content="https://merchendice.com/og.png">
-    <meta name="twitter:image:alt" content="The Merchendice wordmark above the line “Merch your audience would buy even without your name on it.”">
+    <meta name="twitter:image:alt" content="The Merchendice wordmark above the line “Merch that looks like it came from you.”">
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -29,7 +29,6 @@
     <link rel="preload" href="/fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="../site.css">
     <script src="../site.js" defer></script>
-    <script src="../examples.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -53,24 +52,6 @@
         <p>Stores we’ve built, starting with one sample shop. Creator stores will be added to this page as they open.</p>
       </section>
       <section class="directory-content" aria-label="Browse storefronts">
-        <div class="directory-toolbar">
-          <div>
-            <label class="directory-search-label" for="exampleSearch">Search storefronts</label>
-            <div class="directory-search-wrap">
-              <span aria-hidden="true">⌕</span>
-              <input id="exampleSearch" type="search" placeholder="Search by name or type" autocomplete="off">
-            </div>
-          </div>
-          <div class="directory-filters" role="group" aria-label="Choose example or real storefronts">
-            <button type="button" class="directory-filter is-active" data-filter="example" aria-pressed="true">Example storefronts</button>
-            <!-- Hidden while no listing uses data-kind="real". examples.js shows this tab again when one does. -->
-            <button type="button" class="directory-filter" data-filter="real" aria-pressed="false" hidden>Real storefronts</button>
-          </div>
-        </div>
-        <div class="directory-results-heading">
-          <p id="directoryResultCount" role="status" aria-live="polite">1 storefront</p>
-          <span id="directoryResultKind">EXAMPLE STOREFRONTS</span>
-        </div>
         <div class="directory-grid" id="directoryGrid">
           <article class="listing-card listing-card--creator" data-kind="example" data-search="creator storefront merch sample example songbird">
             <a class="listing-art" href="/example-store/" data-prefetch-example tabindex="-1" aria-hidden="true"><img src="/images/example-store-accessories.webp" alt="" width="1120" height="980" decoding="async"></a>
@@ -81,7 +62,6 @@
             </div>
           </article>
         </div>
-        <p class="directory-empty" id="directoryEmpty" hidden>No storefronts match that search. Try a different name or type.</p>
       </section>
       <section class="directory-cta" aria-label="Start an enquiry">
         <h2>Want one of these for your channel?</h2>

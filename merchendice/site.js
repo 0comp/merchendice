@@ -21,11 +21,7 @@ if (form) {
     const enquiry = {
       name: String(values.get('name') || '').trim(),
       email: String(values.get('email') || '').trim(),
-      platforms: values.getAll('platforms').map(String),
-      youtube: String(values.get('youtube') || '').trim(),
-      instagram: String(values.get('instagram') || '').trim(),
-      tiktok: String(values.get('tiktok') || '').trim(),
-      otherPlatforms: String(values.get('otherPlatforms') || '').trim(),
+      channels: String(values.get('channels') || '').trim(),
       website: String(values.get('website') || '').trim(),
       description: String(values.get('description') || '').trim(),
     };
@@ -82,34 +78,27 @@ if (form) {
 const navToggle = document.querySelector('[data-nav-toggle]');
 const siteNav = document.querySelector('#site-nav');
 if (navToggle && siteNav && typeof navToggle.addEventListener === 'function' && siteNav.classList) {
-  const closeNav = () => {
-    siteNav.classList.remove('is-open');
-    navToggle.setAttribute('aria-expanded', 'false');
-  };
-  navToggle.addEventListener('click', () => {
-    const open = siteNav.classList.toggle('is-open');
+  // On small screens the open menu dims the page behind it and stops it scrolling.
+  const backdrop = typeof document.createElement === 'function' ? document.createElement('div') : null;
+  if (backdrop) {
+    backdrop.className = 'nav-backdrop';
+    backdrop.hidden = true;
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', () => closeNav());
+  }
+  const setOpen = (open) => {
+    siteNav.classList.toggle('is-open', open);
     navToggle.setAttribute('aria-expanded', String(open));
-  });
+    if (backdrop) backdrop.hidden = !open;
+    document.body?.classList?.toggle('nav-open', open);
+  };
+  const closeNav = () => setOpen(false);
+  navToggle.addEventListener('click', () => setOpen(!siteNav.classList.contains('is-open')));
   siteNav.addEventListener('click', (event) => {
     if (event.target.closest && event.target.closest('a')) closeNav();
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeNav();
   });
+  if (typeof window !== 'undefined') window.matchMedia?.('(min-width: 761px)').addEventListener?.('change', (event) => { if (event.matches) closeNav(); });
 }
-
-// Presentation only: a hairline under the header once the page scrolls.
-(() => {
-  if (typeof window === 'undefined' || typeof document.querySelector !== 'function') return;
-  const header = document.querySelector('[data-header]');
-  if (!header || !header.classList) return;
-  let ticking = false;
-  const update = () => {
-    header.classList.toggle('is-scrolled', window.scrollY > 8);
-    ticking = false;
-  };
-  window.addEventListener('scroll', () => {
-    if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
-  }, { passive: true });
-  update();
-})();

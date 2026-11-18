@@ -9,6 +9,10 @@ import { createEmailSender } from './src/mail.mjs';
 const MAX_BODY_BYTES = 40000;
 const HSTS_VALUE = 'max-age=31536000; includeSubDomains';
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+const SECURITY_HEADERS = {
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+  'cross-origin-opener-policy': 'same-origin',
+};
 
 // The example store moved from /examplepage.com/ to /example-store/. Old links get a permanent redirect.
 export function legacyExampleRedirect(pathname) {
@@ -28,6 +32,7 @@ function sendJson(response, status, message) {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
+    ...SECURITY_HEADERS,
   });
   response.end(JSON.stringify(message));
 }
@@ -131,13 +136,18 @@ function serveStatic(pathname, method, outgoing) {
     'content-length': data.length,
     'cache-control': type === 'font/woff2' ? 'public, max-age=31536000, immutable' : 'public, max-age=604800',
     'x-content-type-options': 'nosniff',
+    ...SECURITY_HEADERS,
   });
   outgoing.end(method === 'HEAD' ? undefined : data);
   return true;
 }
 
 export function createAppServer({ env = process.env, sendMail, rateLimiter = createRateLimiter() } = {}) {
-  const rawOrigin = env.PUBLIC_ORIGIN || (env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+  const production = env.NODE_ENV === 'production';
+  // Outside production the origin defaults to the address the server listens on, so the form works
+  // on http://127.0.0.1:PORT and http://localhost:PORT alike (see localAlias below).
+  const devHost = !env.HOST || ['0.0.0.0', '::', '127.0.0.1'].includes(env.HOST) ? '127.0.0.1' : env.HOST;
+  const rawOrigin = env.PUBLIC_ORIGIN || (production ? '' : `http://${devHost.includes(':') ? `[${devHost}]` : devHost}:${env.PORT || 3000}`);
   let publicOrigin;
   try {
     const parsed = new URL(rawOrigin);
@@ -148,7 +158,6 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
   const runtimeEnv = { MAIL_TO: env.MAIL_TO || 'merchendices@gmail.com', sendMail };
   // TLS ends at the reverse proxy (Nginx Proxy Manager), so HTTPS handling is only on in production
   // with an https PUBLIC_ORIGIN, and never for localhost requests.
-  const production = env.NODE_ENV === 'production';
   const httpsOrigin = publicOrigin.startsWith('https:');
   const useHsts = production && httpsOrigin && env.HSTS !== '0';
   // Redirect only when a trusted proxy explicitly says the client used plain HTTP.
@@ -157,9 +166,14 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
 
   const server = createServer({ maxHeaderSize: 8192 }, async (incoming, outgoing) => {
     try {
+      // In development, a request to localhost, 127.0.0.1 or [::1] is treated as coming from that
+      // address, so the enquiry form's same-origin check passes whichever one the browser used.
+      const hostHeader = String(incoming.headers.host || '');
+      const localAlias = !production && !env.PUBLIC_ORIGIN && LOCAL_HOSTS.has(requestHostname(incoming)) && /^[\w.\[\]:-]+$/.test(hostHeader);
+      const requestOrigin = localAlias ? `http://${hostHeader}` : publicOrigin;
       let url = null;
-      try { url = new URL(incoming.url, `${publicOrigin}/`); } catch { url = null; }
-      if (!url || url.origin !== publicOrigin || !incoming.url.startsWith('/')) {
+      try { url = new URL(incoming.url, `${requestOrigin}/`); } catch { url = null; }
+      if (!url || url.origin !== new URL(requestOrigin).origin || !incoming.url.startsWith('/')) {
         incoming.resume();
         return sendJson(outgoing, 400, { message: invalidRequest });
       }
@@ -172,7 +186,7 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
       if (useHsts && !local) outgoing.setHeader('strict-transport-security', HSTS_VALUE);
       const legacy = ['GET', 'HEAD'].includes(incoming.method) && legacyExampleRedirect(url.pathname);
       if (legacy) {
-        outgoing.writeHead(301, { location: `${legacy}${url.search}`, 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff' });
+        outgoing.writeHead(301, { location: `${legacy}${url.search}`, 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff', ...SECURITY_HEADERS });
         return outgoing.end();
       }
       if (['GET', 'HEAD'].includes(incoming.method) && serveStatic(url.pathname, incoming.method, outgoing)) return;
@@ -182,7 +196,7 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
         return;
       }
       if (incoming.method === 'POST' && url.pathname === '/api/enquiry') {
-        if (incoming.headers.origin && incoming.headers.origin !== publicOrigin) {
+        if (incoming.headers.origin && incoming.headers.origin !== url.origin) {
           incoming.resume();
           return sendJson(outgoing, 403, { message: 'Please submit the form from this website.' });
         }
