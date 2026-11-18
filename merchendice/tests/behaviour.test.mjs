@@ -321,9 +321,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(html, /We read every note|keep looking after/i);
   assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /—/, 'no em dashes in the copy');
   assert.doesNotMatch(html, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
-  for (const platform of ['TikTok', 'Instagram', 'YouTube']) {
-    assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/" aria-label="Start a project \\(${platform} creators\\)">${platform}</a>`));
-  }
+  assert.doesNotMatch(html, /class="platforms"|platform-link|mid-size creators on/, 'platform line removed at Oscar\'s request');
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
   assert.match(html, /<h2 id="quality-title">We’d rather say no to a product than sell a bad one\.<\/h2>/);
