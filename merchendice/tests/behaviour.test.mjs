@@ -333,8 +333,8 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(html, /class="platforms"|platform-link|mid-size creators on/, 'platform line removed at Oscar\'s request');
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
-  assert.match(html, /<h2 id="quality-title">We’d rather say no to a product than sell a bad one\.<\/h2>/);
-  assert.match(html, /We steer you away from items that print badly, and nothing launches until you’ve signed it off\./);
+  assert.match(html, /<h2 id="quality-title">We only launch products that pass our sample check\.<\/h2>/);
+  assert.match(html, /We point you towards items that print well, and nothing launches until you’ve signed it off\./);
   assert.doesNotMatch(html, /Every design starts from what you post|Worried your merch will look cheap/);
   assert.doesNotMatch(html, /Mugs|Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
@@ -474,11 +474,11 @@ test('one call-to-action label, and each idea said only once across the site', a
   const all = Object.values(pages).join(' ');
   const count = (re) => (all.match(re) || []).length;
   assert.equal(count(/Commercial terms are agreed/g), 1, 'terms wording lives in the FAQ only');
-  assert.equal(count(/doesn’t take orders/g), 1);
+  assert.equal(count(/A preview store, built to show the finished standard/g), 1);
   assert.equal(count(/in your look/g), 1);
   assert.equal(count(/[Pp]hysical samples/g), 1);
   assert.equal(count(/a few directions/g), 1);
-  assert.equal(count(/\bjoke/g), 1);
+  assert.equal(count(/\bjoke/g), 2, "statement line plus the approved enquiry-step wording");
   // The homepage ends on the FAQ, and the footer carries the contact line.
   assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<\/main>/);
   assert.match(home, /<p class="footer-contact">[^<]*<a href="\/enquiry\/">Contact us<\/a><\/p>/);
