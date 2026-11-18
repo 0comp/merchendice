@@ -155,13 +155,14 @@ test('the fonts are served from the site, and removed product mockups are not', 
   const fixture = await serverFixture(t);
   assert.equal((await fetch(`${fixture.base}/images/tee.webp`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/images/shop-preview-1.webp`)).status, 404);
-  const preview = await fetch(`${fixture.base}/images/example-store-accessories.webp`);
-  assert.equal(preview.status, 200);
-  assert.match(preview.headers.get('content-type'), /image\/webp/);
+  assert.equal((await fetch(`${fixture.base}/images/example-store-accessories.webp`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
   for (const old of ['archivo', 'source-serif-4']) assert.equal((await fetch(`${fixture.base}/fonts/${old}.woff2`)).status, 404, old);
-  for (const image of ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'goods-flatlay', 'store-banner']) {
+  for (const gone of ['tote-black-detail', 'sticker-camel', 'example-store-accessories']) {
+    assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
+  }
+  for (const image of ['hero-tee', 'tote-natural', 'tote-black', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
@@ -292,4 +293,47 @@ test('every response carries the permissions and opener policies, and hashed ass
     assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable');
   }
   assert.equal((await fetch(`${fixture.base}/site.css`)).headers.get('cache-control'), 'no-cache');
+});
+
+test('every referenced local asset exists', async t => {
+  const fixture = await serverFixture(t);
+  const startRoutes = ['/', '/examples/', '/enquiry/', '/privacy/', '/example-store/', '/missing-page'];
+  const seen = new Set(startRoutes);
+  const queue = startRoutes.map((path) => ({ path, referrer: 'start' }));
+  const missing = [];
+
+  const enqueue = (ref, referrer) => {
+    if (!ref) return;
+    const token = String(ref).trim();
+    if (!token || token.startsWith('data:') || token.startsWith('mailto:') || token.startsWith('#')) return;
+    let url;
+    try {
+      url = new URL(token, 'https://merchendice.com' + (referrer.endsWith('/') ? referrer : referrer + '/'));
+    } catch {
+      return;
+    }
+    if (url.protocol === 'https:' && url.host !== 'merchendice.com') return;
+    if (url.protocol === 'http:') return;
+    if (!url.pathname.startsWith('/') || url.pathname.startsWith('/api/')) return;
+    const path = url.pathname;
+    if (seen.has(path)) return;
+    seen.add(path);
+    queue.push({ path, referrer });
+  };
+
+  while (queue.length) {
+    const { path, referrer } = queue.shift();
+    const response = await fetch(`${fixture.base}${path}`);
+    if (response.status >= 400 && path !== '/missing-page') missing.push(`${path} (${response.status}) from ${referrer}`);
+    const type = response.headers.get('content-type') || '';
+    if (!/html|css|javascript|xml|svg|text\//.test(type)) continue;
+    const body = await response.text();
+    for (const match of body.matchAll(/\b(?:href|src|poster)=["']([^"']+)/g)) enqueue(match[1], path);
+    for (const match of body.matchAll(/srcset=["']([^"']+)/g)) {
+      for (const part of match[1].split(',')) enqueue(part.trim().split(/\s+/)[0], path);
+    }
+    for (const match of body.matchAll(/url\((['"]?)([^"'()]+)\1\)/g)) enqueue(match[2], path);
+  }
+
+  assert.deepEqual(missing, [], missing.join('; '));
 });

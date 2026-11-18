@@ -15,18 +15,20 @@ Tests mock email delivery and never send messages. `/healthz` reports that the w
 
 ## Image slots
 
-Every photo on the marketing pages is a plain file in `images/`. To use your own photos, save them as WebP with the same file name and the same shape (the sizes below), then rebuild. Nothing else needs to change. Today they are product mockups from the example store; the bird artwork's origin still needs confirming.
+Every photo on the marketing pages is a plain file in `images/`. To use your own photos, save them as WebP with the same file name and the same shape (the sizes below), then rebuild. Nothing else needs to change. Today they are product mockups from the example store, cropped or composited from those files. The bird artwork's origin still needs confirming, so the homepage shows it on at most two photos (the shirt and the sticker).
+
+The tote photos on the marketing pages have the small chest print retouched out, using canvas from the same mockup (not a generated texture). `canvas-natural.webp` and `canvas-black.webp` are unretouched close-ups of the lower bag, below the print. `goods-flatlay.webp` and `store-banner.webp` are still-lifes of those blank totes on a sand ground. Nothing here is AI-generated or stock.
 
 | File | Size (px) | Shape | Where it shows |
 | --- | --- | --- | --- |
 | `hero-tee.webp` | 720 × 900 | 4:5 | Homepage photo mosaic (the only clothing on the marketing pages) |
 | `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic, enquiry page (desktop), share image |
 | `tote-black.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only) |
-| `tote-black-detail.webp` | 540 × 540 | 1:1 | Homepage mosaic (desktop only), share image |
+| `canvas-natural.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only) |
+| `canvas-black.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only), share image |
 | `sticker.webp` | 640 × 800 | 4:5 | Homepage mosaic, share image |
-| `sticker-camel.webp` | 640 × 800 | 4:5 | Homepage mosaic (desktop only) |
 | `goods-flatlay.webp` | 960 × 1200 | 4:5 | "A few good products" section |
-| `store-banner.webp` | 2400 × 1200 | 2:1 (shown cropped to 12:5) | Example store section |
+| `store-banner.webp` | 2400 × 1200 | 2:1 (shown cropped to 12:5) | Example store section and `/examples/` |
 | `store/<product>-<colour>.webp` | 900 × 900 | 1:1 | Example store product cards and quick view |
 
 Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file.

@@ -27,10 +27,12 @@ const binaryFiles = {
   '/og.png': ['og.png', 'image/png'],
 };
 
-function structuredDataAllowance(html) {
-  const match = html.match(/<script type="application\/ld\+json">([^<]*)<\/script>/);
-  if (!match) return '';
-  return ` 'sha256-${crypto.createHash('sha256').update(match[1]).digest('base64')}'`;
+function scriptSrcAllowance(html) {
+  const hashes = new Set();
+  for (const match of html.matchAll(/<script(?:\s[^>]*)?>([^<]*)<\/script>/g)) {
+    hashes.add(`'sha256-${crypto.createHash('sha256').update(match[1]).digest('base64')}'`);
+  }
+  return [...hashes].map((hash) => ` ${hash}`).join('');
 }
 
 const assets = {};
@@ -55,7 +57,7 @@ function linkHashed(html) {
 
 for (const [route, file] of Object.entries(pages)) {
   const body = linkHashed(await fs.readFile(file, 'utf8')).replace(/\n?[ \t]*<!--[\s\S]*?-->/g, '');
-  assets[route] = { body, type: 'text/html; charset=utf-8', scriptSrcExtra: structuredDataAllowance(body) };
+  assets[route] = { body, type: 'text/html; charset=utf-8', scriptSrcExtra: scriptSrcAllowance(body) };
 }
 for (const [route, [file, type]] of Object.entries(textFiles)) {
   assets[route] = { body: await fs.readFile(file, 'utf8'), type };
@@ -64,7 +66,8 @@ for (const [route, [file, type]] of Object.entries(binaryFiles)) {
   assets[route] = { body: (await fs.readFile(file)).toString('base64'), type, encoding: 'base64' };
 }
 const notFoundPage = linkHashed(await fs.readFile('404.html', 'utf8')).replace(/\n?[ \t]*<!--[\s\S]*?-->/g, '');
+const notFoundScriptSrc = scriptSrcAllowance(notFoundPage);
 const runtime = await fs.readFile('src/worker-runtime.mjs', 'utf8');
 await fs.mkdir('dist', { recursive: true });
-await fs.writeFile('dist/app.mjs', `const ASSETS = ${JSON.stringify(assets)};\nconst NOT_FOUND_PAGE = ${JSON.stringify(notFoundPage)};\n${runtime}`);
+await fs.writeFile('dist/app.mjs', `const ASSETS = ${JSON.stringify(assets)};\nconst NOT_FOUND_PAGE = ${JSON.stringify(notFoundPage)};\nconst NOT_FOUND_SCRIPT_SRC = ${JSON.stringify(notFoundScriptSrc)};\n${runtime}`);
 console.log('Built Merchendice site and enquiry endpoint.');

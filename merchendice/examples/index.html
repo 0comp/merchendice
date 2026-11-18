@@ -25,6 +25,7 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <script>document.documentElement.classList.add('js')</script>
     <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="../site.css">
@@ -48,14 +49,14 @@
     </header>
     <main id="main" class="examples-page">
       <section class="examples-hero" aria-labelledby="directory-title">
-        <h1 id="directory-title">Storefronts</h1>
-        <p>Stores we’ve built, starting with one sample shop. Creator stores will be added to this page as they open.</p>
+        <h1 id="directory-title" class="hero-rise">Storefronts</h1>
+        <p class="hero-rise hero-rise-2">Stores we’ve built, starting with one sample shop. Creator stores will be added to this page as they open.</p>
       </section>
       <section class="directory-content" aria-label="Browse storefronts">
         <div class="directory-grid" id="directoryGrid">
           <article class="listing-card listing-card--creator" data-kind="example" data-search="creator storefront merch sample example songbird">
-            <a class="listing-art" href="/example-store/" data-prefetch-example tabindex="-1" aria-hidden="true"><img src="/images/example-store-accessories.webp" alt="" width="1120" height="980" decoding="async"></a>
-            <div class="listing-card-body">
+            <a class="listing-art" href="/example-store/" data-prefetch-example tabindex="-1" aria-hidden="true"><img src="/images/store-banner.webp" alt="" width="2400" height="1200" decoding="async"></a>
+            <div class="listing-card-body rise">
               <h2>CREATOR</h2>
               <p>A light, editorial shop for a made-up brand, with a collection page, quick view and a bag. Browse it like a customer would.</p>
               <a class="button button-primary listing-button" href="/example-store/" data-prefetch-example>See the example store</a>
@@ -63,7 +64,7 @@
           </article>
         </div>
       </section>
-      <section class="directory-cta" aria-label="Start an enquiry">
+      <section class="directory-cta rise" aria-label="Start an enquiry">
         <h2>Want one of these for your channel?</h2>
         <a class="button button-primary" href="/enquiry/">Start a project</a>
       </section>

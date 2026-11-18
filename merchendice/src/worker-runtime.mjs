@@ -110,7 +110,7 @@ export default {
     }
     if (request.method !== 'POST' || url.pathname !== '/api/enquiry') {
       if (['GET', 'HEAD'].includes(request.method) && !url.pathname.startsWith('/api/')) {
-        return textResponse(request.method === 'HEAD' ? null : NOT_FOUND_PAGE, 'text/html; charset=utf-8', 404, { cacheControl: 'no-store' });
+        return textResponse(request.method === 'HEAD' ? null : NOT_FOUND_PAGE, 'text/html; charset=utf-8', 404, { cacheControl: 'no-store', scriptSrcExtra: typeof NOT_FOUND_SCRIPT_SRC === 'string' ? NOT_FOUND_SCRIPT_SRC : '' });
       }
       return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8', 'permissions-policy': PERMISSIONS_POLICY, 'cross-origin-opener-policy': OPENER_POLICY } });
     }

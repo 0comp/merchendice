@@ -60,6 +60,11 @@ test('CREATOR example is served on its Merchendice path with self-hosted images 
     await fs.access(new URL(`../images/store/${p.id}-${id}.webp`, import.meta.url));
   }
   assert.match(html, /<link rel="stylesheet" href="\/example-store\/store\.[0-9a-f]{10}\.css">/);
+  assert.doesNotMatch(html, /archivo/i);
+  const storeCssHref = html.match(/href="(\/example-store\/store\.[0-9a-f]{10}\.css)"/)[1];
+  const storeCss = await (await worker.fetch(new Request(`https://site.example.test${storeCssHref}`))).text();
+  assert.match(storeCss, /\/fonts\/dm-sans\.woff2/);
+  assert.doesNotMatch(storeCss, /archivo/i);
   const nested = await worker.fetch(new Request('https://site.example.test/example-store/products/sample'));
   assert.equal(nested.status, 200);
   const directory = await worker.fetch(new Request('https://site.example.test/examples/'));
@@ -286,28 +291,46 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /src="\/images\/[a-z-]+\.webp"/, tag);
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
-  const allowed = ['hero-tee', 'tote-natural', 'tote-black', 'tote-black-detail', 'sticker', 'sticker-camel', 'goods-flatlay', 'store-banner'];
-  const names = tags.map(tag => tag.match(/\/images\/([a-z-]+)\.webp/)[1]);
+  const allowed = ['hero-tee', 'tote-natural', 'tote-black', 'canvas-natural', 'canvas-black', 'sticker', 'goods-flatlay', 'store-banner'];
+  // Desktop-only tiles use <picture>. Count the designed photo once (the min-width source, or the img if there isn't one).
+  const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
+  const names = [];
+  for (const figure of figures) {
+    const desktop = figure.match(/<source media="\(min-width: 901px\)" srcset="\/images\/([a-z-]+)\.webp"/);
+    const img = figure.match(/<img\b[^>]*src="\/images\/([a-z-]+)\.webp"/);
+    names.push((desktop || img)[1]);
+  }
+  for (const tag of tags) {
+    if (figures.some(figure => figure.includes(tag))) continue;
+    names.push(tag.match(/\/images\/([a-z-]+)\.webp/)[1]);
+  }
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
+  const bird = names.filter(name => name === 'hero-tee' || name === 'sticker');
+  assert.equal(bird.length, 2, 'at most two bird images on the home page');
   // Clothing appears exactly once on the marketing pages: the shirt tile in the hero mosaic.
   assert.equal((html.match(/\/images\/hero-tee\.webp/g) || []).length, 1);
   const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
   assert.match(hero, /\/images\/hero-tee\.webp/);
+  assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
-  // No eyebrow labels, accent words, italic flourishes, scroll cue or reveal-on-scroll.
+  // No eyebrow labels, accent words, italic flourishes or scroll cue.
   assert.doesNotMatch(html, /class="[^"]*\b(kicker|accent|reveal|scroll-cue|section-lede|eyebrow)\b/);
   assert.doesNotMatch(html, /<em>|<i>[^<]/);
   assert.doesNotMatch(html, /We help creators turn|Merch your audience would buy/i);
   assert.doesNotMatch(html, /We read every note|keep looking after/i);
   assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /—/, 'no em dashes in the copy');
   assert.doesNotMatch(html, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
-  for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/">${platform}<`));
+  for (const platform of ['TikTok', 'Instagram', 'YouTube']) {
+    assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/" aria-label="Start a project \\(${platform} creators\\)">${platform}</a>`));
+  }
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
   assert.match(html, /<h2 id="quality-title">We’d rather say no to a product than sell a bad one\.<\/h2>/);
-  assert.match(html, /cheap or off-brand/, 'the quality section still names the fear it answers');
-  assert.doesNotMatch(html, /class="closer|example-store-accessories/, 'no closer section and no store screenshot on the homepage');
+  assert.match(html, /We steer you away from items that print badly, and nothing launches until you’ve signed it off\./);
+  assert.doesNotMatch(html, /Every design starts from what you post|Worried your merch will look cheap/);
+  assert.doesNotMatch(html, /Mugs|Prints and posters/);
+  assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
   assert.doesNotMatch(html, /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
@@ -315,10 +338,13 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.match(css, /\/fonts\/cormorant-garamond\.woff2/);
   assert.match(css, /\/fonts\/dm-sans\.woff2/);
   assert.match(css, /font-display: swap/);
-  assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.reveal|\.kicker|\.accent\b|@keyframes/);
+  assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.kicker|\.accent\b/);
+  assert.match(css, /@keyframes rise-in/);
   assert.match(css, /body \{[^}]*font-size: 17px/);
   const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
-  assert.doesNotMatch(js, /IntersectionObserver|reveal/);
+  assert.match(js, /IntersectionObserver/);
+  assert.match(js, /unobserve/);
+  assert.doesNotMatch(js, /reveal/);
 });
 
 test('no sentence is repeated across the homepage', async () => {
@@ -343,7 +369,7 @@ test('marketing pages use the cream and espresso theme with no green, terracotta
     assert.match(html, /<meta name="theme-color" content="#2e211d">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Only the homepage hero may show clothing; other marketing pages use the example store screenshot only.
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(example-store-accessories|tote-natural|tote-black-detail|sticker)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-banner|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -425,4 +451,38 @@ test('one call-to-action label, and each idea said only once across the site', a
   // The homepage ends on the FAQ, and the footer carries the contact line.
   assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<\/main>/);
   assert.match(home, /<p class="footer-contact">[^<]*<a href="\/enquiry\/">Contact us<\/a><\/p>/);
+});
+
+test('load-in motion has a reduced-motion path and a no-JS fallback, and does not hide content without JS', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
+  // Hidden state only applies when JS has marked the document and motion is allowed.
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\)[\s\S]*html\.js \.hero-rise[\s\S]*opacity: 0/);
+  assert.match(css, /@media \(prefers-reduced-motion: no-preference\)[\s\S]*html\.js-io \.rise:not\(\.is-in\)[\s\S]*opacity: 0/);
+  // The first hero step starts immediately so the heading is not delayed more than about 300ms.
+  assert.match(css, /animation: rise-in 600ms ease-out forwards/);
+  assert.doesNotMatch(css, /html\.js \.hero-rise \{[^}]*animation-delay/);
+  assert.match(css, /html\.js \.hero-rise-2 \{ animation-delay: 80ms/);
+  assert.match(css, /html\.js \.hero-rise-3 \{ animation-delay: 160ms/);
+  assert.match(css, /translateY\(10px\)/);
+  // Reduced motion restores visibility and cancels the animation.
+  const reduce = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+  assert.match(reduce, /html\.js \.hero-rise/);
+  assert.match(reduce, /html\.js-io \.rise/);
+  assert.match(reduce, /animation: none/);
+  assert.match(reduce, /opacity: 1/);
+  // Observer is skipped when the viewer prefers reduced motion, and each target is observed only once.
+  assert.match(js, /prefers-reduced-motion: reduce/);
+  assert.match(js, /IntersectionObserver/);
+  assert.match(js, /unobserve/);
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    assert.match(html, /<script>document\.documentElement\.classList\.add\('js'\)<\/script>/, route);
+    const csp = (await worker.fetch(new Request(`https://site.example.test${route}`))).headers.get('content-security-policy');
+    const digest = (await import('node:crypto')).createHash('sha256').update("document.documentElement.classList.add('js')").digest('base64');
+    assert.ok(csp.includes(`'sha256-${digest}'`), route);
+    assert.doesNotMatch(csp, /unsafe-inline/, route);
+    // Without the js class, the markup itself does not start hidden.
+    assert.doesNotMatch(html, /style="[^"]*opacity:\s*0/, route);
+  }
 });

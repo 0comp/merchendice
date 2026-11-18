@@ -25,6 +25,7 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <script>document.documentElement.classList.add('js')</script>
     <link rel="preload" href="/fonts/cormorant-garamond.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="../site.css">
@@ -49,12 +50,12 @@
     <main id="main">
       <section class="enquiry-layout" aria-labelledby="enquiry-title">
         <div class="enquiry-intro">
-          <h1 id="enquiry-title">Tell us what you’d like to make</h1>
-          <p>A few lines is enough: who you are, where you post and what you’re picturing, even if it’s still rough. We reply by email.</p>
-          <figure class="enquiry-image"><img src="/images/tote-natural.webp" alt="" width="720" height="960" loading="lazy" decoding="async"></figure>
+          <h1 id="enquiry-title" class="hero-rise">Tell us what you’d like to make</h1>
+          <p class="hero-rise hero-rise-2">A few lines is enough: who you are, where you post and what you’re picturing, even if it’s still rough. We reply by email.</p>
+          <figure class="enquiry-image"><img src="/images/tote-natural.webp" alt="Natural canvas tote on a camel background" width="720" height="960" loading="lazy" decoding="async"></figure>
         </div>
         <div class="form-wrap">
-          <div class="form-panel">
+          <div class="form-panel rise">
             <form id="enquiryForm" novalidate>
               <div hidden aria-hidden="true"><label for="website">Website</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
               <div class="form-row">
@@ -68,7 +69,7 @@
                 </div>
               </div>
               <div class="field">
-                <label for="channels">Links to your channels <span class="optional">Optional</span></label>
+                <label for="channels">Links to your channels <span class="optional">(optional)</span></label>
                 <p class="field-hint" id="channelsHint">TikTok, Instagram, YouTube or anywhere else you post. Links or handles are both fine.</p>
                 <input id="channels" name="channels" type="text" maxlength="1000" aria-describedby="channelsHint">
               </div>
