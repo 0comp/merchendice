@@ -12,3 +12,21 @@ npm start
 ```
 
 Tests mock email delivery and never send messages. `/healthz` reports that the web server is running; it does not certify email delivery. Configure the provider and verify one enquiry before accepting visitors.
+
+## Image slots
+
+Every photo on the marketing pages is a plain file in `images/`. To use your own photos, save them as WebP with the same file name and the same shape (the sizes below), then rebuild. Nothing else needs to change. Today they are product mockups from the example store; the bird artwork's origin still needs confirming.
+
+| File | Size (px) | Shape | Where it shows |
+| --- | --- | --- | --- |
+| `hero-tee.webp` | 720 × 900 | 4:5 | Homepage photo mosaic (the only clothing on the marketing pages) |
+| `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic, share image |
+| `tote-black.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only) |
+| `tote-black-detail.webp` | 540 × 540 | 1:1 | Homepage mosaic (desktop only), enquiry page, share image |
+| `sticker.webp` | 640 × 800 | 4:5 | Homepage mosaic, share image |
+| `sticker-camel.webp` | 640 × 800 | 4:5 | Homepage mosaic (desktop only) |
+| `goods-flatlay.webp` | 960 × 1200 | 4:5 | "A few good products" section |
+| `store-banner.webp` | 2400 × 1200 | 2:1 (shown cropped to 12:5) | Example store section |
+| `store/<product>-<colour>.webp` | 900 × 900 | 1:1 | Example store product cards and quick view |
+
+Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file.
