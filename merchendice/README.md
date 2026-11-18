@@ -28,8 +28,8 @@ On the homepage the swallow tee is the only tee, and the colorful songbird appea
 | `about-*.webp` (not yet added) | 4:5 portrait, about 640 × 800 | Homepage About section: photos of Oscar Thomas and Oscar Rodhelius, when supplied. Add `<div class="about-photos"><figure><img src="/images/about-oscar-thomas-640.webp" alt="Oscar Thomas" width="640" height="800" loading="lazy" decoding="async"></figure>…</div>` after `.about-copy` in `index.html`; the layout switches to words beside photos on its own. Until then the section is words only, with no placeholder box. |
 | `hoodie-black-496.webp` | 496 × 620 | "A few good products" (shown at most 460 px wide). Sleeve and pocket of the black hoodie. |
 | `store-phone-780.webp`, `store-phone-520.webp` | 780 × 1158, 520 × 772 | Homepage example-store section (shown at most 380 px wide). Unedited 2× phone screenshot of `/example-store/`. |
-| `store-desktop-1440.webp`, `store-desktop-960.webp` | 1440 × 900, 960 × 600 | `/examples/` card (shown at most about 720 px wide). Unedited 1.75× desktop screenshot of `/example-store/`. |
-| `tote-natural.webp` | 720 × 960 | Enquiry page (desktop). Songbird Canvas Tote. |
+| `store-desktop-1440.webp`, `store-desktop-960.webp` | 1440 × 900, 960 × 600 | `/examples/` card (shown at most about 720 px wide). Unedited 1440 × 900 desktop screenshot of `/example-store/`, re-shot after the round 13 copy changes (960 is the same capture scaled down). |
+| `tote-natural.webp`, `tote-natural-360.webp` | 720 × 960, 360 × 480 | Message page (desktop, shown at most 340 px wide). Songbird Canvas Tote. |
 | `store/<product>-<colour>.webp` | 900 × 900 | 1:1 | Example store product cards and quick view |
 
 ### Stock photo credits

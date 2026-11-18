@@ -677,7 +677,7 @@ test('About names the co-founders without invented claims, and the footer says w
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const about = home.slice(home.indexOf('<section class="about'), home.indexOf('</section>', home.indexOf('<section class="about')));
   assert.match(about, /<h2 id="about-title">Who we are<\/h2>/);
-  assert.match(about, /<p class="about-lead">Merchendice is run by co-founders Oscar Thomas and Oscar Rodhelius\.<\/p>/);
+  assert.match(about, /<p class="about-lead">Merchendice is run by <span class="nowrap">co-founders<\/span> Oscar Thomas and Oscar Rodhelius\.<\/p>/);
   assert.match(about, /<p>They draw the designs and build and run each store together with the creator\.<\/p>/);
   assert.equal((about.match(/<p\b/g) || []).length, 2, 'two lines only, no backstory');
   assert.doesNotMatch(about, /<img|placeholder|founded in|years|since \d/i, 'no photos yet and no invented claims');

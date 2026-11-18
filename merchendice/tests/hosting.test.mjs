@@ -162,7 +162,7 @@ test('the fonts are served from the site, and removed product mockups are not', 
   for (const gone of ['tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand', 'store-banner', 'goods-flatlay', 'canvas-black', 'canvas-natural', 'canvas-sand', 'sticker', 'hero-tee', 'hero-tee-880', 'hero-tee-560', 'tote-handles-416', 'hoodie-sand-424', 'crew-grey-400']) {
     assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   }
-  for (const image of ['hero-tee-1040', 'hero-tee-640', 'packaging-bag-448', 'packaging-bag-224', 'fabric-folds-624', 'fabric-folds-312', 'fabric-edge-448', 'fabric-edge-224', 'hoodie-black-496', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960', 'tote-natural']) {
+  for (const image of ['hero-tee-1040', 'hero-tee-640', 'packaging-bag-448', 'packaging-bag-224', 'fabric-folds-624', 'fabric-folds-312', 'fabric-edge-448', 'fabric-edge-224', 'hoodie-black-496', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960', 'tote-natural', 'tote-natural-360']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
