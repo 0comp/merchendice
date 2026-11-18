@@ -15,20 +15,20 @@ Tests mock email delivery and never send messages. `/healthz` reports that the w
 
 ## Image slots
 
-Every photo on the marketing pages is a plain file in `images/`. To use your own photos, save them as WebP with the same file name and the same shape (the sizes below), then rebuild. Nothing else needs to change. Today they are unedited product mockups from the example store, cropped or placed on a solid colour from the site palette. Nothing is AI-generated or stock.
+Every photo on the marketing pages is a plain file in `images/`. File names end in the pixel width, and pages list the sizes in `srcset`, so a browser never draws a photo larger than its file. To use your own photos, export WebP files at the sizes below (or larger, then update the names, `width`/`height` and `srcset`), and rebuild. Today they are crops of the example store's supplier mockups at their native resolution (1200 × 1200 sources, never enlarged), with the white studio backdrop swapped for a site colour, plus two unedited screenshots of `/example-store/`. Nothing is AI-generated or stock. A test checks that every `width`/`height` and `srcset` width matches the real file.
 
-The colourful songbird (the small chest print on the tote and the matching sticker) appears on at most three homepage photos: the natural tote in the mosaic, the sticker, and the black tote in "A few good products". The hero shirt is a different design, the Dove Line Tee. The example-store card uses a third design, the Vintage Swallow Tee. `canvas-natural.webp`, `canvas-black.webp` and `canvas-sand.webp` are close-ups of bag canvas, taken below the print. The bird artwork's origin still needs confirming before these photos go live.
+On the homepage the swallow tee is the only tee, and the colourful songbird appears once, on the crewneck inside the example-store screenshot. The other photos are close details of store products cropped clear of the print. The bird artwork's origin still needs confirming before these photos go live.
 
-| File | Size (px) | Shape | Where it shows |
-| --- | --- | --- | --- |
-| `hero-tee.webp` | 720 × 900 | 4:5 | Homepage photo mosaic (the one tee in the hero). Dove Line Tee, unedited. |
-| `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic, enquiry page (desktop), share image. Songbird Canvas Tote, unedited. |
-| `canvas-sand.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only), canvas close-up |
-| `canvas-natural.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only) |
-| `canvas-black.webp` | 720 × 900 | 4:5 | Homepage mosaic (desktop only), share image |
-| `sticker.webp` | 640 × 800 | 4:5 | Homepage mosaic, share image. Songbird Sticker, unedited. |
-| `goods-flatlay.webp` | 960 × 1200 | 4:5 | "A few good products" section. Songbird Canvas Tote in black, unedited. |
-| `store-banner.webp` | 2400 × 1200 | 2:1 (shown cropped to 12:5 or 8:7) | Example store section and `/examples/`. Vintage Swallow Tee in coyote brown, unedited. |
+| File | Size (px) | Where it shows |
+| --- | --- | --- |
+| `hero-tee-1040.webp`, `hero-tee-640.webp` | 1040 × 1100, 640 × 677 | Homepage hero, first photo; the only photo in the hero on phones. Dove Line Tee (sand). |
+| `tote-handles-416.webp` | 416 × 484 | Homepage hero (desktop). Handles of the natural canvas tote. |
+| `hoodie-sand-424.webp` | 424 × 248 | Homepage hero (desktop). Hood and drawstrings of the sand hoodie. |
+| `crew-grey-400.webp` | 400 × 292 | Homepage hero (desktop). Collar of the grey crewneck. |
+| `hoodie-black-496.webp` | 496 × 620 | "A few good products" (shown at most 460 px wide). Sleeve and pocket of the black hoodie. |
+| `store-phone-780.webp`, `store-phone-520.webp` | 780 × 1158, 520 × 772 | Homepage example-store section (shown at most 380 px wide). Unedited 2× phone screenshot of `/example-store/`. |
+| `store-desktop-1440.webp`, `store-desktop-960.webp` | 1440 × 900, 960 × 600 | `/examples/` card (shown at most about 720 px wide). Unedited 1.75× desktop screenshot of `/example-store/`. |
+| `tote-natural.webp` | 720 × 960 | Enquiry page (desktop). Songbird Canvas Tote. |
 | `store/<product>-<colour>.webp` | 900 × 900 | 1:1 | Example store product cards and quick view |
 
-Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file.
+Keep the subject near the middle of each photo, because hero tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file.
