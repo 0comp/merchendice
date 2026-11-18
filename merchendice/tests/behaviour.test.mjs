@@ -73,12 +73,13 @@ test('example shop renders a product grid, labels it as an example, and loads no
 test('homepage explains the service and sends contact to the enquiry page instead of an email address', async () => {
   const response = await worker.fetch(new Request('https://site.example.test/'));
   const html = await response.text();
-  assert.match(html.replace(/<[^>]+>/g, ''), /We help creators turn their own ideas into merch/);
+  assert.match(html.replace(/<[^>]+>/g, ''), /Merch your audience would buy even without your name on it\./);
   assert.match(html, /Tell us your idea/);
   assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
   assert.match(html, /href="\/enquiry\/"/);
   assert.match(html, /Shopify/);
   assert.match(html, /print-on-demand/);
+  assert.match(html, /printed on demand/);
   assert.doesNotMatch(html, /Printify|ShineOn|\/images\/tee|images-api\.printify\.com/);
   assert.doesNotMatch(html, /merchendices@gmail\.com|mailto:/);
   assert.match(html, /rel="canonical" href="https:\/\/merchendice.com\/"/);
@@ -285,48 +286,61 @@ test('directory matches multiple words in any order and restores the empty state
   assert.equal(card.hidden,false); assert.equal(empty.hidden,true);
 });
 
-test('homepage keeps the redesigned structure, a broad audience and only the approved hero illustration', async () => {
+test('homepage is type-led, with one real store screenshot and none of the old template tells', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  // The hero is a hand-made inline SVG of three products (Oscar approved the tee for this illustration only).
-  const hero = html.match(/<svg class="hero-illustration"[\s\S]*?<\/svg>/);
-  assert.ok(hero, 'hero illustration is present');
-  for (const piece of ['art-tee', 'art-tote', 'art-necklace']) assert.match(hero[0], new RegExp(`class="art-piece ${piece}"`));
-  assert.doesNotMatch(hero[0], /<text|<image|href=|url\(/, 'the illustration is plain shapes, with no text, images or external references');
-  const rest = html.replace(hero[0], '');
-  // Outside that illustration the only images are accessory crops (tote and sticker) inside the example-shop preview card.
+  // No drawn illustrations: the only image is a cropped screenshot of the example store's accessories view.
   const images = [...html.matchAll(/<img\b[^>]*src="([^"]+)"/g)].map(m => m[1]);
-  assert.deepEqual(images.sort(), ['/images/shop-preview-1.webp', '/images/shop-preview-1.webp', '/images/shop-preview-2.webp', '/images/shop-preview-2.webp', '/images/shop-preview-3.webp']);
-  assert.doesNotMatch(rest, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
-  assert.doesNotMatch(rest, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
+  assert.deepEqual(images, ['/images/example-store-accessories.webp']);
+  assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse/);
+  const svgs = [...html.matchAll(/<svg class="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual([...new Set(svgs)], ['wordmark-mark'], 'the wordmark is the only inline SVG');
+  // No eyebrow labels, accent words, italic flourishes, scroll cue or reveal-on-scroll.
+  assert.doesNotMatch(html, /class="[^"]*\b(kicker|accent|reveal|scroll-cue|section-lede)\b/);
+  assert.doesNotMatch(html, /<em>|<i>[^<]/);
+  assert.doesNotMatch(html, /We help creators turn/i);
+  assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /—/, 'no em dashes in the copy');
+  assert.doesNotMatch(html, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
+  assert.doesNotMatch(html, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
   for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/">${platform}<`));
-  assert.doesNotMatch(rest, /<circle/);
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
-  assert.match(html, /look cheap or <span class="accent nowrap">off-brand\?/);
+  assert.match(html, /<h2 id="quality-title">“Will my merch look cheap or off-brand\?”<\/h2>/);
   assert.match(html, /No generic templates/);
-  assert.doesNotMatch(rest, /jewel|tote|clothing|fashion|beauty|lifestyle|\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
-  assert.match(html, /Let’s make your/);
-  assert.match(html, /class="scroll-cue"/);
+  assert.doesNotMatch(html, /jewel|tote|clothing|fashion|beauty|lifestyle|\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\/fonts\/archivo\.woff2/);
-  assert.match(css, /\/fonts\/instrument-serif-regular\.woff2/);
+  assert.match(css, /\/fonts\/source-serif-4\.woff2/);
   assert.match(css, /font-display: swap/);
+  assert.doesNotMatch(css, /Instrument Serif|font-style: italic|\.reveal|\.kicker|\.accent\b/);
+  assert.match(css, /body \{[^}]*font-size: 18px/);
+  const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
+  assert.doesNotMatch(js, /IntersectionObserver|reveal/);
 });
 
-test('marketing pages use the warm cream and terracotta theme with no gradient text or glows', async () => {
+test('no sentence is repeated across the homepage', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  const body = html.slice(html.indexOf('<main'), html.indexOf('</main>')).replace(/<!--[\s\S]*?-->/g, '').replace(/<span class="sr-only">[^<]*<\/span>/g, '');
+  const sentences = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').split(/(?<=[.?!])\s+/).map(t => t.trim().toLowerCase()).filter(t => t.split(' ').length > 3);
+  const seen = new Set();
+  for (const sentence of sentences) { assert.ok(!seen.has(sentence), `repeated: ${sentence}`); seen.add(sentence); }
+});
+
+test('marketing pages use the paper, ink and green theme with no gradient text or glows', async () => {
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
-  assert.match(css, /--bg: #f7f2ea/);
-  assert.match(css, /--accent: #b5553a/);
+  assert.match(css, /--bg: #f3f1ec/);
+  assert.match(css, /--green: #1f3d30/);
+  assert.doesNotMatch(css, /#b5553a|#f7f2ea/i);
   assert.doesNotMatch(css, /\.grad\b|glow|#7cc8d9|#9a8be8|#ecd27f|background-clip: text/i);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
-    assert.match(html, /<link rel="preload" href="\/fonts\/instrument-serif-regular\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
-    assert.match(html, /<meta name="theme-color" content="#f7f2ea">/, route);
-    // No clothing photos on marketing pages: the only raster images are the shop-preview accessory crops.
-    for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/shop-preview-[123]\.webp$/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/source-serif-4\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<meta name="theme-color" content="#f3f1ec">/, route);
+    // No clothing photos on marketing pages: the only raster image is the example store's accessories screenshot.
+    for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.equal(src, '/images/example-store-accessories.webp', route);
+    assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark/, route);
   }
 });
 
@@ -360,8 +374,8 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.doesNotMatch(html, /id="what-you-get"|id="why"/);
   const steps = [...html.matchAll(/<li class="process-step[^"]*">[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1]);
   assert.deepEqual(steps, ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']);
-  const withoutCostFaq = html.replace('There’s nothing to pay while we shape the idea, design and sample.', '');
-  assert.equal((withoutCostFaq.match(/[Ss]amples?\b(?! shop)/g) || []).length, 2, 'samples appears only in the Samples step (and the approved cost answer)');
+  const withoutCostFaq = html.replace('There’s nothing to pay while we shape the idea, design and sample.', '').replace(/<head>[\s\S]*<\/head>/, '');
+  assert.ok((withoutCostFaq.match(/[Ss]amples?\b(?! shop)/g) || []).length <= 3, 'samples is mentioned in the intro and the Samples step only');
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 

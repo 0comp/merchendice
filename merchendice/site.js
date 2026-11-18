@@ -98,48 +98,18 @@ if (navToggle && siteNav && typeof navToggle.addEventListener === 'function' && 
   });
 }
 
-// Presentation only: header state and scroll reveal.
-// Everything is optional, so the page stays fully readable if any of it is unavailable.
+// Presentation only: a hairline under the header once the page scrolls.
 (() => {
-  if (typeof window === 'undefined' || typeof document.querySelectorAll !== 'function' || !document.documentElement) return;
-  const root = document.documentElement;
-  const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
+  if (typeof window === 'undefined' || typeof document.querySelector !== 'function') return;
   const header = document.querySelector('[data-header]');
-  if (header && header.classList) {
-    let ticking = false;
-    const update = () => {
-      header.classList.toggle('is-scrolled', window.scrollY > 24);
-      ticking = false;
-    };
-    window.addEventListener('scroll', () => {
-      if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
-    }, { passive: true });
-    update();
-  }
-
-  const revealItems = Array.from(document.querySelectorAll('.reveal'));
-  if (revealItems.length && !reduceMotion && 'IntersectionObserver' in window) {
-    const groups = new Map();
-    for (const item of revealItems) {
-      const parent = item.parentElement;
-      const index = groups.get(parent) || 0;
-      groups.set(parent, index + 1);
-      item.style.setProperty('--delay', `${Math.min(index, 4) * 90}ms`);
-    }
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-in');
-          observer.unobserve(entry.target);
-        }
-      }
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
-    root.classList.add('js-reveal');
-    for (const item of revealItems) {
-      const rect = item.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 0.92) item.classList.add('is-in');
-      else observer.observe(item);
-    }
-  }
+  if (!header || !header.classList) return;
+  let ticking = false;
+  const update = () => {
+    header.classList.toggle('is-scrolled', window.scrollY > 8);
+    ticking = false;
+  };
+  window.addEventListener('scroll', () => {
+    if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+  }, { passive: true });
+  update();
 })();

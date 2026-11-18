@@ -157,8 +157,9 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
 
   const server = createServer({ maxHeaderSize: 8192 }, async (incoming, outgoing) => {
     try {
-      const url = new URL(incoming.url, `${publicOrigin}/`);
-      if (url.origin !== publicOrigin || !incoming.url.startsWith('/')) {
+      let url = null;
+      try { url = new URL(incoming.url, `${publicOrigin}/`); } catch { url = null; }
+      if (!url || url.origin !== publicOrigin || !incoming.url.startsWith('/')) {
         incoming.resume();
         return sendJson(outgoing, 400, { message: invalidRequest });
       }

@@ -154,11 +154,13 @@ test('a filled website field is ignored before email is sent', async t => {
 test('the fonts are served from the site, and removed product mockups are not', async t => {
   const fixture = await serverFixture(t);
   assert.equal((await fetch(`${fixture.base}/images/tee.webp`)).status, 404);
-  const preview = await fetch(`${fixture.base}/images/shop-preview-1.webp`);
+  assert.equal((await fetch(`${fixture.base}/images/shop-preview-1.webp`)).status, 404);
+  const preview = await fetch(`${fixture.base}/images/example-store-accessories.webp`);
   assert.equal(preview.status, 200);
   assert.match(preview.headers.get('content-type'), /image\/webp/);
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
-  for (const name of ['archivo', 'instrument-serif-regular', 'instrument-serif-italic']) {
+  assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
+  for (const name of ['archivo', 'source-serif-4']) {
     const font = await fetch(`${fixture.base}/fonts/${name}.woff2`);
     assert.equal(font.status, 200, name);
     assert.match(font.headers.get('content-type'), /font\/woff2/);
@@ -213,6 +215,8 @@ test('plain HTTP from the trusted proxy redirects to HTTPS once, without a loop'
 
 test('old /examplepage.com links redirect permanently to /example-store/', async t => {
   const fixture = await serverFixture(t);
+  const doubleSlash = await fetch(`${fixture.base}//`, { redirect: 'manual' });
+  assert.equal(doubleSlash.status, 400, 'an unparseable path is a bad request, not a server error');
   for (const [from, to] of [['/examplepage.com', '/example-store/'], ['/examplepage.com/', '/example-store/'], ['/examplepage.com/products/x?y=1', '/example-store/products/x?y=1']]) {
     const response = await fetch(`${fixture.base}${from}`, { redirect: 'manual' });
     assert.equal(response.status, 301, from);
