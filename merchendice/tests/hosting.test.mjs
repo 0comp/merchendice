@@ -154,6 +154,9 @@ test('a filled website field is ignored before email is sent', async t => {
 test('the display font is served from the site, and removed product mockups are not', async t => {
   const fixture = await serverFixture(t);
   assert.equal((await fetch(`${fixture.base}/images/tee.webp`)).status, 404);
+  const preview = await fetch(`${fixture.base}/images/shop-preview-1.webp`);
+  assert.equal(preview.status, 200);
+  assert.match(preview.headers.get('content-type'), /image\/webp/);
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   const font = await fetch(`${fixture.base}/fonts/archivo.woff2`);
   assert.equal(font.status, 200);

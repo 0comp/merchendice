@@ -70,16 +70,17 @@ test('example shop renders a product grid, labels it as an example, and loads no
   assert.doesNotMatch(response.headers.get('content-security-policy'), /stripe/i);
 });
 
-test('homepage explains the service and publishes only the public contact address', async () => {
+test('homepage explains the service and sends contact to the enquiry page instead of an email address', async () => {
   const response = await worker.fetch(new Request('https://site.example.test/'));
   const html = await response.text();
-  assert.match(html, /We help creators turn their own ideas into merch/);
-  assert.match(html, /Send us a short note about your idea/);
+  assert.match(html.replace(/<[^>]+>/g, ''), /We help creators turn their own ideas into merch/);
+  assert.match(html, /Tell us your idea/);
+  assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
   assert.match(html, /href="\/enquiry\/"/);
   assert.match(html, /Shopify/);
   assert.match(html, /print-on-demand/);
   assert.doesNotMatch(html, /Printify|ShineOn|\/images\/tee|images-api\.printify\.com/);
-  assert.match(html, /merchendices@gmail.com/);
+  assert.doesNotMatch(html, /merchendices@gmail\.com|mailto:/);
   assert.match(html, /rel="canonical" href="https:\/\/merchendice.com\/"/);
   assert.match(html, /property="og:image"/);
   assert.match(html, /application\/ld\+json/);
@@ -91,7 +92,8 @@ test('homepage explains the service and publishes only the public contact addres
   const parsed = JSON.parse(jsonLd);
   assert.equal(parsed['@type'], 'Organization');
   assert.equal(parsed.name, 'Merchendice');
-  assert.equal(parsed.email, 'merchendices@gmail.com');
+  assert.equal(parsed.email, undefined);
+  assert.equal(parsed.contactPoint.url, 'https://merchendice.com/enquiry/');
   assert.equal(parsed.address, undefined);
   assert.equal(parsed.founder, undefined);
 });
@@ -285,9 +287,13 @@ test('directory matches multiple words in any order and restores the empty state
 
 test('homepage keeps the redesigned structure, a broad audience and no product imagery', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  assert.doesNotMatch(html, /<img\b/);
+  // The only images are accessory crops (tote and sticker) inside the example-shop preview card.
+  const images = [...html.matchAll(/<img\b[^>]*src="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual(images.sort(), ['/images/shop-preview-1.webp', '/images/shop-preview-1.webp', '/images/shop-preview-2.webp', '/images/shop-preview-2.webp', '/images/shop-preview-3.webp']);
   assert.doesNotMatch(html, /\b(tee|hoodie|t-shirt|sweatshirt)\b/i);
-  for (const number of ['01', '02', '03']) assert.match(html, new RegExp(`class="service-num">${number}<`));
+  assert.doesNotMatch(html, /service-num|quality-num|process-num|Step 0\d|>0[1-9]</);
+  for (const platform of ['TikTok', 'Instagram', 'YouTube']) assert.match(html, new RegExp(`<a class="platform-link" href="/enquiry/">${platform}<`));
+  assert.doesNotMatch(html, /<circle/);
   for (const step of ['Idea', 'Designs', 'Samples', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.match(html, /id="quality"/);
   assert.match(html, /look cheap or <span class="grad nowrap">off-brand\?/);
@@ -300,4 +306,14 @@ test('homepage keeps the redesigned structure, a broad audience and no product i
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(css, /\/fonts\/archivo\.woff2/);
+});
+
+test('no marketing page shows the email address or section numbering', async () => {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    assert.doesNotMatch(html, /merchendices@gmail\.com|mailto:/, route);
+    assert.doesNotMatch(html, /Step 0\d|service-num|quality-num|process-num/, route);
+    assert.match(html, /Contact us/, route);
+    assert.doesNotMatch(html, /<circle/, route);
+  }
 });
