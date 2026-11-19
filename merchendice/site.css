@@ -550,6 +550,9 @@ main { display: block; }
     transition: opacity 600ms ease-out, transform 600ms ease-out;
   }
 }
+@media (prefers-reduced-motion: no-preference) {
+  html.js-io .v2d-foot.rise.is-in { transition-delay: 120ms; }
+}
 @keyframes rise-in {
   to { opacity: 1; transform: none; }
 }
