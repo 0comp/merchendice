@@ -538,7 +538,7 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 
-test('the FAQ has exactly the seven approved questions, and the only cost wording is the approved answer', async () => {
+test('the FAQ has exactly the nine approved questions, and the only cost wording is the approved answer', async () => {
   const approved = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
   const damaged = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
@@ -548,6 +548,8 @@ test('the FAQ has exactly the seven approved questions, and the only cost wordin
   assert.ok(faq.includes('<p>Send us the form, and we’ll reply by email, usually within one or two days.</p>'));
   assert.ok(faq.includes(`<p>${approved}</p>`));
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
+  assert.ok(faq.includes('<summary>What can I sell?</summary>\n            <p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery.</p>'));
+  assert.doesNotMatch(faq, /Clothing like tees and totes/);
   assert.ok(faq.includes(`<p>${damaged}</p>`));
   assert.doesNotMatch(faq.replace(approved, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   assert.doesNotMatch(home, /"FAQPage"/);
