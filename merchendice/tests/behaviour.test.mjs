@@ -670,3 +670,9 @@ test('the example store links back to the Merchendice homepage from its top bar'
   assert.match(css, /\.announce-back:focus-visible\{outline-color:#fff\}/);
   assert.match(css, /@media \(max-width:700px\)\{[\s\S]*?\.announce-back\{position:static/);
 });
+
+test('the homepage product band lists exactly what Oscar approved', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  const strip = html.match(/<ul aria-label="What we make">([\s\S]*?)<\/ul>/)[1];
+  assert.deepEqual([...strip.matchAll(/<li>([^<]+)<\/li>/g)].map(m => m[1]), ['Totes and bags', 'Stickers', 'Clothes', 'Jewellery']);
+});
