@@ -186,7 +186,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 
 /* Layout */
 main { display: block; }
-.hero, .statement, .goods, .process-section, .showcase, .about-section, .faq-section, .missing-hero, .site-footer, .examples-page > section, .enquiry-layout, .privacy-page {
+.hero, .goods, .process-section, .showcase, .about-section, .faq-section, .missing-hero, .site-footer, .examples-page > section, .enquiry-layout, .privacy-page {
   width: 100%;
   max-width: calc(var(--wrap) + var(--gutter) * 2);
   margin-inline: auto;
@@ -238,8 +238,6 @@ main { display: block; }
 .service-strip li { font-size: 13px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; }
 
 /* Statement */
-.statement { padding-block: clamp(72px, 10vw, 140px); text-align: center; }
-.statement p { max-width: 30em; margin: 0 auto; color: var(--ink); font-family: var(--serif); font-size: clamp(27px, 2.7vw, 40px); font-weight: 500; line-height: 1.3; text-wrap: balance; }
 
 /* Goods (carried over from 1aa68d8) */
 .goods {
@@ -248,7 +246,7 @@ main { display: block; }
   justify-content: center;
   gap: clamp(32px, 7vw, 120px);
   align-items: center;
-  padding-bottom: clamp(72px, 9vw, 128px);
+  padding-block: clamp(72px, 9vw, 128px);
 }
 .goods-feature { overflow: hidden; background: var(--bg-warm); }
 .goods-feature img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }

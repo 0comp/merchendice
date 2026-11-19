@@ -602,7 +602,8 @@ test('one call-to-action label, and each idea said only once across the site', a
   const count = (re) => (all.match(re) || []).length;
   assert.equal(count(/A demo store, so you can see the finished standard/g), 1);
   assert.equal(count(/in your look/g), 1);
-  assert.equal(count(/\bjoke/g), 2, "statement line plus the approved enquiry-step wording");
+  assert.equal(count(/\bjoke/g), 1, "only the approved enquiry-step wording");
+  assert.equal(count(/already recognises/g), 0, "the removed statement line stays gone");
   // The homepage ends on the closing call to action after the FAQ, and the footer carries the contact line.
   assert.match(home, /<\/details>\s*<\/div>\s*<\/section>\s*<section class="closing-cta rise" aria-labelledby="closing-title">\s*<h2 id="closing-title">Let’s make your first drop\.<\/h2>\s*<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>\s*<\/section>\s*<\/main>/);
   assert.match(home, /<p class="footer-contact">[^<]*<a href="\/enquiry\/">Contact us<\/a><\/p>/);
