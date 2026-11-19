@@ -324,7 +324,7 @@ test('the About page holds Oscar’s approved words and the two names, and is li
   assert.match(html, /<div class="v2-panel hero-rise hero-rise-2">[\s\S]*<p class="v2-panel-cta"><a class="button button-primary" href="\/enquiry\/">Contact us<\/a><\/p>\s*<\/div>/);
   assert.doesNotMatch(html, /Start a project/);
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rodelius/);
+  assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rod[e]lius/);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const page = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.equal((page.match(/href="\/about\/"/g) || []).length, 2, route);
@@ -553,7 +553,7 @@ test('the FAQ has exactly the nine approved questions, and the only cost wording
   for (const path of ['/', '/about/', '/examples/', '/enquiry/', '/privacy/']) {
     const page = await (await worker.fetch(new Request(`https://site.example.test${path}`))).text();
     assert.match(page, /<p class="footer-contact">Got an idea\? <a /, path);
-    assert.doesNotMatch(page, /or just a channel|Rodhelius/, path);
+    assert.doesNotMatch(page, /or just a channel|Rod[h]elius/, path);
   }
   assert.ok(faq.includes(`<p>${damaged}</p>`));
   assert.doesNotMatch(faq.replace(approved, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
