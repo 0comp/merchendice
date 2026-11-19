@@ -20,6 +20,7 @@ const hashed = {
 const textFiles = {
   '/favicon.svg': ['favicon.svg', 'image/svg+xml'],
   '/robots.txt': ['robots.txt', 'text/plain; charset=utf-8'],
+  '/llms.txt': ['llms.txt', 'text/plain; charset=utf-8'],
   '/sitemap.xml': ['sitemap.xml', 'application/xml; charset=utf-8'],
 };
 const binaryFiles = {
@@ -61,7 +62,8 @@ for (const [route, file] of Object.entries(pages)) {
   assets[route] = { body, type: 'text/html; charset=utf-8', scriptSrcExtra: scriptSrcAllowance(body) };
 }
 for (const [route, [file, type]] of Object.entries(textFiles)) {
-  assets[route] = { body: await fs.readFile(file, 'utf8'), type };
+  // Normalise line endings so a Windows checkout serves the same bytes as Linux.
+  assets[route] = { body: (await fs.readFile(file, 'utf8')).replace(/\r\n/g, '\n'), type };
 }
 for (const [route, [file, type]] of Object.entries(binaryFiles)) {
   assets[route] = { body: (await fs.readFile(file)).toString('base64'), type, encoding: 'base64' };

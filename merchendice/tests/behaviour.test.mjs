@@ -113,7 +113,7 @@ test('homepage explains the service and sends contact to the enquiry page instea
   const digest = (await import('node:crypto')).createHash('sha256').update(jsonLd).digest('base64');
   assert.ok(response.headers.get('content-security-policy').includes(`'sha256-${digest}'`));
   assert.doesNotMatch(response.headers.get('content-security-policy'), /unsafe-inline/);
-  const parsed = JSON.parse(jsonLd);
+  const parsed = JSON.parse(jsonLd)['@graph'].find((node) => node['@type'] === 'Organization');
   assert.equal(parsed['@type'], 'Organization');
   assert.equal(parsed.name, 'Merchendice');
   assert.equal(parsed.email, undefined);
@@ -442,7 +442,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   // Mugs are allowed: Oscar's approved 'What can I sell?' answer names them.
   assert.doesNotMatch(html, /Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
-  assert.doesNotMatch(html.replace('replaced free of charge', 'replaced'), /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
+  assert.doesNotMatch(html.replaceAll('replaced free of charge', 'replaced'), /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
@@ -460,7 +460,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
 
 test('JSON-LD and the visible hero line both say creators and influencers', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  const json = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
+  const json = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1])['@graph'].find((node) => node['@type'] === 'Organization');
   assert.match(json.description, /creators and influencers/);
   assert.match(json.audience.audienceType, /Creators and influencers/);
   assert.match(html, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
@@ -570,7 +570,8 @@ test('the FAQ has exactly the nine approved questions with the approved answers'
   assert.match(faq, /<summary>What can I sell\?<\/summary>\s*<p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery\.<\/p>/);
   assert.doesNotMatch(faq, /Clothing like tees and totes/);
   assert.ok(faq.includes(`<p>${APPROVED_DAMAGED}</p>`));
-  assert.doesNotMatch(await page('/'), /"FAQPage"/);
+  // The FAQPage data is built from these same nine answers; tests/seo.test.mjs checks it word for word.
+  assert.match(await page('/'), /"@type":"FAQPage"/);
 });
 
 test('every page footer, the 404 page included, says "Got an idea? Contact us"', async () => {
@@ -585,7 +586,7 @@ test('the only cost wording on any page is the approved FAQ answer', async () =>
   const faq = homeFaq(await page('/'));
   assert.doesNotMatch(faq.replace(APPROVED_COST, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   for (const route of PAGES) {
-    const html = (await page(route)).replace(APPROVED_COST, '').replace(APPROVED_DAMAGED, '');
+    const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }

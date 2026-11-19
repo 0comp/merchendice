@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY scripts ./scripts
 COPY src ./src
-COPY index.html site.css site.js robots.txt sitemap.xml favicon.svg favicon.ico apple-touch-icon.png og.png 404.html ./
+COPY index.html site.css site.js robots.txt llms.txt sitemap.xml favicon.svg favicon.ico apple-touch-icon.png og.png 404.html ./
 COPY examples ./examples
 COPY example-store ./example-store
 COPY enquiry ./enquiry

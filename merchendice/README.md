@@ -49,3 +49,11 @@ Keep the subject near the middle of each photo, because tiles are cropped a litt
 ## Icons
 
 The site icon is a cream M on a charcoal (#2B2A28) rounded tile. `favicon.svg` is the source. `favicon.ico` holds 16, 32 and 48 px frames and `apple-touch-icon.png` is 180 px. Pages link them with `?v=3`; bump that number on every page when the icon changes, because browsers cache icons hard. The example store links `/favicon.ico` without a version and only picks up a new icon when the cache expires.
+
+## Search and AI discovery
+
+Each public page has its own title, description, canonical address on the apex domain (never www), Open Graph and Twitter tags and a robots tag that allows rich snippets. The home page carries Organization, WebSite and FAQPage data (the FAQ text is copied word for word from the visible answers, and `tests/seo.test.mjs` fails if they drift apart). The About page names the co-founders in its data and the other subpages carry a breadcrumb trail. No prices, ratings, reviews, addresses or phone numbers go into structured data.
+
+`robots.txt` allows every crawler, the AI ones by name, and points at `sitemap.xml`. `llms.txt` is a short plain-text summary for AI assistants, written only from copy that is already on the site. When a page is added or its copy changes, update the sitemap date, `llms.txt` if the facts change, and the page list in `tests/helpers.mjs`. The example store stays `noindex` and out of the sitemap.
+
+Needs the live site: verifying the domain in Google Search Console and Bing Webmaster Tools, submitting `sitemap.xml` to both, and the `www` host redirecting to the apex.
