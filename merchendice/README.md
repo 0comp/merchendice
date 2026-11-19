@@ -45,3 +45,7 @@ All three are under the [Pexels License](https://www.pexels.com/license/) (check
 | `photo-crewneck-*.webp` | https://www.pexels.com/photo/white-crew-neck-t-shirt-9594089/ | Ron Lach | Pexels License |
 
 Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file. It shows the natural tote, the hero tee, the knit stack and the jewellery photo, as four 258 × 258 tiles on the right (no faces, nothing AI-generated). The knit tile is a square crop of `knit-stack.webp` (rows 80 to 720 of the 640 × 800 file), downscaled only. The file is saved as a 256-colour PNG to keep it near 150 KB.
+
+## Icons
+
+The site icon is a cream two-arch m on a terracotta (#B03A26) rounded tile. `favicon.svg` is the source. `favicon.ico` holds 16, 32 and 48 px frames and `apple-touch-icon.png` is 180 px, both drawn from the SVG. Pages link them with `?v=2`; bump that number on every page when the icon changes, because browsers cache icons hard. The example store links `/favicon.ico` without a version and only picks up a new icon when the cache expires.
