@@ -206,6 +206,9 @@ main { display: block; }
 .hero h1 { max-width: 17ch; font-size: clamp(48px, 5.4vw, 84px); line-height: 1.05; }
 .hero-line {
   margin: 26px 0 22px;
+  font-family: var(--sans);
+  line-height: 1.65;
+  text-wrap: pretty;
   color: var(--ink);
   font-size: 13px;
   font-weight: 500;

@@ -196,3 +196,49 @@ test('llms.txt is short, line-ending safe and the Dockerfile ships all three cra
   const dockerfile = await readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
   for (const file of ['robots.txt', 'llms.txt', 'sitemap.xml']) assert.match(dockerfile, new RegExp(`\\b${file.replace('.', '\\.')}\\b`), file);
 });
+
+test('the approved SEO wording is in place and the layout classes are unchanged', async () => {
+  const home = await page('/');
+  assert.match(home, /<h1 id="hero-title" class="hero-rise">Merch that looks like it came from you\.<\/h1>/);
+  assert.match(home, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
+  assert.match(home, /<h2 id="faq-title" class="rise">Frequently asked questions<\/h2>/);
+  assert.match(home, /<h2 id="how-title">How it works<\/h2>/);
+  assert.doesNotMatch(home, />Questions<\/h2>/);
+  const about = await page('/about/');
+  assert.match(about, /<h1>About Merchendice<\/h1>/);
+  assert.match(about, /<p>We make clothing, totes and bags, mugs, home goods and jewellery\.<\/p>/);
+  const enquiry = await page('/enquiry/');
+  assert.match(enquiry, /<p class="hero-rise hero-rise-2">For creators of any size, on any platform\. A few lines is enough/);
+  assert.match(enquiry, /<span>Based and designed in Sweden<\/span>/);
+});
+
+test('content images have descriptive alt text; only purely decorative ones stay empty', async () => {
+  const empty = [];
+  for (const route of PUBLIC) {
+    const html = await page(route);
+    for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
+      const alt = tag.match(/\salt="([^"]*)"/)[1];
+      if (!alt) empty.push(`${route} ${tag.match(/src="([^"]+)"/)[1]}`);
+      else assert.ok(alt.split(' ').length >= 4 && !/\.(webp|png)|image of|picture of/i.test(alt), `${route}: ${alt}`);
+    }
+  }
+  assert.deepEqual(empty, [], 'no empty alt left on any public page');
+});
+
+test('the example store files are exactly as they were before the SEO work', async () => {
+  const { execFileSync } = await import('node:child_process');
+  let diff;
+  try {
+    diff = execFileSync('git', ['diff', '--stat', '3b5a9a3', 'HEAD', '--', 'example-store'], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch { return; } // no git history here (for example inside a Docker build)
+  assert.equal(diff.trim(), '');
+});
+
+test('the hero line keeps its paragraph look now that it is a heading', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const css = await readFile(new URL('../site.css', import.meta.url), 'utf8');
+  const rule = css.match(/\n\.hero-line \{([^}]+)\}/)[1];
+  for (const declaration of [/font-family: var\(--sans\)/, /line-height: 1\.65/, /font-size: 13px/, /font-weight: 500/, /text-transform: uppercase/, /letter-spacing: \.2em/]) {
+    assert.match(rule, declaration);
+  }
+});

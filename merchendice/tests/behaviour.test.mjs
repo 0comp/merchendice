@@ -316,7 +316,7 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
 
 test('the About page holds Oscar’s approved words and the two names, and is linked from every page', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
-  assert.match(html, /<h1>Who we are<\/h1>\s*<p class="v-lead">We started Merchendice after watching a creator’s merch launch fall flat\. We knew it could be done better, so we built the service we wish they’d had\.<\/p>/);
+  assert.match(html, /<h1>About Merchendice<\/h1>\s*<p class="v-lead">We started Merchendice after watching a creator’s merch launch fall flat\. We knew it could be done better, so we built the service we wish they’d had\.<\/p>/);
   assert.match(html, /We design every piece from a creator’s own content and colours, then build and run the store for them\. Each order is printed on demand and shipped for them, so they never touch stock\. They have as much say as they want, and we handle the rest\./);
   assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodelius<\/p><p class="v-where">Based in Sweden<\/p>/);
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
@@ -463,7 +463,7 @@ test('JSON-LD and the visible hero line both say creators and influencers', asyn
   const json = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1])['@graph'].find((node) => node['@type'] === 'Organization');
   assert.match(json.description, /creators and influencers/);
   assert.match(json.audience.audienceType, /Creators and influencers/);
-  assert.match(html, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
+  assert.match(html, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
 });
 
 test('the primary Start a project button sits in the hero under the bullets, and the hero text is top-aligned', async () => {
