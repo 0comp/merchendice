@@ -9,6 +9,7 @@ COPY examples ./examples
 COPY example-store ./example-store
 COPY enquiry ./enquiry
 COPY privacy ./privacy
+COPY about ./about
 RUN npm run build
 
 FROM node:24-alpine

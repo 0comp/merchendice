@@ -6,6 +6,7 @@ const pages = {
   '/examples/': 'examples/index.html',
   '/enquiry/': 'enquiry/index.html',
   '/privacy/': 'privacy/index.html',
+  '/about/': 'about/index.html',
   '/example-store/': 'example-store/index.html',
 };
 // Stylesheets and scripts get a content hash in their URL, so browsers can cache them for a year.

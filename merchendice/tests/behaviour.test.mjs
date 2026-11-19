@@ -15,7 +15,7 @@ const input = {name:'A creator',email:'creator@example.test',description:'A merc
 const request = (value, headers={}) => new Request('https://site.example.test/api/enquiry', {method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(value)});
 
 test('all pages support GET and HEAD without exposing email configuration', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/example-store/']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/example-store/']) {
     const get = await worker.fetch(new Request(`https://site.example.test${route}`),env);
     assert.equal(get.status,200);
     assert.equal((await get.text()).includes(env.MAIL_TO),false);
@@ -27,7 +27,7 @@ test('all pages support GET and HEAD without exposing email configuration', asyn
 });
 
 test('directory, enquiry, and privacy paths redirect to the trailing slash', async () => {
-  for (const route of ['/examples', '/enquiry', '/privacy', '/example-store']) {
+  for (const route of ['/examples', '/enquiry', '/privacy', '/about', '/example-store']) {
     const response = await worker.fetch(new Request(`https://site.example.test${route}?ref=1`));
     assert.equal(response.status, 301);
     assert.equal(response.headers.get('location'), `${route}/?ref=1`);
@@ -135,7 +135,7 @@ test('unknown pages use the branded not-found page', async () => {
   const robots = await worker.fetch(new Request('https://site.example.test/robots.txt'));
   assert.match(await robots.text(), /Sitemap: https:\/\/merchendice.com\/sitemap.xml/);
   const sitemap = await (await worker.fetch(new Request('https://site.example.test/sitemap.xml'))).text();
-  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/', 'https://merchendice.com/privacy/']) {
+  for (const loc of ['https://merchendice.com/', 'https://merchendice.com/enquiry/', 'https://merchendice.com/examples/', 'https://merchendice.com/privacy/', 'https://merchendice.com/about/']) {
     assert.match(sitemap, new RegExp(`<loc>${loc.replace(/[/.]/g, '\\$&')}</loc><lastmod>\\d{4}-\\d{2}-\\d{2}</lastmod>`));
   }
   assert.doesNotMatch(sitemap, /example-store/, 'the noindex example store is left out of the sitemap');
@@ -298,7 +298,7 @@ test('the sent dialog markup is a labelled native dialog with the approved wordi
 });
 
 test('marketing pages never mention samples, quality checks or Shopify, and list jewellery', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /sample|quality|shopify/i, route);
     assert.doesNotMatch(html.replace(/<[^>]+>/g, ' '), /\bcolor|\bfavorite|jewelry|\bcenter\b/i, route);
@@ -313,14 +313,25 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
   assert.doesNotMatch(home, /mobile-cta|language|guide/i);
 });
 
-test('the About section uses Oscar’s approved words and the two names, and sits before the FAQ', async () => {
-  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  assert.match(html, /<section class="about-section rise" id="about" aria-labelledby="about-title">\s*<h2 id="about-title">Who we are<\/h2>\s*<p>We watched creators try to launch their own merch and saw how often it fell flat\. Merchendice exists to make it simple, so any creator can launch merch their audience actually wants\.<\/p>\s*<p class="about-names">Oscar Thomas and Oscar Rodhelius<\/p>\s*<\/section>/);
-  assert.ok(html.indexOf('id="about"') < html.indexOf('id="faq"'));
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+test('the About page holds Oscar’s approved words and the two names, and is linked from every page', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
+  assert.match(html, /<h1 class="hero-rise">Who we are<\/h1>\s*<p>We watched creators try to launch their own merch and saw how often it fell flat\. Merchendice exists to make it simple, so any creator can launch merch their audience actually wants\.<\/p>\s*<p class="about-names">Oscar Thomas and Oscar Rodhelius<\/p>/);
+  assert.match(html, /<title>About \| Merchendice<\/title>/);
+  assert.match(html, /<link rel="canonical" href="https:\/\/merchendice\.com\/about\/">/);
+  assert.match(html, /<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/);
+  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rodhelius/);
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const page = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
-    assert.match(page, /href="(\/)?#about"/, route);
+    assert.equal((page.match(/href="\/about\/"/g) || []).length, 2, route);
+    assert.doesNotMatch(page, /#about/, route);
   }
+});
+
+test('the header Contact us button is a filled terracotta button on dark', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /\.nav-cta \{[^}]*background: var\(--accent\);[^}]*color: var\(--on-accent\)/);
+  assert.match(css, /\.nav-cta:hover \{ background: var\(--accent-hover\)/);
 });
 
 test('log retention configs keep about 30 days', async () => {
@@ -466,7 +477,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
   assert.match(css, /--accent: #B03A26/);
   assert.doesNotMatch(css, /--green|#1f3d30|#172e24/i);
   assert.doesNotMatch(css, /\.grad\b|glow|#7cc8d9|#9a8be8|#ecd27f|background-clip: text|linear-gradient|radial-gradient/i);
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
@@ -480,7 +491,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
 });
 
 test('no marketing page shows the email address or section numbering', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /merchendices@gmail\.com|mailto:/, route);
     assert.doesNotMatch(html, /Step 0\d|service-num|quality-num|process-num/, route);
@@ -492,7 +503,7 @@ test('no marketing page shows the email address or section numbering', async () 
 test('privacy notice is finished and indexable, and open items live in an unserved TODO.md', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
   assert.doesNotMatch(html, /noindex|\(draft\)|draft-banner/i);
-  for (const route of ['/', '/privacy/', '/enquiry/', '/examples/', '/example-store/', '/missing-page']) {
+  for (const route of ['/', '/privacy/', '/about/', '/enquiry/', '/examples/', '/example-store/', '/missing-page']) {
     assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${route}`))).text(), /<!--/, route);
   }
   const notes = await fs.readFile(new URL('../TODO.md', import.meta.url), 'utf8');
@@ -526,7 +537,7 @@ test('the only cost wording is the approved FAQ answer, with no prices, fees, sp
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.match(home, /<summary>What does it cost to get started\?<\/summary>/);
   assert.ok(home.includes(`<p>${approved}</p>`));
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
   }
@@ -534,7 +545,7 @@ test('the only cost wording is the approved FAQ answer, with no prices, fees, sp
 
 test('one call-to-action label, and each idea said only once across the site', async () => {
   const pages = {};
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     pages[route] = html.slice(html.indexOf('<body'), html.indexOf('</body>')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   }
@@ -579,7 +590,7 @@ test('load-in motion has a reduced-motion path and a no-JS fallback, and does no
   assert.match(js, /prefers-reduced-motion: reduce/);
   assert.match(js, /IntersectionObserver/);
   assert.match(js, /unobserve/);
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
+  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.match(html, /<script>document\.documentElement\.classList\.add\('js'\)<\/script>/, route);
     const csp = (await worker.fetch(new Request(`https://site.example.test${route}`))).headers.get('content-security-policy');

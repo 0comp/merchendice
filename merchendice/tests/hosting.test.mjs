@@ -297,7 +297,7 @@ test('every response carries the permissions and opener policies, and hashed ass
 
 test('every referenced local asset exists', async t => {
   const fixture = await serverFixture(t);
-  const startRoutes = ['/', '/examples/', '/enquiry/', '/privacy/', '/example-store/', '/missing-page'];
+  const startRoutes = ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/example-store/', '/missing-page'];
   const seen = new Set(startRoutes);
   const queue = startRoutes.map((path) => ({ path, referrer: 'start' }));
   const missing = [];
