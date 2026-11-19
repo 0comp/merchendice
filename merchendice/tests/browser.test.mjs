@@ -125,3 +125,30 @@ test('the sent dialog closes with Esc, the Close button or the backdrop, and foc
   assert.equal((await state()).open, true, 'clicking the dialog text keeps it open');
   assert.equal(server.sends(), 4);
 });
+
+test('the share image shows the knit stack in the tile where the old bird sticker was', browserTestOptions(), async (t) => {
+  const { base } = await startServer(t);
+  const browser = await startBrowser(t);
+  const tab = await browser.newPage({ width: 1300, height: 700 });
+  await tab.goto(`${base}/`);
+  // Draw the share image and the knit photo (cropped and scaled the way README describes) and compare pixels.
+  const result = await tab.evaluate(`(async () => {
+    const load = (src) => new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
+    const [og, knit] = await Promise.all([load('/og.png'), load('/images/knit-stack.webp')]);
+    const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c.getContext('2d', { willReadFrequently: true }); };
+    const share = canvas(1200, 630); share.drawImage(og, 0, 0);
+    const tile = canvas(258, 258); tile.imageSmoothingQuality = 'high'; tile.drawImage(knit, 0, 80, 640, 640, 0, 0, 258, 258);
+    const a = share.getImageData(656, 358, 258, 258).data, b = tile.getImageData(0, 0, 258, 258).data;
+    let diff = 0, dark = 0;
+    for (let i = 0; i < a.length; i += 4) {
+      diff += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+      if (Math.abs(a[i] - 46) <= 3 && Math.abs(a[i + 1] - 36) <= 3 && Math.abs(a[i + 2] - 30) <= 3) dark++;
+    }
+    return { width: og.naturalWidth, height: og.naturalHeight, meanDiff: diff / (a.length / 4) / 3, darkShare: dark / (a.length / 4) };
+  })()`);
+  assert.equal(result.width, 1200);
+  assert.equal(result.height, 630);
+  assert.ok(result.meanDiff < 12, `knit tile matches the photo (mean difference ${result.meanDiff.toFixed(1)})`);
+  // The old sticker tile was mostly a flat #2E241E background.
+  assert.ok(result.darkShare < 0.05, `no sticker background left (${(result.darkShare * 100).toFixed(1)}% of the tile)`);
+});

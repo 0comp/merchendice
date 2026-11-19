@@ -28,7 +28,7 @@ test('all pages, the 404 page included, support GET and HEAD without exposing em
 });
 
 test('every page path without a trailing slash 301-redirects to it and keeps the query string', async () => {
-  for (const route of ['/examples', '/enquiry', '/privacy', '/about', '/example-store']) {
+  for (const route of [...PAGES, '/example-store/'].filter(route => route.length > 1 && route.endsWith('/')).map(route => route.slice(0, -1))) {
     const response = await worker.fetch(new Request(`https://site.example.test${route}?ref=1`));
     assert.equal(response.status, 301);
     assert.equal(response.headers.get('location'), `${route}/?ref=1`);
@@ -269,7 +269,7 @@ function dialogStub() {
   };
 }
 
-test('a confirmed send opens the sent dialog, focuses its close button, and returns focus when it closes', async () => {
+test('site.js wiring, with a stubbed dialog: a confirmed send opens it, focuses Close, and closing returns focus', async () => {
   const dialog=dialogStub();
   const h=formHarness(async()=>Response.json({ok:true}),input,dialog);
   await h.submit();
@@ -716,4 +716,21 @@ test('the homepage product band lists exactly what Oscar approved', async () => 
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const strip = html.match(/<ul aria-label="What we make">([\s\S]*?)<\/ul>/)[1];
   assert.deepEqual([...strip.matchAll(/<li>([^<]+)<\/li>/g)].map(m => m[1]), ['Totes and bags', 'Stickers', 'Clothes', 'Jewellery']);
+});
+
+test('the share image is a 1200 × 630 PNG under 300 KB, and every page points to it with matching meta', async () => {
+  const response = await worker.fetch(new Request('https://site.example.test/og.png'));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-type'), 'image/png');
+  const png = Buffer.from(await response.arrayBuffer());
+  assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], 'PNG signature');
+  assert.equal(png.readUInt32BE(16), 1200);
+  assert.equal(png.readUInt32BE(20), 630);
+  assert.ok(png.length < 300 * 1024, `${Math.round(png.length / 1024)} KB`);
+  assert.deepEqual(png, await fs.readFile(new URL('../og.png', import.meta.url)), 'the served file is the committed one');
+  for (const route of PAGES.filter(route => route !== MISSING_PAGE)) {
+    const html = await page(route);
+    assert.match(html, /<meta property="og:image" content="https:\/\/merchendice\.com\/og\.png">\s*<meta property="og:image:width" content="1200">\s*<meta property="og:image:height" content="630">/, route);
+    assert.match(html, /<meta name="twitter:image" content="https:\/\/merchendice\.com\/og\.png">/, route);
+  }
 });

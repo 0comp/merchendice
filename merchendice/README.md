@@ -11,7 +11,7 @@ npm run build
 npm start
 ```
 
-Tests mock email delivery and never send messages. `/healthz` reports that the web server is running; it does not certify email delivery. Configure the provider and verify one enquiry before accepting visitors.
+Tests mock email delivery and never send messages. Every test file rebuilds `dist/` first, so a stale build can't hide a change. Three checks run the site in headless Chrome over the DevTools protocol, with no extra npm packages: the share image, the computed button corners and how the sent dialog closes (Esc, Close or a backdrop click). They find Chrome, Chromium or Edge in the usual places; set `CHROME_PATH` to point elsewhere. Without a browser they fail on purpose; `SKIP_BROWSER_TESTS=1` marks them as skipped instead. `/healthz` reports that the web server is running; it does not certify email delivery. Configure the provider and verify one enquiry before accepting visitors.
 
 ## Image slots
 

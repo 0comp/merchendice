@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import worker from '../dist/app.mjs';
+// helpers.mjs rebuilds dist/app.mjs first, so the dist/ scan below always reads a fresh build.
+import { PAGES, worker } from './helpers.mjs';
 
 // Built from two halves so this file never contains the misspelling itself.
 const misspelling = new RegExp('Rod' + 'helius', 'i');
@@ -22,7 +23,7 @@ async function* walk(dir) {
 
 test('the co-founder is always spelled Rodelius, never Rod' + 'helius', async () => {
   // Every served page, including the 404 page and the example store, plus the text assets they load.
-  const routes = ['/', '/about/', '/examples/', '/enquiry/', '/privacy/', '/example-store/', '/missing-page', '/robots.txt', '/sitemap.xml', '/site.js', '/site.css'];
+  const routes = [...PAGES, '/example-store/', '/robots.txt', '/sitemap.xml', '/site.js', '/site.css'];
   const missing = await worker.fetch(new Request('https://site.example.test/missing-page'));
   assert.equal(missing.status, 404, 'the 404 page is actually served');
   for (const route of routes) {

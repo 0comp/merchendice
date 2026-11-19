@@ -28,8 +28,9 @@ function requestHostname(incoming) {
 const invalidRequest = 'Please check the form and try again.';
 const tooManyEnquiries = 'Too many enquiries. Please try again later.';
 
-function sendJson(response, status, message) {
+function sendJson(response, status, message, extraHeaders = {}) {
   response.writeHead(status, {
+    ...extraHeaders,
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
@@ -75,11 +76,16 @@ export const ENQUIRY_RAW_LIMIT = 20;
 // record() counts a send that went out, and the returned release() frees the held place either way.
 export function createRateLimiter({ limit = ENQUIRY_LIMIT, windowMs = ENQUIRY_WINDOW_MS, maxClients = 10000, now: clock = Date.now } = {}) {
   const clients = new Map();
+  let lastPrune = clock();
+  // Expired counts are dropped, so an address is held in memory for about one window (the Privacy
+  // notice says up to an hour). Pruning runs at most once a minute, or at once when the table is full.
+  function prune(now) {
+    lastPrune = now;
+    for (const [key, value] of clients) if (value.expires <= now && value.pending === 0) clients.delete(key);
+  }
   function bucketFor(ip) {
     const now = clock();
-    if (clients.size >= maxClients) {
-      for (const [key, value] of clients) if (value.expires <= now && value.pending === 0) clients.delete(key);
-    }
+    if (clients.size >= maxClients || now - lastPrune >= 60 * 1000) prune(now);
     let bucket = clients.get(ip);
     if (!bucket || bucket.expires <= now) {
       // With the table still full of live clients, refuse rather than forget anyone's count.
@@ -112,6 +118,12 @@ export function createRateLimiter({ limit = ENQUIRY_LIMIT, windowMs = ENQUIRY_WI
       const bucket = bucketFor(ip);
       if (bucket) bucket.count++;
     },
+    // Whole seconds until this address may try again (for the Retry-After header).
+    retryAfter(ip) {
+      const bucket = clients.get(ip);
+      return Math.max(1, Math.ceil(((bucket?.expires ?? clock() + windowMs) - clock()) / 1000));
+    },
+    size: () => clients.size,
   };
 }
 
@@ -244,7 +256,7 @@ export function createAppServer({
         // The raw cap comes first, so even rejected POSTs are limited.
         if (!rawRateLimiter.allow(ip)) {
           incoming.resume();
-          return sendJson(outgoing, 429, { message: tooManyEnquiries });
+          return sendJson(outgoing, 429, { message: tooManyEnquiries }, { 'retry-after': String(rawRateLimiter.retryAfter(ip)) });
         }
         if (incoming.headers.origin && incoming.headers.origin !== url.origin) {
           incoming.resume();
@@ -253,7 +265,7 @@ export function createAppServer({
         releaseSend = rateLimiter.reserve(ip);
         if (!releaseSend) {
           incoming.resume();
-          return sendJson(outgoing, 429, { message: tooManyEnquiries });
+          return sendJson(outgoing, 429, { message: tooManyEnquiries }, { 'retry-after': String(rateLimiter.retryAfter(ip)) });
         }
         if (Number(incoming.headers['content-length']) > MAX_BODY_BYTES) {
           releaseSend();

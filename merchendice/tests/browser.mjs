@@ -66,6 +66,11 @@ export async function launchBrowser() {
     '--disable-extensions', '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank',
   ], { stdio: ['ignore', 'ignore', 'pipe'] });
   const exited = new Promise((resolve) => chrome.once('exit', resolve));
+  // Never leave a Chrome behind if the test process ends early.
+  const killOnExit = () => chrome.kill('SIGKILL');
+  process.once('exit', killOnExit);
+  // Windows can hold the profile folder for a moment after Chrome exits; a leftover temp folder is harmless.
+  const removeProfile = () => { try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch {} };
   let cdp;
   try {
     const url = await new Promise((resolve, reject) => {
@@ -83,7 +88,8 @@ export async function launchBrowser() {
   } catch (error) {
     chrome.kill();
     await exited;
-    rmSync(profile, { recursive: true, force: true, maxRetries: 5 });
+    process.off('exit', killOnExit);
+    removeProfile();
     throw error;
   }
 
@@ -156,7 +162,8 @@ export async function launchBrowser() {
       const timer = setTimeout(() => chrome.kill('SIGKILL'), 5000);
       await exited;
       clearTimeout(timer);
-      rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+      process.off('exit', killOnExit);
+      removeProfile();
     },
   };
 }

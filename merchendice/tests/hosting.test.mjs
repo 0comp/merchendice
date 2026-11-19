@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { request as httpRequest } from 'node:http';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 // helpers.mjs rebuilds dist/app.mjs first; server.mjs is loaded only afterwards, so it serves the fresh build.
-import './helpers.mjs';
+import { PAGES, worker } from './helpers.mjs';
 const { createAppServer, createRateLimiter, ENQUIRY_LIMIT, ENQUIRY_RAW_LIMIT, ENQUIRY_WINDOW_MS } = await import('../server.mjs');
 import { createEmailSender, headerSafe, makeGmailMessage } from '../src/mail.mjs';
 
@@ -130,6 +130,22 @@ test('each visitor can send exactly 2 enquiries per hour; the 3rd gets a friendl
   assert.equal(limiter.reserve('a'),null);
   now=60*60*1000;
   assert.equal(typeof limiter.reserve('a'),'function');
+  // The 2nd blocked send carries a Retry-After header too.
+  assert.ok(Number(third.headers.get('retry-after'))>3500);
+});
+
+test('rate-limit counts are dropped after about an hour, as the Privacy notice says', async () => {
+  let now=0;
+  const limiter=createRateLimiter({now:()=>now});
+  for (const ip of ['a','b','c']) limiter.record(ip);
+  assert.equal(limiter.size(),3);
+  now=ENQUIRY_WINDOW_MS+60*1000;
+  limiter.record('d');
+  assert.equal(limiter.size(),1,'expired addresses are forgotten');
+  const privacy=await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
+  assert.equal(ENQUIRY_WINDOW_MS,60*60*1000);
+  assert.match(privacy,/That count is kept in memory for up to an hour and the site doesn’t save it\./);
+  assert.doesNotMatch(privacy,/ten minutes/);
 });
 
 test('invalid, oversized, honeypot and undelivered enquiries do not use up the 2-per-hour allowance', async t => {
@@ -170,9 +186,17 @@ test(`a separate raw cap of ${ENQUIRY_RAW_LIMIT} POSTs an hour per visitor stops
   const blocked=await bad();
   assert.equal(blocked.status,429);
   assert.equal((await blocked.json()).message,'Too many enquiries. Please try again later.');
+  const retry=Number(blocked.headers.get('retry-after'));
+  assert.ok(retry>3500 && retry<=3600,`Retry-After is about an hour (${retry}s)`);
   assert.equal((await fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)})).status,429);
   assert.equal(fixture.sends(),0);
-  // Cross-site POSTs count toward the raw cap too.
+  // Cross-site POSTs are refused with a 403 but still count toward the raw cap.
+  const other=await serverFixture(t);
+  const crossSite=()=>fetch(`${other.base}/api/enquiry`,{method:'POST',headers:{origin:'https://another.example.test'},body:JSON.stringify(input)});
+  for (let i=0;i<ENQUIRY_RAW_LIMIT;i++) assert.equal((await crossSite()).status,403,`cross-site POST ${i+1}`);
+  assert.equal((await crossSite()).status,429);
+  assert.equal((await fetch(`${other.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)})).status,429);
+  assert.equal(other.sends(),0);
   let now=0;
   const raw=createRateLimiter({limit:ENQUIRY_RAW_LIMIT,now:()=>now});
   for (let i=0;i<ENQUIRY_RAW_LIMIT;i++) assert.equal(raw.allow('a'),true);
@@ -383,7 +407,7 @@ test('every response carries the permissions and opener policies, and hashed ass
 
 test('every referenced local asset exists', async t => {
   const fixture = await serverFixture(t);
-  const startRoutes = ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/example-store/', '/missing-page'];
+  const startRoutes = [...PAGES, '/example-store/'];
   const seen = new Set(startRoutes);
   const queue = startRoutes.map((path) => ({ path, referrer: 'start' }));
   const missing = [];

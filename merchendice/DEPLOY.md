@@ -46,6 +46,10 @@ COMPOSIO_FROM_EMAIL=merchendices@gmail.com
 
 The backend uses Composio's [documented proxy endpoint](https://docs.composio.dev/reference/api-reference/tools/postToolsExecuteProxy) to send a Gmail message with Reply-To. It checks both the upstream status and the Gmail message receipt before claiming success. Your Gmail OAuth credentials stay with Composio; the server stores only the Composio project key and account ID.
 
+### Enquiry rate limits
+
+In `server.mjs`, each IP address can send 2 enquiries per hour (`ENQUIRY_LIMIT`). Only enquiries the email provider confirms count, so a form error, an oversized message, a spam-trap hit or a failed delivery doesn't use one up. Separately, every POST to the form counts toward an abuse cap of 20 per hour per IP (`ENQUIRY_RAW_LIMIT`), so the form can't be hammered. Both answer with a 429 and a `Retry-After` header. Behind the proxy, set `TRUST_PROXY=1` (as `compose.yaml` does) so the limits use the visitor's `X-Real-IP` rather than the proxy's address. Counts live in memory only and are dropped after about an hour.
+
 ### Gmail SMTP mode (matches the reference repository)
 
 The reference [Rigoluso/Merchendices repository](https://github.com/Rigoluso/Merchendices/blob/75c73aae10f1a304fae16b1b21156694730e22aa/mail-api/server.mjs) uses Gmail SMTP with Nodemailer. It does not use Composio or Resend. This package preserves that account/password approach, the business inbox, Reply-To, validation, and rate limiting while adapting it to your current form. Its mail library is updated from the reference version.
