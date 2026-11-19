@@ -159,10 +159,10 @@ test('the fonts are served from the site, and removed product mockups are not', 
   assert.equal((await fetch(`${fixture.base}/fonts/fraunces.woff2`)).status, 404);
   assert.equal((await fetch(`${fixture.base}/fonts/instrument-serif-regular.woff2`)).status, 404);
   for (const old of ['archivo', 'source-serif-4']) assert.equal((await fetch(`${fixture.base}/fonts/${old}.woff2`)).status, 404, old);
-  for (const gone of ['tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand', 'canvas-black', 'canvas-natural', 'canvas-sand', 'goods-flatlay', 'store-banner']) {
+  for (const gone of ['sticker', 'tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand', 'canvas-black', 'canvas-natural', 'canvas-sand', 'goods-flatlay', 'store-banner']) {
     assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   }
-  for (const image of ['hero-tee', 'tote-natural', 'sticker', 'photo-jewellery-720', 'photo-jewellery-360', 'photo-tote-720', 'photo-tote-360', 'photo-crewneck-720', 'photo-crewneck-360', 'hoodie-black-496', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960']) {
+  for (const image of ['hero-tee', 'tote-natural', 'knit-stack', 'photo-jewellery-720', 'photo-jewellery-360', 'photo-tote-720', 'photo-tote-360', 'photo-crewneck-720', 'photo-crewneck-360', 'hoodie-black-496', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);

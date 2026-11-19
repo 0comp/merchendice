@@ -19,7 +19,7 @@ Every photo on the marketing pages is a plain file in `images/`. To use your own
 
 The stock photos show plain, unbranded products (jewellery, a blank tote, a crewneck) with no faces, logos or watermarks. They are there to show the kind of product, and are never captioned as Merchendice work, products or clients.
 
-The colourful songbird (the small chest print on the tote and the matching sticker) appears on two homepage photos: the natural tote and the sticker, both desktop-only tiles in the mosaic. It also shows on the crewneck inside the example-store screenshots. The hero shirt is a different design, the Dove Line Tee. The black hoodie in "A few good products" is a close detail of a store product, cropped clear of the print. The bird artwork's origin still needs confirming before these photos go live.
+The colourful songbird (the small chest print on the tote and the matching sticker) appears on one homepage photo: the natural tote, a desktop-only tile in the mosaic. It also shows on the crewneck inside the example-store screenshots. The hero shirt is a different design, the Dove Line Tee. The black hoodie in "A few good products" is a close detail of a store product, cropped clear of the print. The bird artwork's origin still needs confirming before these photos go live.
 
 | File | Size (px) | Shape | Where it shows |
 | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ The colourful songbird (the small chest print on the tote and the matching stick
 | `photo-crewneck-720.webp`, `photo-crewneck-360.webp` | 720 × 900, 360 × 450 | 4:5 | Homepage mosaic (desktop only). Stock photo: neckline of an off-white crewneck. |
 | `hero-tee.webp` | 720 × 900 | 4:5 | Homepage mosaic (the one tee in the hero, also on phones). Dove Line Tee, unedited. |
 | `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic (desktop only), enquiry page (desktop), share image. Songbird Canvas Tote, unedited. |
-| `sticker.webp` | 640 × 800 | 4:5 | Homepage mosaic (desktop only), share image. Songbird Sticker, unedited. |
+| `knit-stack.webp` | 640 × 800 | 4:5 | Homepage mosaic (desktop only). Folded knit sweaters, photo by Arina Krasnikova on Pexels (Pexels licence): https://www.pexels.com/photo/a-close-up-shot-of-stack-of-folded-knitted-fabrics-5710046/ |
 | `hoodie-black-496.webp` | 496 × 620 | 4:5 | "A few good products" (shown at most 460 px wide). Sleeve and pocket of the black hoodie. |
 | `store-phone-780.webp`, `store-phone-520.webp` | 780 × 1158, 520 × 772 | about 2:3 | Homepage example-store section (shown at most 380 px wide). Unedited 2× phone screenshot of `/example-store/`. |
 | `store-desktop-1440.webp`, `store-desktop-960.webp` | 1440 × 900, 960 × 600 | 16:10 | `/examples/` card (shown at most about 720 px wide). Unedited 1440 × 900 desktop screenshot of the current `/example-store/` (960 is the same capture scaled down). |

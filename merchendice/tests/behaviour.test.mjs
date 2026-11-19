@@ -381,7 +381,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /src="\/images\/[a-z0-9-]+\.webp"/, tag);
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
-  const allowed = ['hero-tee', 'tote-natural', 'sticker', 'photo-jewellery-720', 'photo-tote-720', 'photo-crewneck-720', 'hoodie-black-496', 'store-phone-780'];
+  const allowed = ['hero-tee', 'tote-natural', 'knit-stack', 'photo-jewellery-720', 'photo-tote-720', 'photo-crewneck-720', 'hoodie-black-496', 'store-phone-780'];
   // Desktop-only tiles use <picture>. Count the designed photo once (the min-width source, or the img if there isn't one).
   const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
@@ -396,9 +396,11 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   }
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
-  // The colourful songbird (the cartoon bird from the tote and sticker) may appear on at most three homepage images.
+  // The colourful songbird (the cartoon bird from the tote) now appears on one homepage image; the sticker tile is the knit stack.
   const songbird = names.filter(name => ['tote-natural', 'sticker', 'goods-flatlay'].includes(name));
-  assert.deepEqual(songbird, ['sticker', 'tote-natural']);
+  assert.deepEqual(songbird, ['tote-natural']);
+  assert.match(html, /<img src="\/images\/knit-stack\.webp" alt="Stack of folded knit sweaters" width="640" height="800"/);
+  assert.doesNotMatch(html, /sticker\.webp|Songbird kiss-cut sticker/);
   // The fabric close-ups are gone; the hero mixes three stock product photos with the store mockups.
   assert.doesNotMatch(html, /tote-black|canvas-(black|natural|sand)|canvas weave|goods-flatlay|store-banner/);
   assert.match(html, /Natural canvas tote with a colourful songbird print/);
