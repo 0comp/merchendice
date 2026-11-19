@@ -674,3 +674,7 @@ main { display: block; }
 .v2d-foot .v-cta .button{width:100%}
 }
 .v2-panel+.v2c-lower+.v2d-foot{display:block}@media(min-width:861px){.v2-panel+.v2c-lower+.v2d-foot{display:flex}}
+
+/* about: shortened jewellery band; --crop = how far the photo's top edge sits above the panel's top edge (desktop) */
+.v2{--crop:50px;--overlap:clamp(64px,13vw,200px)}
+@media(min-width:861px){.v2-band{height:calc(var(--crop) + var(--overlap))}.v2-band img{object-position:center 44%}}
