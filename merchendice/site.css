@@ -678,3 +678,11 @@ main { display: block; }
 /* about: shortened jewellery band; --crop = how far the photo's top edge sits above the panel's top edge (desktop) */
 .v2{--crop:50px;--overlap:clamp(64px,13vw,200px)}
 @media(min-width:861px){.v2-band{height:calc(var(--crop) + var(--overlap))}.v2-band img{object-position:center 44%}}
+
+/* about: single CTA lives inside the "Who we are" panel; the sign-off stands alone below the rule */
+.v2-panel-cta{margin:clamp(24px,2.6vw,32px) 0 0}
+.v2-panel-cta .button{min-width:176px;text-align:center}
+@media(max-width:860px){.v2-panel-cta .button{width:100%}}
+@media(min-width:861px){.v2 .v2d-foot{justify-content:flex-start}}
+@media(min-width:861px){.v2-panel{padding-bottom:clamp(32px,3.6vw,52px)}.v2-panel-cta .button{min-width:200px;min-height:50px}}
+.v2 .v2d-foot{margin-top:clamp(40px,4.4vw,60px)}

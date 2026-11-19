@@ -321,7 +321,8 @@ test('the About page holds Oscar’s approved words and the two names, and is li
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
   assert.match(html, /<title>About \| Merchendice<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/merchendice\.com\/about\/">/);
-  assert.match(html, /<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/);
+  assert.match(html, /<div class="v2-panel">[\s\S]*<p class="v2-panel-cta"><a class="button button-primary" href="\/enquiry\/">Contact us<\/a><\/p>\s*<\/div>/);
+  assert.doesNotMatch(html, /Start a project/);
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rodhelius/);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
