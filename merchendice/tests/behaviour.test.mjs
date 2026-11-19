@@ -536,16 +536,18 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 
-test('the FAQ has exactly the five approved questions and never mentions price, $ or payout', async () => {
+test('the FAQ has exactly the seven approved questions, and the only cost wording is the approved answer', async () => {
+  const approved = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
   const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
-  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?']);
+  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?']);
   assert.ok(faq.includes('<p>Send us the form, and we’ll reply by email, usually within one or two days.</p>'));
-  assert.doesNotMatch(faq, /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
+  assert.ok(faq.includes(`<p>${approved}</p>`));
+  assert.doesNotMatch(faq.replace(approved, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   assert.doesNotMatch(home, /"FAQPage"/);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+    const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }
