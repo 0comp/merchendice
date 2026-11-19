@@ -48,4 +48,4 @@ Keep the subject near the middle of each photo, because tiles are cropped a litt
 
 ## Icons
 
-The site icon is a cream two-arch m on a terracotta (#B03A26) rounded tile. `favicon.svg` is the source. `favicon.ico` holds 16, 32 and 48 px frames and `apple-touch-icon.png` is 180 px, both drawn from the SVG. Pages link them with `?v=2`; bump that number on every page when the icon changes, because browsers cache icons hard. The example store links `/favicon.ico` without a version and only picks up a new icon when the cache expires.
+The site icon is a cream M on a charcoal (#2B2A28) rounded tile. `favicon.svg` is the source. `favicon.ico` holds 16, 32 and 48 px frames and `apple-touch-icon.png` is 180 px. Pages link them with `?v=3`; bump that number on every page when the icon changes, because browsers cache icons hard. The example store links `/favicon.ico` without a version and only picks up a new icon when the cache expires.
