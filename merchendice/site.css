@@ -584,3 +584,93 @@ main { display: block; }
     transition: none;
   }
 }
+
+/* about mockup C2b */
+.v-wrap{max-width:calc(1180px + var(--gutter)*2);margin:0 auto;padding-inline:var(--gutter)}
+.v h1{font-family:var(--serif);font-weight:500;color:var(--ink);line-height:1;margin:0;text-align:left}
+.v-lead{font-family:var(--serif);font-size:clamp(23px,2.2vw,29px);line-height:1.36;color:var(--ink);margin:0}
+.v-names{margin:28px 0 4px;font-weight:500;color:var(--ink);font-size:16px}
+.v-where{margin:0;font-size:14px;color:var(--muted)}
+.v-points h2{font-family:var(--serif);font-size:25px;font-weight:500;color:var(--ink);margin:0 0 8px}
+.v-points p{margin:0;font-size:15.5px;color:var(--text)}
+.v img{display:block;width:100%;height:100%;object-fit:cover}
+
+.v2-bandwrap{max-width:calc(1180px + var(--gutter)*2);margin:0 auto;padding:clamp(20px,3vw,40px) var(--gutter) 0}
+.v2-band{width:80%;height:clamp(240px,34vw,480px)}
+.v2-lower{margin-top:clamp(48px,5vw,72px)!important}
+.v2-band img{border-radius:0}
+.v2-band img{object-position:center 36%}
+.v2 .v-wrap{position:relative}
+.v2-panel{position:relative;z-index:1;max-width:640px;margin:clamp(-200px,-13vw,-64px) 0 0 auto;background:var(--surface);border:1px solid var(--ink);padding:clamp(28px,4vw,56px)}
+.v2 h1{font-size:clamp(44px,5.4vw,76px);margin-bottom:28px}
+.v2-lower{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(32px,6vw,88px);align-items:stretch;margin-top:clamp(56px,7vw,96px)}
+.v2-points{display:flex;flex-direction:column;border-top:1px solid var(--ink)}
+.v2-points>div{padding:24px 0;border-bottom:1px solid var(--line-strong)}
+.v2-points>div:last-child{border-bottom:0}
+.v-cta{margin:clamp(40px,5vw,64px) 0 0;padding-bottom:clamp(64px,8vw,112px)}
+@media(max-width:860px){.v2-band{width:100%}.v2-panel{margin:-48px 0 0;padding:28px 22px}.v2-lower{grid-template-columns:1fr}.v-cta .button{width:100%}.v2-band{height:clamp(200px,56vw,320px)}}
+
+.v2-lower{display:block}
+.v2-points{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(28px,4vw,64px);border-top:0}
+.v2-points>div{padding:28px 0 0;border-top:1px solid var(--ink);border-bottom:0}
+.v2-points>div:last-child{border-bottom:0}
+.v2-points h2{font-size:clamp(23px,2vw,27px)}
+.v-cta{text-align:left}
+@media(max-width:860px){.v2-points{grid-template-columns:1fr;gap:0}.v2-points>div{padding:24px 0}.v2-points>div:last-child{padding-bottom:0}}
+.v2-lower{margin-top:clamp(56px,6vw,88px)!important}
+.v2-points>div{position:relative;padding:32px 0 0}
+.v2-points>div::before{content:"";position:absolute;left:0;top:-2px;width:48px;height:3px;background:var(--accent)}
+.v2-points h2{margin-bottom:12px}
+.v2-points p{font-size:17px;line-height:1.55;max-width:34ch}
+.v-cta{margin-top:clamp(48px,5vw,72px)}
+@media(max-width:860px){.v2-points>div{padding:28px 0 28px}.v2-points>div:last-child{padding-bottom:0}.v2-lower{margin-top:48px!important}.v2-points p{max-width:none}}
+
+/* about mockup C2c */
+.v2c-lower{max-width:600px;margin-top:clamp(40px,5vw,72px)!important}
+.v2c-prose p{font-family:var(--serif);font-size:clamp(19px,1.5vw,21px);line-height:1.62;color:var(--ink);margin:0 0 1.15em}
+.v2c-prose p:last-child{margin-bottom:0}
+.v2c-prose em{font-style:italic;color:var(--accent);font-weight:500}
+.v-cta{margin-top:clamp(36px,4vw,52px)}
+@media(max-width:860px){.v2c-lower{max-width:none;margin-top:36px!important}.v2c-prose p{font-size:19px}}
+@media(min-width:861px){
+.v2 .v-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,640px);column-gap:clamp(40px,6vw,96px);align-items:start}
+.v2 .v2-panel{grid-column:2;grid-row:1;width:auto}
+.v2 .v2c-lower{grid-column:1;grid-row:1;margin-top:clamp(40px,3.4vw,56px)!important;max-width:460px;padding-right:0}
+.v2 .v-cta{grid-column:1/-1;grid-row:2}
+.v2c-prose p{font-size:clamp(19px,1.45vw,21px)}
+}
+
+.v2c-prose p{text-wrap:pretty;font-size:clamp(20px,1.6vw,22.5px);line-height:1.58}
+.v2c-lower .v-cta{margin:clamp(32px,3.4vw,48px) 0 0;padding-bottom:0}
+.v2-panel+.v2c-lower+*{display:none}
+.v-wrap{padding-bottom:clamp(64px,8vw,112px)}
+@media(min-width:861px){.v2 .v2c-lower{align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;max-width:480px}.v2c-lower .v-cta{margin-top:32px}}
+@media(min-width:861px){.v2 .v-wrap{grid-template-columns:minmax(0,1fr) minmax(0,min(640px,52%))}.v2 .v2c-lower{display:block;align-self:start}.v2c-lower .v-cta{margin-top:clamp(28px,3vw,40px)}}
+
+/* about mockup C2d */
+.v2d-lower .v2c-prose p{font-size:clamp(20px,1.6vw,22.5px);line-height:1.6}
+.v2d-lower .v-names{margin:clamp(28px,3vw,40px) 0 4px;font-family:var(--serif);font-style:italic;font-size:clamp(19px,1.5vw,21px)}
+.v2d-lower .v-cta{margin:clamp(28px,3vw,40px) 0 0;padding-bottom:0}
+.v2d-lower .v-names{padding-top:clamp(20px,2vw,28px);border-top:1px solid var(--line-strong);margin-top:clamp(28px,3vw,40px)}
+.v2d-lower .v-where{letter-spacing:.02em}
+.v2d-lower .v-cta .button{min-width:176px;text-align:center}
+@media(min-width:861px){.v2 .v-wrap{padding-bottom:clamp(56px,6vw,88px)}.v2d-lower .v2c-prose{max-width:440px}.v2-panel{padding-bottom:clamp(36px,4.4vw,64px)}}
+@media(min-width:861px){.v2d-lower .v2c-prose{max-width:none}}
+
+/* C2d final balance */
+.v2d-foot .v-names{margin:0 0 4px;padding:0;border:0;font-family:var(--serif);font-style:italic;font-size:clamp(20px,1.6vw,22.5px);color:var(--ink)}
+.v2d-foot .v-where{margin:0;font-size:14px;color:var(--muted);letter-spacing:.02em}
+.v2d-foot .v-cta{margin:0;padding:0}
+.v2d-foot .v-cta .button{min-width:176px;text-align:center}
+.v2d-lower .v2c-prose p{text-wrap:pretty}
+@media(min-width:861px){
+.v2 .v2d-foot{grid-column:1/-1;grid-row:2;display:flex;justify-content:space-between;align-items:center;gap:32px;margin-top:clamp(36px,4vw,56px);padding-top:clamp(22px,2.4vw,32px);border-top:1px solid var(--line-strong)}
+.v2 .v2d-lower{max-width:none;padding-right:clamp(0px,2vw,24px)}
+.v2 .v-wrap{padding-bottom:clamp(56px,6vw,88px)}
+}
+@media(max-width:860px){
+.v2d-foot{margin-top:32px;padding-top:24px;border-top:1px solid var(--line-strong)}
+.v2d-foot .v-cta{margin-top:28px}
+.v2d-foot .v-cta .button{width:100%}
+}
+.v2-panel+.v2c-lower+.v2d-foot{display:block}@media(min-width:861px){.v2-panel+.v2c-lower+.v2d-foot{display:flex}}

@@ -315,7 +315,10 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
 
 test('the About page holds Oscar’s approved words and the two names, and is linked from every page', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
-  assert.match(html, /<h1 class="hero-rise">Who we are<\/h1>\s*<p>We watched creators try to launch their own merch and saw how often it fell flat\. Merchendice exists to make it simple, so any creator can launch merch their audience actually wants\.<\/p>\s*<p class="about-names">Oscar Thomas and Oscar Rodhelius<\/p>/);
+  assert.match(html, /<h1>Who we are<\/h1>\s*<p class="v-lead">We started Merchendice after watching a creator’s merch launch fall flat\. We knew it could be done better, so we built the service we wish they’d had\.<\/p>/);
+  assert.match(html, /We design every piece from a creator’s own content and colours, then build and run the store for them\. Each order is printed on demand and shipped for them, so they never touch stock\. They have as much say as they want, and we handle the rest\./);
+  assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodhelius<\/p><p class="v-where">Based in Sweden<\/p>/);
+  assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
   assert.match(html, /<title>About \| Merchendice<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/merchendice\.com\/about\/">/);
   assert.match(html, /<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/);
@@ -485,7 +488,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/photo-jewellery-720\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -600,4 +603,12 @@ test('load-in motion has a reduced-motion path and a no-JS fallback, and does no
     // Without the js class, the markup itself does not start hidden.
     assert.doesNotMatch(html, /style="[^"]*opacity:\s*0/, route);
   }
+});
+
+test('the About page tells the story and has no photo placeholder', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
+  assert.match(html, /started Merchendice after watching a creator’s merch launch fall flat/);
+  assert.match(html, /<p class="v-where">Based in Sweden<\/p>/);
+  assert.doesNotMatch(html, /Your photo here|photo-slot|placeholder/i);
+  assert.equal((html.match(/<h1\b/g) || []).length, 1);
 });
