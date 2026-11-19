@@ -690,3 +690,5 @@ main { display: block; }
 .v2 .v2d-foot{border-top:0!important;padding-top:0!important}
 /* about: sign-off sits close under the story */
 @media(min-width:861px){.v2 .v-wrap{grid-template-rows:auto 1fr}.v2 .v2-panel{grid-row:1/3}.v2 .v2d-foot{grid-column:1;grid-row:2;align-self:start;margin-top:28px!important}}
+/* storefronts: tighter space around the heading and intro */
+.examples-hero{padding-top:32px;padding-bottom:8px}
