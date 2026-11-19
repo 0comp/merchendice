@@ -566,7 +566,8 @@ test('the FAQ has exactly the nine approved questions with the approved answers'
   assert.ok(faq.includes('<p>Send us <a href="/enquiry/">the form</a>, and we’ll reply by email, usually within one or two days.</p>'));
   assert.ok(faq.includes(`<p>${APPROVED_COST}</p>`));
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
-  assert.ok(faq.includes('<summary>What can I sell?</summary>\n            <p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery.</p>'));
+  // Any whitespace between the question and its answer, so a Windows (CRLF) checkout passes too.
+  assert.match(faq, /<summary>What can I sell\?<\/summary>\s*<p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery\.<\/p>/);
   assert.doesNotMatch(faq, /Clothing like tees and totes/);
   assert.ok(faq.includes(`<p>${APPROVED_DAMAGED}</p>`));
   assert.doesNotMatch(await page('/'), /"FAQPage"/);
