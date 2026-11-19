@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { request as httpRequest } from 'node:http';
 import { brotliDecompressSync, gunzipSync } from 'node:zlib';
-import { createAppServer, createRateLimiter } from '../server.mjs';
+import { createAppServer, createRateLimiter, ENQUIRY_LIMIT, ENQUIRY_WINDOW_MS } from '../server.mjs';
 import { createEmailSender, headerSafe, makeGmailMessage } from '../src/mail.mjs';
 
 const input = {name:'A creator',email:'creator@example.test',description:'A merch idea'};
@@ -91,12 +91,35 @@ test('credentials and server source cannot be downloaded', async t => {
   assert.equal((await fetch(`${fixture.base}/healthz`)).status,200);
 });
 
-test('oversized enquiries and excess submissions are rejected before email is sent', async t => {
-  const fixture=await serverFixture(t,{rateLimiter:createRateLimiter({limit:2})});
+test('oversized enquiries are rejected before email is sent', async t => {
+  const fixture=await serverFixture(t);
   assert.equal((await fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:'a'.repeat(50000)})).status,413);
-  assert.equal((await fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)})).status,200);
-  assert.equal((await fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)})).status,429);
-  assert.equal(fixture.sends(),1);
+  assert.equal(fixture.sends(),0);
+});
+
+test('each visitor can send exactly 2 enquiries per hour; the 3rd gets a friendly 429 and is never emailed', async t => {
+  assert.equal(ENQUIRY_LIMIT,2);
+  assert.equal(ENQUIRY_WINDOW_MS,60*60*1000);
+  // The real server, with its default limiter.
+  const fixture=await serverFixture(t);
+  const post=()=>fetch(`${fixture.base}/api/enquiry`,{method:'POST',body:JSON.stringify(input)});
+  assert.equal((await post()).status,200);
+  assert.equal((await post()).status,200);
+  const third=await post();
+  assert.equal(third.status,429);
+  assert.equal((await third.json()).message,'Too many enquiries. Please try again later.');
+  assert.equal(fixture.sends(),2);
+  // The window is one hour: still blocked at 59 minutes, open again at 60, and other visitors are unaffected.
+  let now=0;
+  const limiter=createRateLimiter({now:()=>now});
+  assert.equal(limiter.allow('a'),true);
+  assert.equal(limiter.allow('a'),true);
+  assert.equal(limiter.allow('a'),false);
+  assert.equal(limiter.allow('b'),true);
+  now=59*60*1000;
+  assert.equal(limiter.allow('a'),false);
+  now=60*60*1000;
+  assert.equal(limiter.allow('a'),true);
 });
 
 function rawGet(url, headers = {}) {

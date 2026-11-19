@@ -59,11 +59,15 @@ function readBody(request) {
   });
 }
 
-export function createRateLimiter({ limit = 5, windowMs = 10 * 60 * 1000, maxClients = 10000 } = {}) {
+// Each client IP may send 2 enquiries per hour; the 3rd within the hour gets a 429 and never reaches the mail provider.
+export const ENQUIRY_LIMIT = 2;
+export const ENQUIRY_WINDOW_MS = 60 * 60 * 1000;
+
+export function createRateLimiter({ limit = ENQUIRY_LIMIT, windowMs = ENQUIRY_WINDOW_MS, maxClients = 10000, now: clock = Date.now } = {}) {
   const clients = new Map();
   return {
     allow(ip) {
-      const now = Date.now();
+      const now = clock();
       if (clients.size >= maxClients) {
         for (const [key, value] of clients) if (value.expires <= now) clients.delete(key);
       }
