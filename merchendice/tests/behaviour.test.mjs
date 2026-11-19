@@ -659,3 +659,14 @@ test('the About page tells the story and has no photo placeholder', async () => 
   assert.doesNotMatch(html, /Your photo here|photo-slot|placeholder/i);
   assert.equal((html.match(/<h1\b/g) || []).length, 1);
 });
+
+test('the example store links back to the Merchendice homepage from its top bar', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/example-store/'))).text();
+  const bar = html.match(/<div class="announce">([\s\S]*?)<\/div>/)[1];
+  assert.match(bar, /^<a class="announce-back" href="\/"><span aria-hidden="true">←<\/span> Back to Merchendice<\/a>/);
+  // The new top-bar link plus the two that were already in the store footer (Merchendice and Built by Merchendice).
+  assert.equal((html.match(/href="\/"/g) || []).length, 3);
+  const css = await (await worker.fetch(new Request('https://site.example.test/example-store/store.css'))).text();
+  assert.match(css, /\.announce-back:focus-visible\{outline-color:#fff\}/);
+  assert.match(css, /@media \(max-width:700px\)\{[\s\S]*?\.announce-back\{position:static/);
+});
