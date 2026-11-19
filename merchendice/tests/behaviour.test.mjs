@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
-import worker from '../dist/app.mjs';
+// helpers.mjs rebuilds dist/app.mjs before any test reads it.
+import { worker, PAGES, MISSING_PAGE, expectedStatus, page } from './helpers.mjs';
 
 const env = {
   MAIL_TO: 'inbox@example.test',
@@ -14,19 +15,19 @@ const env = {
 const input = {name:'A creator',email:'creator@example.test',description:'A merch idea'};
 const request = (value, headers={}) => new Request('https://site.example.test/api/enquiry', {method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(value)});
 
-test('all pages support GET and HEAD without exposing email configuration', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/example-store/']) {
+test('all pages, the 404 page included, support GET and HEAD without exposing email configuration', async () => {
+  for (const route of [...PAGES, '/example-store/']) {
     const get = await worker.fetch(new Request(`https://site.example.test${route}`),env);
-    assert.equal(get.status,200);
-    assert.equal((await get.text()).includes(env.MAIL_TO),false);
+    assert.equal(get.status,expectedStatus(route),route);
+    assert.equal((await get.text()).includes(env.MAIL_TO),false,route);
     const head = await worker.fetch(new Request(`https://site.example.test${route}`,{method:'HEAD'}),env);
-    assert.equal(head.status,200);
+    assert.equal(head.status,expectedStatus(route),route);
     assert.equal(await head.text(),'');
     assert.equal(head.headers.get('content-type'),get.headers.get('content-type'));
   }
 });
 
-test('directory, enquiry, and privacy paths redirect to the trailing slash', async () => {
+test('every page path without a trailing slash 301-redirects to it and keeps the query string', async () => {
   for (const route of ['/examples', '/enquiry', '/privacy', '/about', '/example-store']) {
     const response = await worker.fetch(new Request(`https://site.example.test${route}?ref=1`));
     assert.equal(response.status, 301);
@@ -298,8 +299,8 @@ test('the sent dialog markup is a labelled native dialog with the approved wordi
 });
 
 test('marketing pages never mention samples, quality checks or Shopify, and list jewellery', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+  for (const route of PAGES) {
+    const html = await page(route);
     assert.doesNotMatch(html, /sample|quality|shopify/i, route);
     assert.doesNotMatch(html.replace(/<[^>]+>/g, ' '), /\bcolor|\bfavorite|jewelry|\bcenter\b/i, route);
   }
@@ -325,10 +326,10 @@ test('the About page holds Oscar’s approved words and the two names, and is li
   assert.doesNotMatch(html, /Start a project/);
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rod[e]lius/);
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const page = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
-    assert.equal((page.match(/href="\/about\/"/g) || []).length, 2, route);
-    assert.doesNotMatch(page, /#about/, route);
+  for (const route of PAGES) {
+    const html = await page(route);
+    assert.equal((html.match(/href="\/about\/"/g) || []).length, 2, route);
+    assert.doesNotMatch(html, /#about/, route);
   }
 });
 
@@ -338,11 +339,23 @@ test('the header Contact us button is a filled terracotta button on dark', async
   assert.match(css, /\.nav-cta:hover \{ background: var\(--accent-hover\)/);
 });
 
-test('log retention configs keep about 30 days', async () => {
+test('log retention configs keep about 30 days, with concrete Docker size caps', async () => {
   const read = (path) => fs.readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-  assert.match(await read('Caddyfile'), /roll_keep_for 720h/);
-  assert.match(await read('deploy/logrotate-merchendice'), /rotate 30/);
-  assert.match(await read('compose.yaml'), /max-size/);
+  // Proxy access logs (the only ones with visitor IPs) are deleted after 30 days.
+  const caddy = await read('Caddyfile');
+  assert.match(caddy, /roll_size 1MiB/);
+  assert.match(caddy, /roll_keep_for 720h/);
+  const logrotate = await read('deploy/logrotate-merchendice');
+  for (const line of [/^\s*daily$/m, /^\s*rotate 30$/m, /^\s*maxage 30$/m]) assert.match(logrotate, line);
+  // Docker's json-file driver can only rotate by size, never by age. Both containers get the same
+  // concrete cap: 3 files of 10 MB. The app logs only start-up lines and errors (no visitor IPs), so
+  // 30 MB holds far more than 30 days of them; Caddy's own lines carry no visitor IPs either.
+  for (const file of ['compose.yaml', 'compose.https.yaml']) {
+    const yaml = await read(file);
+    const logging = [...yaml.matchAll(/logging:\s*\n\s*driver: ([\w-]+)\s*\n\s*options:\s*\n\s*max-size: "([^"]+)"\s*\n\s*max-file: "([^"]+)"/g)];
+    assert.equal(logging.length, 1, `${file} has one logging block`);
+    assert.deepEqual(logging[0].slice(1), ['json-file', '10m', '3'], file);
+  }
 });
 
 test('client rejects the same incomplete email address as the server', async () => {
@@ -426,7 +439,8 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   for (const step of ['Idea', 'Designs', 'Products', 'Your store', 'Launch']) assert.match(html, new RegExp(`<h3>${step}</h3>`));
   assert.doesNotMatch(html, /id="quality"|href="#quality"|sample check|signed it off/);
   assert.doesNotMatch(html, /Every design starts from what you post|Worried your merch will look cheap/);
-  assert.doesNotMatch(html, /Mugs|Prints and posters/);
+  // Mugs are allowed: Oscar's approved 'What can I sell?' answer names them.
+  assert.doesNotMatch(html, /Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
   assert.doesNotMatch(html.replace('replaced free of charge', 'replaced'), /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
@@ -483,8 +497,8 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
   assert.match(css, /--accent: #B03A26/);
   assert.doesNotMatch(css, /--green|#1f3d30|#172e24/i);
   assert.doesNotMatch(css, /\.grad\b|glow|#7cc8d9|#9a8be8|#ecd27f|background-clip: text|linear-gradient|radial-gradient/i);
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+  for (const route of PAGES) {
+    const html = await page(route);
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
@@ -497,8 +511,8 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
 });
 
 test('no marketing page shows the email address or section numbering', async () => {
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+  for (const route of PAGES) {
+    const html = await page(route);
     assert.doesNotMatch(html, /merchendices@gmail\.com|mailto:/, route);
     assert.doesNotMatch(html, /Step 0\d|service-num|quality-num|process-num/, route);
     assert.match(html, /Contact us/, route);
@@ -509,8 +523,8 @@ test('no marketing page shows the email address or section numbering', async () 
 test('privacy notice is finished and indexable, and open items live in an unserved TODO.md', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/privacy/'))).text();
   assert.doesNotMatch(html, /noindex|\(draft\)|draft-banner/i);
-  for (const route of ['/', '/privacy/', '/about/', '/enquiry/', '/examples/', '/example-store/', '/missing-page']) {
-    assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${route}`))).text(), /<!--/, route);
+  for (const route of [...PAGES, '/example-store/']) {
+    assert.doesNotMatch(route === '/example-store/' ? await (await worker.fetch(new Request(`https://site.example.test${route}`))).text() : await page(route), /<!--/, route);
   }
   const notes = await fs.readFile(new URL('../TODO.md', import.meta.url), 'utf8');
   // The controller line and the 30-day log line are now in the notice itself; TODO.md keeps only the NPM deploy step.
@@ -522,14 +536,17 @@ test('privacy notice is finished and indexable, and open items live in an unserv
   for (const field of ['Your name', 'Your email address', 'project description', 'How long it’s kept', 'deleted']) assert.match(html, new RegExp(field));
   assert.match(html, /<a href="\/enquiry\/">Contact us<\/a>/);
   assert.doesNotMatch(html, /gmail|Gmail/);
-  for (const page of ['/', '/examples/', '/enquiry/', '/missing-page']) {
-    assert.doesNotMatch(await (await worker.fetch(new Request(`https://site.example.test${page}`))).text(), /Privacy notice \(draft\)/);
+  for (const route of PAGES) {
+    assert.doesNotMatch(await page(route), /Privacy notice \(draft\)/, route);
   }
 });
 
-test('hero mark has no pointer parallax and the homepage keeps one merged how-it-works flow', async () => {
+test('site.js has no pointer or mouse-move effects', async () => {
   const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
   assert.doesNotMatch(js, /pointermove|mousemove|--mx/);
+});
+
+test('the homepage has one how-it-works flow with the five steps and no old example link', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.match(html, /id="how-it-works"/);
   assert.doesNotMatch(html, /id="what-you-get"|id="why"/);
@@ -538,48 +555,72 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 
-test('the FAQ has exactly the nine approved questions, and the only cost wording is the approved answer', async () => {
-  const approved = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
-  const damaged = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
-  const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
+const APPROVED_COST = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
+const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
+const homeFaq = (home) => home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
+
+test('the FAQ has exactly the nine approved questions with the approved answers', async () => {
+  const faq = homeFaq(await page('/'));
   const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
   assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?', 'How long until my store is live?', 'What if an order arrives damaged?']);
   assert.ok(faq.includes('<p>Send us <a href="/enquiry/">the form</a>, and we’ll reply by email, usually within one or two days.</p>'));
-  assert.ok(faq.includes(`<p>${approved}</p>`));
+  assert.ok(faq.includes(`<p>${APPROVED_COST}</p>`));
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
   assert.ok(faq.includes('<summary>What can I sell?</summary>\n            <p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery.</p>'));
   assert.doesNotMatch(faq, /Clothing like tees and totes/);
-  for (const path of ['/', '/about/', '/examples/', '/enquiry/', '/privacy/']) {
-    const page = await (await worker.fetch(new Request(`https://site.example.test${path}`))).text();
-    assert.match(page, /<p class="footer-contact">Got an idea\? <a /, path);
-    assert.doesNotMatch(page, /or just a channel|Rod[h]elius/, path);
+  assert.ok(faq.includes(`<p>${APPROVED_DAMAGED}</p>`));
+  assert.doesNotMatch(await page('/'), /"FAQPage"/);
+});
+
+test('every page footer, the 404 page included, says "Got an idea? Contact us"', async () => {
+  for (const route of PAGES) {
+    const html = await page(route);
+    assert.match(html, /<p class="footer-contact">Got an idea\? <a href="(?:\/enquiry\/|#enquiryForm)">Contact us<\/a><\/p>/, route);
+    assert.doesNotMatch(html, /or just a channel/, route);
   }
-  assert.ok(faq.includes(`<p>${damaged}</p>`));
-  assert.doesNotMatch(faq.replace(approved, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
-  assert.doesNotMatch(home, /"FAQPage"/);
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '').replace(damaged, '');
+});
+
+test('the only cost wording on any page is the approved FAQ answer', async () => {
+  const faq = homeFaq(await page('/'));
+  assert.doesNotMatch(faq.replace(APPROVED_COST, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
+  for (const route of PAGES) {
+    const html = (await page(route)).replace(APPROVED_COST, '').replace(APPROVED_DAMAGED, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }
 });
 
-test('the header Contact us button has 4px corners and nothing later overrides them', async () => {
+// Every declaration of a corner radius in site.css, at any nesting level (inside @media too), with the
+// selector it applies to. Comments are stripped first so they can't hide or fake a rule.
+function radiusDeclarations(css) {
+  const found = [];
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of clean.matchAll(/([^{};]+)\{([^{}]*)\}/g)) {
+    for (const d of m[2].matchAll(/(?:^|;)\s*(border(?:-(?:top|bottom|start|end)-(?:left|right|start|end))?-radius)\s*:\s*([^;]+)/g)) {
+      found.push({ selector: m[1].trim().replace(/\s+/g, ' '), property: d[1], value: d[2].trim() });
+    }
+  }
+  return found;
+}
+const BUTTON_SELECTOR = /\b(button|btn|cta|nav-toggle|nav-cta|data-dialog-close)\b/;
+
+test('the header Contact us button has 4px corners and no later rule sets any other radius', async () => {
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
-  assert.match(css, /\.nav-cta \{[^}]*border-radius: 4px;/);
-  assert.doesNotMatch(css, /\.nav-cta[^{]*\{[^}]*border-radius: 2px/);
+  const navCta = radiusDeclarations(css).filter(d => /\.nav-cta\b/.test(d.selector));
+  assert.ok(navCta.length >= 1, 'the .nav-cta rule declares its radius');
+  for (const d of navCta) assert.equal(d.value, '4px', `${d.selector} { ${d.property}: ${d.value} }`);
 });
 
-test('every site button has the same 4px corners as the header Contact us button', async () => {
+test('every button rule in site.css declares exactly 4px corners', async () => {
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
-  assert.match(css, /\.button \{[^}]*border-radius: 4px;/);
-  assert.match(css, /\.nav-toggle \{[^}]*border-radius: 4px;/);
-  for (const m of css.matchAll(/([^{}]*\b(button|btn|cta|nav-toggle)\b[^{}]*)\{([^}]*)\}/g)) {
-    const r = m[3].match(/border-radius:\s*([^;]+)/);
-    if (r) assert.equal(r[1].trim(), '4px', m[1].trim());
+  const declarations = radiusDeclarations(css);
+  for (const selector of ['.button', '.nav-toggle', '.nav-cta']) {
+    assert.ok(declarations.some(d => d.selector === selector && d.value === '4px'), `${selector} declares 4px`);
   }
-  const enquiry = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
+  for (const d of declarations.filter(d => BUTTON_SELECTOR.test(d.selector))) {
+    assert.equal(d.value, '4px', `${d.selector} { ${d.property}: ${d.value} }`);
+  }
+  const enquiry = await page('/enquiry/');
   assert.match(enquiry, /<button class="button button-primary button-submit" type="submit">/);
   assert.match(enquiry, /<button class="button button-primary" type="button" data-dialog-close>/);
 });
@@ -595,8 +636,8 @@ test('the About page uses the same reveal classes as the rest of the site', asyn
 
 test('one call-to-action label, and each idea said only once across the site', async () => {
   const pages = {};
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+  for (const route of PAGES) {
+    const html = await page(route);
     pages[route] = html.slice(html.indexOf('<body'), html.indexOf('</body>')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   }
   // Buttons and links that lead to the enquiry form say "Start a project" (or "Contact us" in the header and footer).
@@ -640,8 +681,8 @@ test('load-in motion has a reduced-motion path and a no-JS fallback, and does no
   assert.match(js, /prefers-reduced-motion: reduce/);
   assert.match(js, /IntersectionObserver/);
   assert.match(js, /unobserve/);
-  for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
+  for (const route of PAGES) {
+    const html = await page(route);
     assert.match(html, /<script>document\.documentElement\.classList\.add\('js'\)<\/script>/, route);
     const csp = (await worker.fetch(new Request(`https://site.example.test${route}`))).headers.get('content-security-policy');
     const digest = (await import('node:crypto')).createHash('sha256').update("document.documentElement.classList.add('js')").digest('base64');

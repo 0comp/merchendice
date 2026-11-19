@@ -70,5 +70,22 @@ const notFoundPage = linkHashed(await fs.readFile('404.html', 'utf8')).replace(/
 const notFoundScriptSrc = scriptSrcAllowance(notFoundPage);
 const runtime = await fs.readFile('src/worker-runtime.mjs', 'utf8');
 await fs.mkdir('dist', { recursive: true });
-await fs.writeFile('dist/app.mjs', `const ASSETS = ${JSON.stringify(assets)};\nconst NOT_FOUND_PAGE = ${JSON.stringify(notFoundPage)};\nconst NOT_FOUND_SCRIPT_SRC = ${JSON.stringify(notFoundScriptSrc)};\n${runtime}`);
+// Write to a temporary file and rename it into place, so a test (or the server) reading dist/app.mjs
+// while another build runs never sees a half-written file. The test files each rebuild in parallel.
+const output = `const ASSETS = ${JSON.stringify(assets)};\nconst NOT_FOUND_PAGE = ${JSON.stringify(notFoundPage)};\nconst NOT_FOUND_SCRIPT_SRC = ${JSON.stringify(notFoundScriptSrc)};\n${runtime}`;
+const temporary = `dist/app.${process.pid}.${Date.now()}.tmp`;
+await fs.writeFile(temporary, output);
+for (let attempt = 1; ; attempt++) {
+  try {
+    await fs.rename(temporary, 'dist/app.mjs');
+    break;
+  } catch (error) {
+    // Windows refuses to replace a file another process has open for a moment; retry briefly.
+    if (attempt >= 20 || !['EPERM', 'EACCES', 'EBUSY'].includes(error.code)) {
+      await fs.rm(temporary, { force: true });
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
 console.log('Built Merchendice site and enquiry endpoint.');

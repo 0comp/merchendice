@@ -26,6 +26,7 @@ function requestHostname(incoming) {
   return host.startsWith('[') ? host.slice(0, host.indexOf(']') + 1) : host.split(':')[0];
 }
 const invalidRequest = 'Please check the form and try again.';
+const tooManyEnquiries = 'Too many enquiries. Please try again later.';
 
 function sendJson(response, status, message) {
   response.writeHead(status, {
@@ -59,27 +60,57 @@ function readBody(request) {
   });
 }
 
-// Each client IP may send 2 enquiries per hour; the 3rd within the hour gets a 429 and never reaches the mail provider.
+// Each client IP may send 2 enquiries per hour. Only enquiries that actually go out (the email provider
+// returned a receipt) count; a form error, an oversized body, a honeypot hit or a failed delivery does not
+// use up the allowance. Once 2 have gone out, the next POST in the hour gets a 429 and never reaches the
+// mail provider.
 export const ENQUIRY_LIMIT = 2;
 export const ENQUIRY_WINDOW_MS = 60 * 60 * 1000;
+// A separate abuse cap counts every POST to /api/enquiry, valid or not, so the form can't be hammered.
+// 20 an hour leaves room for a visitor to fix several form errors and still send their 2 enquiries.
+export const ENQUIRY_RAW_LIMIT = 20;
 
+// A fixed-window counter per client. allow() counts a hit at once (used for the raw POST cap).
+// reserve() holds a place while a send is in progress, so parallel requests can't overshoot the limit;
+// record() counts a send that went out, and the returned release() frees the held place either way.
 export function createRateLimiter({ limit = ENQUIRY_LIMIT, windowMs = ENQUIRY_WINDOW_MS, maxClients = 10000, now: clock = Date.now } = {}) {
   const clients = new Map();
+  function bucketFor(ip) {
+    const now = clock();
+    if (clients.size >= maxClients) {
+      for (const [key, value] of clients) if (value.expires <= now && value.pending === 0) clients.delete(key);
+    }
+    let bucket = clients.get(ip);
+    if (!bucket || bucket.expires <= now) {
+      // With the table still full of live clients, refuse rather than forget anyone's count.
+      if (!bucket && clients.size >= maxClients) return null;
+      bucket = { count: 0, pending: bucket?.pending || 0, expires: now + windowMs };
+      clients.set(ip, bucket);
+    }
+    return bucket;
+  }
   return {
     allow(ip) {
-      const now = clock();
-      if (clients.size >= maxClients) {
-        for (const [key, value] of clients) if (value.expires <= now) clients.delete(key);
-      }
-      let bucket = clients.get(ip);
-      if (!bucket || bucket.expires <= now) {
-        if (!bucket && clients.size >= maxClients) return false;
-        bucket = { count: 0, expires: now + windowMs };
-        clients.set(ip, bucket);
-      }
-      if (bucket.count >= limit) return false;
+      const bucket = bucketFor(ip);
+      if (!bucket || bucket.count + bucket.pending >= limit) return false;
       bucket.count++;
       return true;
+    },
+    reserve(ip) {
+      const bucket = bucketFor(ip);
+      if (!bucket || bucket.count + bucket.pending >= limit) return null;
+      bucket.pending++;
+      let released = false;
+      return () => {
+        if (released) return;
+        released = true;
+        const current = clients.get(ip);
+        if (current && current.pending > 0) current.pending--;
+      };
+    },
+    record(ip) {
+      const bucket = bucketFor(ip);
+      if (bucket) bucket.count++;
     },
   };
 }
@@ -146,7 +177,12 @@ function serveStatic(pathname, method, outgoing) {
   return true;
 }
 
-export function createAppServer({ env = process.env, sendMail, rateLimiter = createRateLimiter() } = {}) {
+export function createAppServer({
+  env = process.env,
+  sendMail,
+  rateLimiter = createRateLimiter(),
+  rawRateLimiter = createRateLimiter({ limit: ENQUIRY_RAW_LIMIT }),
+} = {}) {
   const production = env.NODE_ENV === 'production';
   // Outside production the origin defaults to the address the server listens on, so the form works
   // on http://127.0.0.1:PORT and http://localhost:PORT alike (see localAlias below).
@@ -199,30 +235,56 @@ export function createAppServer({ env = process.env, sendMail, rateLimiter = cre
         outgoing.end(incoming.method === 'HEAD' ? '' : '{"ok":true}');
         return;
       }
+      let requestEnv = runtimeEnv;
+      let releaseSend = null;
       if (incoming.method === 'POST' && url.pathname === '/api/enquiry') {
+        const ip = String(env.TRUST_PROXY === '1'
+          ? incoming.headers['x-real-ip'] || incoming.socket.remoteAddress
+          : incoming.socket.remoteAddress);
+        // The raw cap comes first, so even rejected POSTs are limited.
+        if (!rawRateLimiter.allow(ip)) {
+          incoming.resume();
+          return sendJson(outgoing, 429, { message: tooManyEnquiries });
+        }
         if (incoming.headers.origin && incoming.headers.origin !== url.origin) {
           incoming.resume();
           return sendJson(outgoing, 403, { message: 'Please submit the form from this website.' });
         }
-        const ip = env.TRUST_PROXY === '1'
-          ? incoming.headers['x-real-ip'] || incoming.socket.remoteAddress
-          : incoming.socket.remoteAddress;
-        if (!rateLimiter.allow(String(ip))) {
+        releaseSend = rateLimiter.reserve(ip);
+        if (!releaseSend) {
           incoming.resume();
-          return sendJson(outgoing, 429, { message: 'Too many enquiries. Please try again later.' });
+          return sendJson(outgoing, 429, { message: tooManyEnquiries });
         }
         if (Number(incoming.headers['content-length']) > MAX_BODY_BYTES) {
+          releaseSend();
           incoming.resume();
           return sendJson(outgoing, 413, { message: 'Your enquiry is too long. Please shorten it and try again.' });
+        }
+        // Count the enquiry only once the provider confirms it went out (even if that confirmation
+        // arrives after the visitor's request timed out).
+        if (typeof sendMail === 'function') {
+          requestEnv = {
+            ...runtimeEnv,
+            sendMail: async (...args) => {
+              const receipt = await sendMail(...args);
+              if (receipt && typeof receipt.id === 'string' && receipt.id) rateLimiter.record(ip);
+              return receipt;
+            },
+          };
         }
       }
       const headers = new Headers();
       for (const [key, value] of Object.entries(incoming.headers)) {
         if (value !== undefined) headers.set(key, Array.isArray(value) ? value.join(', ') : value);
       }
-      const body = ['GET', 'HEAD'].includes(incoming.method) ? undefined : await readBody(incoming);
-      const request = new Request(url, { method: incoming.method, headers, ...(body ? { body } : {}) });
-      const response = await app.fetch(request, runtimeEnv);
+      let response;
+      try {
+        const body = ['GET', 'HEAD'].includes(incoming.method) ? undefined : await readBody(incoming);
+        const request = new Request(url, { method: incoming.method, headers, ...(body ? { body } : {}) });
+        response = await app.fetch(request, requestEnv);
+      } finally {
+        releaseSend?.();
+      }
       const responseHeaders = headerMap(response.headers);
       let responseBody = Buffer.from(await response.arrayBuffer());
       const type = String(responseHeaders['content-type'] || '');
