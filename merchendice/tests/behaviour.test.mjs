@@ -321,7 +321,7 @@ test('the About page holds Oscar’s approved words and the two names, and is li
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
   assert.match(html, /<title>About \| Merchendice<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/merchendice\.com\/about\/">/);
-  assert.match(html, /<div class="v2-panel">[\s\S]*<p class="v2-panel-cta"><a class="button button-primary" href="\/enquiry\/">Contact us<\/a><\/p>\s*<\/div>/);
+  assert.match(html, /<div class="v2-panel hero-rise hero-rise-2">[\s\S]*<p class="v2-panel-cta"><a class="button button-primary" href="\/enquiry\/">Contact us<\/a><\/p>\s*<\/div>/);
   assert.doesNotMatch(html, /Start a project/);
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rodhelius/);
@@ -536,15 +536,34 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 
-test('the only cost wording is the approved FAQ answer, with no prices, fees, splits or payouts', async () => {
-  const approved = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
+test('the FAQ has exactly the five approved questions and never mentions price, $ or payout', async () => {
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  assert.match(home, /<summary>What does it cost to get started\?<\/summary>/);
-  assert.ok(home.includes(`<p>${approved}</p>`));
+  const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
+  const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
+  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?']);
+  assert.ok(faq.includes('<p>Send us the form, and we’ll reply by email, usually within one or two days.</p>'));
+  assert.doesNotMatch(faq, /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
+  assert.doesNotMatch(home, /"FAQPage"/);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '');
+    const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
+    assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }
+});
+
+test('the header Contact us button has 4px corners and nothing later overrides them', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /\.nav-cta \{[^}]*border-radius: 4px;/);
+  assert.doesNotMatch(css, /\.nav-cta[^{]*\{[^}]*border-radius: 2px/);
+});
+
+test('the About page uses the same reveal classes as the rest of the site', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
+  assert.match(html, /class="v2-bandwrap hero-rise"/);
+  assert.match(html, /class="v2-panel hero-rise hero-rise-2"/);
+  assert.match(html, /class="v2c-prose rise"/);
+  assert.match(html, /class="v2d-foot rise"/);
+  assert.match(html, /<script src="\/site\.[0-9a-f]+\.js" defer>/);
 });
 
 test('one call-to-action label, and each idea said only once across the site', async () => {
@@ -563,7 +582,6 @@ test('one call-to-action label, and each idea said only once across the site', a
   assert.match(enquiry, /<button class="button button-primary button-submit" type="submit"><span>Start a project<\/span><\/button>/);
   const all = Object.values(pages).join(' ');
   const count = (re) => (all.match(re) || []).length;
-  assert.equal(count(/Commercial terms are agreed/g), 1, 'terms wording lives in the FAQ only');
   assert.equal(count(/A demo store, so you can see the finished standard/g), 1);
   assert.equal(count(/in your look/g), 1);
   assert.equal(count(/\bjoke/g), 2, "statement line plus the approved enquiry-step wording");

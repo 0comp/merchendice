@@ -135,7 +135,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   min-height: 44px;
   padding: 0 20px;
   border: 1px solid var(--accent);
-  border-radius: 2px;
+  border-radius: 4px;
   background: var(--accent);
   color: var(--on-accent);
   font-size: 15px;
