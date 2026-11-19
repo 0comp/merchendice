@@ -426,7 +426,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(html, /Every design starts from what you post|Worried your merch will look cheap/);
   assert.doesNotMatch(html, /Mugs|Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
-  assert.doesNotMatch(html, /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
+  assert.doesNotMatch(html.replace('replaced free of charge', 'replaced'), /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
@@ -538,16 +538,19 @@ test('hero mark has no pointer parallax and the homepage keeps one merged how-it
 
 test('the FAQ has exactly the seven approved questions, and the only cost wording is the approved answer', async () => {
   const approved = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
+  const damaged = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
   const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
-  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?']);
+  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?', 'How long until my store is live?', 'What if an order arrives damaged?']);
   assert.ok(faq.includes('<p>Send us the form, and we’ll reply by email, usually within one or two days.</p>'));
   assert.ok(faq.includes(`<p>${approved}</p>`));
+  assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
+  assert.ok(faq.includes(`<p>${damaged}</p>`));
   assert.doesNotMatch(faq.replace(approved, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   assert.doesNotMatch(home, /"FAQPage"/);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
-    const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '');
+    const html = (await (await worker.fetch(new Request(`https://site.example.test${route}`))).text()).replace(approved, '').replace(damaged, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }
