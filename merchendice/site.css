@@ -155,7 +155,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   min-height: 52px;
   padding: 0 30px;
   border: 1px solid var(--accent);
-  border-radius: 2px;
+  border-radius: 4px;
   background: transparent;
   color: var(--accent);
   font-family: var(--sans);
@@ -494,7 +494,7 @@ main { display: block; }
   body.nav-open { overflow: hidden; }
   .main-nav a { min-height: 50px; padding: 0; font-size: 14px; border-bottom: 1px solid color-mix(in srgb, var(--on-dark) 15%, transparent); }
   .nav-cta { margin-left: auto; padding: 0 14px; font-size: 12px; letter-spacing: .1em; white-space: nowrap; }
-  .nav-toggle { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--on-dark); cursor: pointer; }
+  .nav-toggle { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--on-dark); cursor: pointer; }
   .nav-toggle-bars, .nav-toggle-bars::before, .nav-toggle-bars::after { display: block; width: 22px; height: 1.5px; background: currentColor; transition: transform .3s var(--ease); }
   .nav-toggle-bars { position: relative; }
   .nav-toggle-bars::before, .nav-toggle-bars::after { content: ""; position: absolute; left: 0; }

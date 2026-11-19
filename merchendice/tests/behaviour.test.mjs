@@ -562,6 +562,19 @@ test('the header Contact us button has 4px corners and nothing later overrides t
   assert.doesNotMatch(css, /\.nav-cta[^{]*\{[^}]*border-radius: 2px/);
 });
 
+test('every site button has the same 4px corners as the header Contact us button', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /\.button \{[^}]*border-radius: 4px;/);
+  assert.match(css, /\.nav-toggle \{[^}]*border-radius: 4px;/);
+  for (const m of css.matchAll(/([^{}]*\b(button|btn|cta|nav-toggle)\b[^{}]*)\{([^}]*)\}/g)) {
+    const r = m[3].match(/border-radius:\s*([^;]+)/);
+    if (r) assert.equal(r[1].trim(), '4px', m[1].trim());
+  }
+  const enquiry = await (await worker.fetch(new Request('https://site.example.test/enquiry/'))).text();
+  assert.match(enquiry, /<button class="button button-primary button-submit" type="submit">/);
+  assert.match(enquiry, /<button class="button button-primary" type="button" data-dialog-close>/);
+});
+
 test('the About page uses the same reveal classes as the rest of the site', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
   assert.match(html, /class="v2-bandwrap hero-rise"/);
