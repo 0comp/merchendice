@@ -686,3 +686,5 @@ main { display: block; }
 @media(min-width:861px){.v2 .v2d-foot{justify-content:flex-start}}
 @media(min-width:861px){.v2-panel{padding-bottom:clamp(32px,3.6vw,52px)}.v2-panel-cta .button{min-width:200px;min-height:50px}}
 .v2 .v2d-foot{margin-top:clamp(40px,4.4vw,60px)}
+/* about: no rule above the sign-off */
+.v2 .v2d-foot{border-top:0!important;padding-top:0!important}
