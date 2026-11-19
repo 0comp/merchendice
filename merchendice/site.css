@@ -339,6 +339,8 @@ main { display: block; }
 .faq-item[open] summary::after { transform: rotate(45deg); }
 .faq-item summary:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
 .faq-item p { max-width: 38em; margin: 0; padding: 0 48px 24px 0; }
+.faq-item p a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.faq-item p a:hover { color: var(--accent-hover); }
 
 .process-section::before, .about-section::before, .faq-section::before { content: ""; position: absolute; top: 0; left: var(--gutter); right: var(--gutter); border-top: 1px solid var(--line); }
 

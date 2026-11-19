@@ -317,14 +317,14 @@ test('the About page holds Oscar’s approved words and the two names, and is li
   const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
   assert.match(html, /<h1>Who we are<\/h1>\s*<p class="v-lead">We started Merchendice after watching a creator’s merch launch fall flat\. We knew it could be done better, so we built the service we wish they’d had\.<\/p>/);
   assert.match(html, /We design every piece from a creator’s own content and colours, then build and run the store for them\. Each order is printed on demand and shipped for them, so they never touch stock\. They have as much say as they want, and we handle the rest\./);
-  assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodhelius<\/p><p class="v-where">Based in Sweden<\/p>/);
+  assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodelius<\/p><p class="v-where">Based in Sweden<\/p>/);
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
   assert.match(html, /<title>About \| Merchendice<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/merchendice\.com\/about\/">/);
   assert.match(html, /<div class="v2-panel hero-rise hero-rise-2">[\s\S]*<p class="v2-panel-cta"><a class="button button-primary" href="\/enquiry\/">Contact us<\/a><\/p>\s*<\/div>/);
   assert.doesNotMatch(html, /Start a project/);
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
-  assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rodhelius/);
+  assert.doesNotMatch(home, /id="about"|Who we are|Oscar Rodelius/);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/missing-page']) {
     const page = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.equal((page.match(/href="\/about\/"/g) || []).length, 2, route);
@@ -545,11 +545,16 @@ test('the FAQ has exactly the nine approved questions, and the only cost wording
   const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
   const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
   assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?', 'How long until my store is live?', 'What if an order arrives damaged?']);
-  assert.ok(faq.includes('<p>Send us the form, and we’ll reply by email, usually within one or two days.</p>'));
+  assert.ok(faq.includes('<p>Send us <a href="/enquiry/">the form</a>, and we’ll reply by email, usually within one or two days.</p>'));
   assert.ok(faq.includes(`<p>${approved}</p>`));
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
   assert.ok(faq.includes('<summary>What can I sell?</summary>\n            <p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery.</p>'));
   assert.doesNotMatch(faq, /Clothing like tees and totes/);
+  for (const path of ['/', '/about/', '/examples/', '/enquiry/', '/privacy/']) {
+    const page = await (await worker.fetch(new Request(`https://site.example.test${path}`))).text();
+    assert.match(page, /<p class="footer-contact">Got an idea\? <a /, path);
+    assert.doesNotMatch(page, /or just a channel|Rodhelius/, path);
+  }
   assert.ok(faq.includes(`<p>${damaged}</p>`));
   assert.doesNotMatch(faq.replace(approved, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   assert.doesNotMatch(home, /"FAQPage"/);
