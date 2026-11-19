@@ -459,18 +459,19 @@ test('no sentence is repeated across the homepage', async () => {
   for (const sentence of sentences) { assert.ok(!seen.has(sentence), `repeated: ${sentence}`); seen.add(sentence); }
 });
 
-test('marketing pages use the cream and espresso theme with no green, terracotta, gradient text or glows', async () => {
+test('marketing pages use the cream, charcoal and terracotta theme with no green, gradient text or glows', async () => {
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
-  assert.match(css, /--bg: #f6eee2/);
-  assert.match(css, /--espresso: #2e211d/);
-  assert.doesNotMatch(css, /--green|#1f3d30|#172e24|#b5553a|#f7f2ea|terracotta/i);
+  assert.match(css, /--bg: #F8F3EB/);
+  assert.match(css, /--espresso: #2B2A28/);
+  assert.match(css, /--accent: #B03A26/);
+  assert.doesNotMatch(css, /--green|#1f3d30|#172e24/i);
   assert.doesNotMatch(css, /\.grad\b|glow|#7cc8d9|#9a8be8|#ecd27f|background-clip: text|linear-gradient|radial-gradient/i);
   for (const route of ['/', '/examples/', '/enquiry/', '/privacy/', '/missing-page']) {
     const html = await (await worker.fetch(new Request(`https://site.example.test${route}`))).text();
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
-    assert.match(html, /<meta name="theme-color" content="#2e211d">/, route);
+    assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
     if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
