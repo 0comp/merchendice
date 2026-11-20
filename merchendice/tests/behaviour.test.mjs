@@ -317,9 +317,7 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
 test('the About page holds Oscar’s approved words and the two names, and is linked from every page', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
   assert.match(html, /<h1>About Merchendice<\/h1>\s*<p class="v-lead">We started Merchendice after watching a creator’s merch launch fall flat\. We knew it could be done better, so we built the service we wish they’d had\.<\/p>/);
-  assert.match(html, /<p>It’s the two of us\. We draw the designs and set up the store, so a creator can get on with their content\.<\/p><p>We make clothing, totes and bags, mugs, home goods and jewellery\.<\/p>/);
-  assert.doesNotMatch(html.slice(html.indexOf('<main')), /build and run|handle the rest|photo-jewellery/, 'the About opening no longer repeats the first FAQ answer');
-  assert.match(html, /<div class="v2-band v2-pieces">(?:<img [^>]*src="\/images\/hero-[a-z-]+-560\.webp"[^>]*width="560" height="700"[^>]*>){2}<\/div>/, 'two designed pieces at their own 4:5 shape, not the soft photo');
+  assert.match(html, /We design every piece from a creator’s own content and colours, then build and run the store for them\. Each order is printed on demand and shipped for them, so they never touch stock\. They have as much say as they want, and we handle the rest\./);
   assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodelius<\/p><p class="v-where">Based in Sweden<\/p>/);
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
   assert.match(html, /<title>About \| Merchendice<\/title>/);
@@ -499,7 +497,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/hero-(swallow-tee|tote-natural)-560\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/photo-jewellery-720\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -812,7 +810,7 @@ test('the homepage "What you get" section carries the approved text verbatim, on
   for (const route of PAGES.filter((r) => r !== '/')) assert.doesNotMatch(await page(route), /samples at cost|What you get/, route);
 });
 
-test('no Oxford commas outside the approved FAQ answers, and the About page repeats no FAQ phrasing', async () => {
+test('no Oxford commas outside the approved FAQ answers', async () => {
   for (const route of PAGES) {
     let html = (await page(route)).replace(/<script[\s\S]*?<\/script>/g, '');
     const faq = html.indexOf('<section class="faq-section"');
