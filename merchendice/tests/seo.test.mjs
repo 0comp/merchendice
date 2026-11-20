@@ -39,7 +39,7 @@ test('canonical and og:url are the https apex address of the page, never www', a
     assert.equal(meta(html, /<link rel="canonical" href="([^"]+)"/), expected, route);
     assert.equal(meta(html, /<meta property="og:url" content="([^"]+)"/), expected, route);
     assert.doesNotMatch(html, /https?:\/\/www\.merchendice\.com/, route);
-    assert.equal(meta(html, /<meta property="og:image" content="([^"]+)"/), `${APEX}/og.png`, route);
+    assert.equal(meta(html, /<meta property="og:image" content="([^"]+)"/), `${APEX}/og.png?v=2`, route);
   }
 });
 

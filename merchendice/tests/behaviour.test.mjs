@@ -317,7 +317,9 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
 test('the About page holds Oscar’s approved words and the two names, and is linked from every page', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/about/'))).text();
   assert.match(html, /<h1>About Merchendice<\/h1>\s*<p class="v-lead">We started Merchendice after watching a creator’s merch launch fall flat\. We knew it could be done better, so we built the service we wish they’d had\.<\/p>/);
-  assert.match(html, /We design every piece from a creator’s own content and colours, then build and run the store for them\. Each order is printed on demand and shipped for them, so they never touch stock\. They have as much say as they want, and we handle the rest\./);
+  assert.match(html, /<p>It’s the two of us\. We draw the designs and set up the store, so a creator can get on with their content\.<\/p><p>We make clothing, totes and bags, mugs, home goods and jewellery\.<\/p>/);
+  assert.doesNotMatch(html.slice(html.indexOf('<main')), /build and run|handle the rest|photo-jewellery/, 'the About opening no longer repeats the first FAQ answer');
+  assert.match(html, /<div class="v2-band v2-pieces">(?:<img [^>]*src="\/images\/hero-[a-z-]+-560\.webp"[^>]*width="560" height="700"[^>]*>){2}<\/div>/, 'two designed pieces at their own 4:5 shape, not the soft photo');
   assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodelius<\/p><p class="v-where">Based in Sweden<\/p>/);
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
   assert.match(html, /<title>About \| Merchendice<\/title>/);
@@ -497,7 +499,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/photo-jewellery-720\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/hero-(swallow-tee|tote-natural)-560\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -724,6 +726,10 @@ test('home copy says each idea once: no "for you" pile-up, "build and run" only 
   const faqStart = html.indexOf('<section class="faq-section"');
   const body = html.slice(html.indexOf('<main'), faqStart).replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(body, /build and run|built and run|we run\b|run it\b|handle (the rest|everything)/i);
+  assert.doesNotMatch(html.slice(0, html.indexOf('<main')).replace(/<script[\s\S]*?<\/script>/g, ''), /build and run/i, 'not in the meta descriptions either');
+  const footer = html.slice(html.indexOf('<footer')).replace(/<[^>]+>/g, ' ');
+  assert.match(footer, /Designs and stores for creators of any size on TikTok, Instagram and YouTube\./);
+  assert.doesNotMatch(footer, /we run|build and run/i);
   assert.ok((body.match(/\bfor you\b/g) || []).length === 0, 'no bare "for you" outside the FAQ');
   assert.match(body, /It starts with a short message\. We take it from there\./);
   assert.match(body, /The store opens and we look after it\./);
@@ -761,8 +767,8 @@ test('the share image is a 1200 × 630 PNG under 300 KB, and every page points t
   assert.deepEqual(png, await fs.readFile(new URL('../og.png', import.meta.url)), 'the served file is the committed one');
   for (const route of PAGES.filter(route => route !== MISSING_PAGE)) {
     const html = await page(route);
-    assert.match(html, /<meta property="og:image" content="https:\/\/merchendice\.com\/og\.png">\s*<meta property="og:image:width" content="1200">\s*<meta property="og:image:height" content="630">/, route);
-    assert.match(html, /<meta name="twitter:image" content="https:\/\/merchendice\.com\/og\.png">/, route);
+    assert.match(html, /<meta property="og:image" content="https:\/\/merchendice\.com\/og\.png\?v=2">\s*<meta property="og:image:width" content="1200">\s*<meta property="og:image:height" content="630">/, route);
+    assert.match(html, /<meta name="twitter:image" content="https:\/\/merchendice\.com\/og\.png\?v=2">/, route);
   }
 });
 
@@ -803,4 +809,14 @@ test('the homepage "What you get" section carries the approved text verbatim, on
   assert.ok(html.indexOf('id="how-it-works"') < html.indexOf('id="what-you-get"') && html.indexOf('id="what-you-get"') < html.indexOf('id="faq"'));
   assert.equal(html.split(WHAT_YOU_GET).length - 1, 1);
   for (const route of PAGES.filter((r) => r !== '/')) assert.doesNotMatch(await page(route), /samples at cost|What you get/, route);
+});
+
+test('no Oxford commas outside the approved FAQ answers, and the About page repeats no FAQ phrasing', async () => {
+  for (const route of PAGES) {
+    let html = (await page(route)).replace(/<script[\s\S]*?<\/script>/g, '');
+    const faq = html.indexOf('<section class="faq-section"');
+    if (faq !== -1) html = html.slice(0, faq) + html.slice(html.indexOf('</section>', faq));
+    const text = html.replace(/<[^>]+>/g, ' ');
+    assert.doesNotMatch(text, /\w+, [^,.;:]+, (?:and|or) /, route);
+  }
 });

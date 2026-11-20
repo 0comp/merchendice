@@ -23,7 +23,7 @@ The hero mosaic is six crops of example-store mockups (`images/store/`), all sho
 
 | File | Size (px) | Shape | Where it shows |
 | --- | --- | --- | --- |
-| `photo-jewellery-720.webp`, `photo-jewellery-360.webp` | 720 × 900, 360 × 450 | 4:5 | About page band, share image. Stock photo: gold jewellery on cream cloth. |
+| `photo-jewellery-720.webp`, `photo-jewellery-360.webp` | 720 × 900, 360 × 450 | 4:5 | Not used on any page now (the About band and the share image use the designed hero pieces). Stock photo: gold jewellery on cream cloth. |
 | `hero-crewneck-sand-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (also on phones), preloaded as the first photo. Songbird crewneck in sand (`store/crewneck-25456`). |
 | `hero-swallow-tee-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (also on phones). Vintage Swallow Tee in natural (`store/vintage-swallow-91227`). |
 | `hero-tote-natural-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (desktop only). Songbird Canvas Tote (`store/canvas-tote-101409`). |
@@ -45,7 +45,7 @@ Both are under the [Pexels License](https://www.pexels.com/license/) (checked 18
 | --- | --- | --- | --- |
 | `photo-jewellery-*.webp` | https://www.pexels.com/photo/golden-jewelry-on-white-background-26791734/ | Zerin Takı | Pexels License |
 
-Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file. It shows the natural tote, the Dove Line Tee (the old hero tee file, since removed), the knit stack and the jewellery photo, as four 258 × 258 tiles on the right (no faces, nothing AI-generated). The knit tile is a square crop of `knit-stack.webp` (rows 80 to 720 of the 640 × 800 file), downscaled only. The file is saved as a 256-colour PNG to keep it near 150 KB.
+Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared (linked as `/og.png?v=2`; bump the number when the file changes). It is a white canvas with the dark wordmark bar, the headline and six 192 × 240 tiles taken from the `hero-*-560.webp` pieces, downscaled only. No photos, no faces, nothing AI-generated.
 
 ## Icons
 

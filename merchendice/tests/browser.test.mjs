@@ -126,29 +126,31 @@ test('the sent dialog closes with Esc, the Close button or the backdrop, and foc
   assert.equal(server.sends(), 4);
 });
 
-test('the share image shows the knit stack in the tile where the old bird sticker was', browserTestOptions(), async (t) => {
+test('the share image shows six designed hero pieces on white, with no photos or old sticker tile', browserTestOptions(), async (t) => {
   const { base } = await startServer(t);
   const browser = await startBrowser(t);
   const tab = await browser.newPage({ width: 1300, height: 700 });
   await tab.goto(`${base}/`);
-  // Draw the share image and the knit photo (cropped and scaled the way README describes) and compare pixels.
+  // Draw the share image and each hero piece (scaled to its 192 × 240 tile) and compare pixels.
   const result = await tab.evaluate(`(async () => {
     const load = (src) => new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = src; });
-    const [og, knit] = await Promise.all([load('/og.png'), load('/images/knit-stack.webp')]);
+    const names = ['swallow-tee', 'tote-natural', 'songbird-tee', 'crewneck-sand', 'dove-tee', 'hoodie-sand'];
+    const [og, ...pieces] = await Promise.all([load('/og.png'), ...names.map((n) => load('/images/hero-' + n + '-560.webp'))]);
     const canvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c.getContext('2d', { willReadFrequently: true }); };
     const share = canvas(1200, 630); share.drawImage(og, 0, 0);
-    const tile = canvas(258, 258); tile.imageSmoothingQuality = 'high'; tile.drawImage(knit, 0, 80, 640, 640, 0, 0, 258, 258);
-    const a = share.getImageData(656, 358, 258, 258).data, b = tile.getImageData(0, 0, 258, 258).data;
-    let diff = 0, dark = 0;
-    for (let i = 0; i < a.length; i += 4) {
-      diff += Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
-      if (Math.abs(a[i] - 46) <= 3 && Math.abs(a[i + 1] - 36) <= 3 && Math.abs(a[i + 2] - 30) <= 3) dark++;
-    }
-    return { width: og.naturalWidth, height: og.naturalHeight, meanDiff: diff / (a.length / 4) / 3, darkShare: dark / (a.length / 4) };
+    const diffs = pieces.map((piece, i) => {
+      const tile = canvas(192, 240); tile.imageSmoothingQuality = 'high'; tile.drawImage(piece, 0, 0, 192, 240);
+      const a = share.getImageData(540 + (i % 3) * 206, 100 + Math.floor(i / 3) * 254, 192, 240).data, b = tile.getImageData(0, 0, 192, 240).data;
+      let diff = 0;
+      for (let k = 0; k < a.length; k += 4) diff += Math.abs(a[k] - b[k]) + Math.abs(a[k + 1] - b[k + 1]) + Math.abs(a[k + 2] - b[k + 2]);
+      return diff / (a.length / 4) / 3;
+    });
+    const px = (x, y) => Array.from(share.getImageData(x, y, 1, 1).data.slice(0, 3));
+    return { width: og.naturalWidth, height: og.naturalHeight, diffs, bar: px(600, 10), white: [px(20, 300), px(1190, 300), px(600, 620)] };
   })()`);
   assert.equal(result.width, 1200);
   assert.equal(result.height, 630);
-  assert.ok(result.meanDiff < 12, `knit tile matches the photo (mean difference ${result.meanDiff.toFixed(1)})`);
-  // The old sticker tile was mostly a flat #2E241E background.
-  assert.ok(result.darkShare < 0.05, `no sticker background left (${(result.darkShare * 100).toFixed(1)}% of the tile)`);
+  result.diffs.forEach((d, i) => assert.ok(d < 8, `tile ${i} matches its hero piece (mean difference ${d.toFixed(1)})`));
+  assert.deepEqual(result.bar, [43, 42, 40], 'the dark wordmark bar');
+  for (const rgb of result.white) assert.deepEqual(rgb, [255, 255, 255], 'white background');
 });
