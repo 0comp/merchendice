@@ -273,9 +273,9 @@ test('the fonts are served from the site, and removed product mockups are not', 
   for (const gone of ['sticker', 'tote-black-detail', 'tote-black', 'sticker-camel', 'example-store-accessories', 'jersey-sand', 'canvas-black', 'canvas-natural', 'canvas-sand', 'goods-flatlay', 'store-banner']) {
     assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   }
-  for (const gone of ['hero-tee', 'photo-tote-720', 'photo-tote-360', 'photo-crewneck-720', 'photo-crewneck-360']) assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
+  for (const gone of ['hoodie-black-496', 'hero-tee', 'photo-tote-720', 'photo-tote-360', 'photo-crewneck-720', 'photo-crewneck-360']) assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   const heroTiles = ['hero-tote-natural', 'hero-crewneck-sand', 'hero-dove-tee', 'hero-swallow-tee', 'hero-hoodie-sand', 'hero-songbird-tee'].flatMap(name => [`${name}-560`, `${name}-360`]);
-  for (const image of [...heroTiles, 'tote-natural', 'knit-stack', 'photo-jewellery-720', 'photo-jewellery-360', 'hoodie-black-496', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960']) {
+  for (const image of [...heroTiles, 'tote-natural', 'knit-stack', 'photo-jewellery-720', 'photo-jewellery-360', 'feature-hoodie-black-480', 'feature-hoodie-black-360', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
@@ -393,7 +393,7 @@ test('every response carries the permissions and opener policies, and hashed ass
   const fixture = await serverFixture(t);
   const home = await fetch(`${fixture.base}/`);
   const html = await home.text();
-  for (const response of [home, await fetch(`${fixture.base}/images/hoodie-black-496.webp`), await fetch(`${fixture.base}/missing`)]) {
+  for (const response of [home, await fetch(`${fixture.base}/images/feature-hoodie-black-480.webp`), await fetch(`${fixture.base}/missing`)]) {
     assert.equal(response.headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');
     assert.equal(response.headers.get('cross-origin-opener-policy'), 'same-origin');
   }

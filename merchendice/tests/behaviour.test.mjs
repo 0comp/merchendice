@@ -395,7 +395,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
   const HERO = ['hero-tote-natural', 'hero-crewneck-sand', 'hero-dove-tee', 'hero-swallow-tee', 'hero-hoodie-sand', 'hero-songbird-tee'];
-  const allowed = [...HERO.map(name => `${name}-560`), 'hoodie-black-496', 'store-phone-780'];
+  const allowed = [...HERO.map(name => `${name}-560`), 'feature-hoodie-black-480', 'store-phone-780'];
   const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
   for (const figure of figures) names.push(figure.match(/<img\b[^>]*src="\/images\/([a-z0-9-]+)\.webp"/)[1]);
@@ -415,6 +415,9 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(html, /sticker\.webp|Songbird kiss-cut sticker/);
   assert.doesNotMatch(html, /tote-black|canvas-(black|natural|sand)|canvas weave|goods-flatlay|store-banner/);
   assert.doesNotMatch(html, /Pictured:/);
+  // "A few good products" shows a piece with its print, not a blank sleeve.
+  assert.match(html, /<figure class="goods-feature">\s*<img src="\/images\/feature-hoodie-black-480\.webp" srcset="\/images\/feature-hoodie-black-360\.webp 360w, \/images\/feature-hoodie-black-480\.webp 480w" sizes="[^"]+" alt="Black hoodie with a small colourful songbird on a branch printed on the chest" width="480" height="600" loading="lazy" decoding="async">/);
+  assert.doesNotMatch(html, /hoodie-black-496|Sleeve cuff and pocket/);
   assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
   // No eyebrow labels, accent words, italic flourishes or scroll cue.
