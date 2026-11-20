@@ -217,7 +217,7 @@ main { display: block; }
   text-transform: uppercase;
 }
 .hero-points { margin: 0 0 32px; padding: 0; list-style: none; }
-.hero-points li { position: relative; padding: 5px 0 5px 30px; font-size: 17px; color: var(--text); text-wrap: pretty; }
+.hero-points li { position: relative; padding: 5px 0 5px 30px; font-size: 17px; color: var(--text); }
 .hero-points li::before { content: ""; position: absolute; left: 0; top: 1.05em; width: 16px; height: 1px; background: var(--ink); }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; }
 

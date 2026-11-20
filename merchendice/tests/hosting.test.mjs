@@ -275,7 +275,7 @@ test('the fonts are served from the site, and removed product mockups are not', 
   }
   for (const gone of ['hoodie-black-496', 'hero-tee', 'photo-tote-720', 'photo-tote-360', 'photo-crewneck-720', 'photo-crewneck-360']) assert.equal((await fetch(`${fixture.base}/images/${gone}.webp`)).status, 404, gone);
   const heroTiles = ['hero-tote-natural', 'hero-crewneck-sand', 'hero-dove-tee', 'hero-swallow-tee', 'hero-hoodie-sand', 'hero-songbird-tee'].flatMap(name => [`${name}-560`, `${name}-360`]);
-  for (const image of [...heroTiles, 'tote-natural', 'knit-stack', 'about-knit-1900', 'about-knit-1200', 'about-knit-800', 'photo-jewellery-720', 'photo-jewellery-360', 'feature-hoodie-black-640', 'feature-hoodie-black-400', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960']) {
+  for (const image of [...heroTiles, 'tote-natural', 'knit-stack', 'about-knit-1900', 'about-knit-1200', 'about-knit-800', 'photo-jewellery-720', 'photo-jewellery-360', 'feature-hoodie-black-480', 'feature-hoodie-black-360', 'store-phone-780', 'store-phone-520', 'store-desktop-1440', 'store-desktop-960']) {
     const response = await fetch(`${fixture.base}/images/${image}.webp`);
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
