@@ -39,7 +39,7 @@ test('canonical and og:url are the https apex address of the page, never www', a
     assert.equal(meta(html, /<link rel="canonical" href="([^"]+)"/), expected, route);
     assert.equal(meta(html, /<meta property="og:url" content="([^"]+)"/), expected, route);
     assert.doesNotMatch(html, /https?:\/\/www\.merchendice\.com/, route);
-    assert.equal(meta(html, /<meta property="og:image" content="([^"]+)"/), `${APEX}/og.png`, route);
+    assert.equal(meta(html, /<meta property="og:image" content="([^"]+)"/), `${APEX}/og.png?v=2`, route);
   }
 });
 
@@ -236,7 +236,7 @@ test('the example store files are exactly as they were before the SEO work', asy
   assert.equal(diff.trim(), '');
 });
 
-test('the hero line keeps its paragraph look now that it is a heading', async () => {
+test('the hero line is a paragraph again and keeps its small-caps look', async () => {
   const { readFile } = await import('node:fs/promises');
   const css = await readFile(new URL('../site.css', import.meta.url), 'utf8');
   const rule = css.match(/\n\.hero-line \{([^}]+)\}/)[1];

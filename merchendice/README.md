@@ -26,6 +26,7 @@ The colourful songbird (the small chest print on the tote) appears on one homepa
 | `photo-jewellery-720.webp`, `photo-jewellery-360.webp` | 720 × 900, 360 × 450 | 4:5 | Homepage mosaic (also on phones), share image. Stock photo: gold jewellery on cream cloth. |
 | `photo-tote-720.webp`, `photo-tote-360.webp` | 720 × 900, 360 × 450 | 4:5 | Homepage mosaic (also on phones), first photo loaded. Stock photo: a hand holding a plain cream tote. |
 | `photo-crewneck-720.webp`, `photo-crewneck-360.webp` | 720 × 900, 360 × 450 | 4:5 | Homepage mosaic (desktop only). Stock photo: neckline of an off-white crewneck. |
+| `about-knit-800.webp`, `-1200`, `-1900` | 800 × 400, 1200 × 600, 1900 × 950 | 2:1 | About band (listed in `srcset`). Folded knit sweaters, cropped to 2:1 from the 3500 px original and scaled down only (class `band-knit`). |
 | `hero-tee.webp` | 720 × 900 | 4:5 | Homepage mosaic (the one tee in the hero, also on phones). Dove Line Tee, unedited. |
 | `tote-natural.webp` | 720 × 960 | 3:4 | Homepage mosaic (desktop only), enquiry page (desktop), share image. Songbird Canvas Tote, unedited. |
 | `knit-stack.webp` | 640 × 800 | 4:5 | Homepage mosaic (desktop only), share image. Folded knit sweaters, photo by Arina Krasnikova on Pexels (Pexels licence): https://www.pexels.com/photo/a-close-up-shot-of-stack-of-folded-knitted-fabrics-5710046/ |
@@ -36,15 +37,16 @@ The colourful songbird (the small chest print on the tote) appears on one homepa
 
 ### Stock photo credits
 
-All three are under the [Pexels License](https://www.pexels.com/license/) (checked 18 November 2026): free to use and modify, attribution not required. They are credited here anyway. Don't sell them unaltered or suggest the photographers endorse Merchendice. Each was downloaded from Pexels' own image server (the tote at 2000 px wide, the others at 1400 px), cropped to 4:5 and scaled down only.
+All four are under the [Pexels License](https://www.pexels.com/license/) (checked 18 November 2026): free to use and modify, attribution not required. They are credited here anyway. Don't sell them unaltered or suggest the photographers endorse Merchendice. Each was downloaded from Pexels' own image server (the tote at 2000 px wide, the others at 1400 px), cropped to 4:5 and scaled down only.
 
 | File | Photo page | Photographer | Licence |
 | --- | --- | --- | --- |
+| `about-knit-*.webp`, `knit-stack.webp` | https://www.pexels.com/photo/a-close-up-shot-of-stack-of-folded-knitted-fabrics-5710046/ | Arina Krasnikova | Pexels License |
 | `photo-jewellery-*.webp` | https://www.pexels.com/photo/golden-jewelry-on-white-background-26791734/ | Zerin Takı | Pexels License |
 | `photo-tote-*.webp` | https://www.pexels.com/photo/a-person-holding-a-tote-bag-6787035/ | Artem Podrez | Pexels License |
 | `photo-crewneck-*.webp` | https://www.pexels.com/photo/white-crew-neck-t-shirt-9594089/ | Ron Lach | Pexels License |
 
-Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file. It shows the natural tote, the hero tee, the knit stack and the jewellery photo, as four 258 × 258 tiles on the right (no faces, nothing AI-generated). The knit tile is a square crop of `knit-stack.webp` (rows 80 to 720 of the 640 × 800 file), downscaled only. The file is saved as a 256-colour PNG to keep it near 150 KB.
+Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file (linked as `/og.png?v=2`; bump the number when the file changes). It shows the natural tote, the hero tee, the knit stack and the jewellery photo, as four 258 × 258 tiles on the right (no faces, nothing AI-generated). The knit tile is a square crop of `knit-stack.webp` (rows 80 to 720 of the 640 × 800 file), downscaled only. The file is saved as a 256-colour PNG to keep it near 150 KB.
 
 ## Icons
 

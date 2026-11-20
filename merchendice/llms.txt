@@ -17,7 +17,7 @@ Send the enquiry form and we reply by email, usually within one or two days. The
 ## Pages
 
 - [Home](https://merchendice.com/): what Merchendice does, how it works and common questions
-- [Storefronts directory](https://merchendice.com/examples/): example storefronts, starting with CREATOR, a shop for a made-up brand
+- [Example store](https://merchendice.com/examples/): example storefronts, starting with CREATOR, a shop for a made-up brand
 - [About](https://merchendice.com/about/): who we are, Oscar Thomas and Oscar Rodelius
 - [Start a project](https://merchendice.com/enquiry/): the enquiry form
 - [Privacy notice](https://merchendice.com/privacy/): how enquiry details are handled
