@@ -65,7 +65,12 @@ test('every image has an alt attribute and dimensions; below-the-fold images are
       assert.match(tag, /\sdecoding="async"/, `${route}: decoding on ${tag.slice(0, 80)}`);
     }
     const home = route === '/' ? html : '';
-    if (home) assert.equal((home.match(/fetchpriority="high"/g) || []).length, 1, 'one high-priority image on the home page');
+    if (home) {
+      assert.equal((home.match(/fetchpriority="high"/g) || []).length, 1, 'one high-priority image on the home page');
+      // The first hero tile is preloaded with the same srcset and sizes as the img, so the browser fetches it once.
+      assert.match(home, /<link rel="preload" as="image" href="\/images\/hero-crewneck-sand-560\.webp" imagesrcset="\/images\/hero-crewneck-sand-360\.webp 360w, \/images\/hero-crewneck-sand-560\.webp 560w" imagesizes="\(max-width: 900px\) 46vw, 270px" type="image\/webp">/);
+      assert.match(home, /<img src="\/images\/hero-crewneck-sand-560\.webp" srcset="\/images\/hero-crewneck-sand-360\.webp 360w, \/images\/hero-crewneck-sand-560\.webp 560w" sizes="\(max-width: 900px\) 46vw, 270px"[^>]* fetchpriority="high"/);
+    }
   }
 });
 

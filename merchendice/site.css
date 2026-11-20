@@ -16,6 +16,7 @@
 :root {
   --bg: #F8F3EB;
   --bg-warm: #E9E1D4;
+  --tile: #FFFFFF;
   --surface: #FBF7F1;
   --espresso: #2B2A28;
   --espresso-soft: #3F3D3A;
@@ -223,8 +224,9 @@ main { display: block; }
 .hero-mosaic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-self: stretch; margin-block: -40px; }
 .mosaic-col { display: flex; flex-direction: column; gap: 18px; margin-top: -96px; }
 .mosaic-col-offset { margin-top: -12px; }
-.tile { overflow: hidden; background: var(--bg-warm); }
-.tile img { width: 100%; }
+/* Every hero tile is a mock-up of one of the designs, all on the same white backdrop */
+.tile { overflow: hidden; background: var(--tile); }
+.tile img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 
 /* Strip under the hero */
 .service-strip { background: var(--accent); color: var(--on-accent); }
@@ -467,10 +469,9 @@ main { display: block; }
   .footer-nav { justify-content: flex-start; margin-left: -12px; }
   .hero { height: auto; overflow: visible; padding-top: 16px; padding-bottom: 40px; }
   .hero-copy { padding-block: 8px 0; }
-  .hero-mosaic { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 8px 0 0; }
+  .hero-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 8px 0 0; }
   .mosaic-col, .mosaic-col-offset { display: contents; }
   .hero-mosaic .tile { margin: 0; }
-  .hero-mosaic .tile img { aspect-ratio: 3 / 4; object-fit: cover; }
   .hero-mosaic .tile-desktop { display: none; }
   .enquiry-image { display: none; }
   .enquiry-intro { position: static; }
