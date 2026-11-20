@@ -497,7 +497,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
-    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/photo-jewellery-720\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
+    if (route !== '/') for (const [, src] of html.matchAll(/<img\b[^>]*src="([^"]+)"/g)) assert.match(src, route === '/about/' ? /^\/images\/about-knit-1200\.webp$/ : /^\/images\/(store-desktop-1440|tote-natural)\.webp$/, route);
     assert.doesNotMatch(html, /class="[^"]*\bkicker\b|hero-illustration|enquiry-mark|We read every note/, route);
   }
 });
@@ -818,4 +818,16 @@ test('no Oxford commas outside the approved FAQ answers', async () => {
     const text = html.replace(/<[^>]+>/g, ' ');
     assert.doesNotMatch(text, /\w+, [^,.;:]+, (?:and|or) /, route);
   }
+});
+
+test('About band shows the knit stack with responsive webp sources, alt text and no jewellery photo', async () => {
+  const html = await page('/about/');
+  const img = html.match(/<img\b[^>]*>/)[0];
+  assert.match(img, /alt="Stack of folded knitted fabrics in soft grey and cream"/);
+  assert.match(img, /srcset="\/images\/about-knit-800\.webp 800w, \/images\/about-knit-1200\.webp 1200w, \/images\/about-knit-1800\.webp 1800w"/);
+  assert.match(img, /sizes="[^"]+"/);
+  assert.match(img, /width="1800" height="900" class="band-knit"/);
+  assert.match(img, /fetchpriority="high"/);
+  assert.doesNotMatch(html, /photo-jewellery|Gold necklaces/);
+  assert.match(html, /We started Merchendice after watching a creator’s merch launch fall flat\./);
 });
