@@ -202,7 +202,7 @@ test('llms.txt is short, line-ending safe and the Dockerfile ships all three cra
 test('the approved SEO wording is in place and the layout classes are unchanged', async () => {
   const home = await page('/');
   assert.match(home, /<h1 id="hero-title" class="hero-rise">Merch that looks like it came from you\.<\/h1>/);
-  assert.match(home, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
+  assert.match(home, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
   assert.match(home, /<h2 id="faq-title" class="rise">Frequently asked questions<\/h2>/);
   assert.match(home, /<h2 id="how-title">How it works<\/h2>/);
   assert.doesNotMatch(home, />Questions<\/h2>/);
@@ -236,7 +236,7 @@ test('the example store files are exactly as they were before the SEO work', asy
   assert.equal(diff.trim(), '');
 });
 
-test('the hero line keeps its paragraph look now that it is a heading', async () => {
+test('the hero line is a paragraph again and keeps its small-caps look', async () => {
   const { readFile } = await import('node:fs/promises');
   const css = await readFile(new URL('../site.css', import.meta.url), 'utf8');
   const rule = css.match(/\n\.hero-line \{([^}]+)\}/)[1];

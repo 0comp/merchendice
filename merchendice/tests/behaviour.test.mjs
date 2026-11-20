@@ -306,10 +306,10 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
   }
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.match(home, /<li>Jewellery<\/li>/);
-  assert.match(home, /Bags, apparel, jewellery and small extras, chosen for your audience\./);
+  assert.match(home, /<p class="goods-range">Clothing, totes and bags, mugs, home goods and jewellery\.<\/p>/);
   assert.match(home, /influencers of any size/);
   assert.match(home, /Exclusive designs/);
-  assert.match(home, /A store in your look, built and run for you/);
+  assert.match(home, /A store in your look, built and kept running by us/);
   assert.match(home, /<span>Based and designed in Sweden<\/span>/);
   assert.doesNotMatch(home, /mobile-cta|language|guide/i);
 });
@@ -463,7 +463,7 @@ test('JSON-LD and the visible hero line both say creators and influencers', asyn
   const json = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1])['@graph'].find((node) => node['@type'] === 'Organization');
   assert.match(json.description, /creators and influencers/);
   assert.match(json.audience.audienceType, /Creators and influencers/);
-  assert.match(html, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
+  assert.match(html, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
 });
 
 test('the primary Start a project button sits in the hero under the bullets, and the hero text is top-aligned', async () => {
@@ -716,10 +716,42 @@ test('the example store links back to the Merchendice homepage from its top bar'
   assert.match(css, /@media \(max-width:700px\)\{[\s\S]*?\.announce-back\{position:static/);
 });
 
-test('the homepage product band lists exactly what Oscar approved', async () => {
+test('the homepage product band follows the approved FAQ list, and stickers are listed nowhere', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const strip = html.match(/<ul aria-label="What we make">([\s\S]*?)<\/ul>/)[1];
-  assert.deepEqual([...strip.matchAll(/<li>([^<]+)<\/li>/g)].map(m => m[1]), ['Totes and bags', 'Clothes', 'Jewellery']);
+  assert.deepEqual([...strip.matchAll(/<li>([^<]+)<\/li>/g)].map(m => m[1]), ['Clothing', 'Totes and bags', 'Mugs', 'Home goods', 'Jewellery']);
+  assert.match(html, /Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery\./, 'the FAQ list the band follows');
+  assert.match(html, /from clothing and totes to mugs and jewellery\./);
+  for (const route of PAGES) assert.doesNotMatch((await page(route)).replace(/<script[\s\S]*?<\/script>/g, ''), /sticker/i, route);
+  assert.doesNotMatch(await (await worker.fetch(new Request('https://site.example.test/llms.txt'))).text(), /sticker/i);
+});
+
+test('home copy says each idea once: no "for you" pile-up, "build and run" only in the approved FAQ', async () => {
+  const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
+  const faqStart = html.indexOf('<section class="faq-section"');
+  const body = html.slice(html.indexOf('<main'), faqStart).replace(/<[^>]+>/g, ' ');
+  assert.doesNotMatch(body, /build and run|built and run|we run\b|run it\b|handle (the rest|everything)/i);
+  assert.ok((body.match(/\bfor you\b/g) || []).length === 0, 'no bare "for you" outside the FAQ');
+  assert.match(body, /It starts with a short message\. We take it from there\./);
+  assert.match(body, /The store opens and we look after it\./);
+});
+
+test('quick fixes: Example store naming, reply time on the enquiry page, no Oxford comma on the examples page', async () => {
+  for (const route of PAGES) {
+    const html = await page(route);
+    assert.doesNotMatch(html, /Storefronts/, route);
+    if (route !== '/example-store/') assert.equal((html.match(/<a href="\/examples\/"( aria-current="page")?>Example store<\/a>/g) || []).length, 2, route);
+  }
+  const examples = await page('/examples/');
+  assert.match(examples, /<title>Example store \| Merchendice<\/title>/);
+  assert.match(examples, /<h1 id="directory-title" class="hero-rise">Example store<\/h1>/);
+  assert.match(examples, /a collection page, quick view and a bag\./);
+  const enquiry = await page('/enquiry/');
+  assert.match(enquiry, /even if it’s still rough\. We reply by email, usually within one or two days\.<\/p>/);
+  assert.match(enquiry, /<p id="sentText">We’ll answer by email, usually within one or two days\.<\/p>/);
+  const home = await page('/');
+  assert.match(home, /<meta name="description" content="[^"]*on TikTok, Instagram, YouTube or anywhere else\./);
+  assert.match(home, /Creators of any size, on any platform\./, 'the FAQ line the meta wording agrees with');
 });
 
 test('the share image is a 1200 × 630 PNG under 300 KB, and every page points to it with matching meta', async () => {
