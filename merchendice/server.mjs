@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { isIPv4, isIPv6 } from 'node:net';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
@@ -127,6 +128,30 @@ export function createRateLimiter({ limit = ENQUIRY_LIMIT, windowMs = ENQUIRY_WI
   };
 }
 
+// The key the rate limits count against. IPv4 addresses (including IPv4-mapped IPv6) count one by one.
+// An IPv6 address counts by its /64 network, because one home or server connection is normally given a
+// whole /64 and could otherwise rotate addresses to get round the limits or fill the table.
+export function rateLimitKey(address) {
+  let value = String(address || '').trim().toLowerCase();
+  if (value.startsWith('[') && value.endsWith(']')) value = value.slice(1, -1);
+  value = value.split('%')[0];
+  if (value.startsWith('::ffff:') && isIPv4(value.slice(7))) return value.slice(7);
+  if (isIPv4(value)) return value;
+  if (!isIPv6(value)) return value.slice(0, 64) || 'unknown';
+  let [head, tail = ''] = value.split('::');
+  let left = head ? head.split(':') : [];
+  let right = value.includes('::') ? (tail ? tail.split(':') : []) : [];
+  const last = (right.length ? right : left).at(-1);
+  if (last && last.includes('.')) {
+    // An embedded IPv4 tail fills the last two groups.
+    const [a, b, c, d] = last.split('.').map(Number);
+    const groups = [((a << 8) | b).toString(16), ((c << 8) | d).toString(16)];
+    if (right.length) right.splice(-1, 1, ...groups); else left.splice(-1, 1, ...groups);
+  }
+  const groups = value.includes('::') ? [...left, ...Array(8 - left.length - right.length).fill('0'), ...right] : left;
+  return `${groups.slice(0, 4).map((group) => parseInt(group, 16).toString(16)).join(':')}::/64`;
+}
+
 function encodingQuality(header, name) {
   let specific;
   let wildcard;
@@ -250,7 +275,7 @@ export function createAppServer({
       let requestEnv = runtimeEnv;
       let releaseSend = null;
       if (incoming.method === 'POST' && url.pathname === '/api/enquiry') {
-        const ip = String(env.TRUST_PROXY === '1'
+        const ip = rateLimitKey(env.TRUST_PROXY === '1'
           ? incoming.headers['x-real-ip'] || incoming.socket.remoteAddress
           : incoming.socket.remoteAddress);
         // The raw cap comes first, so even rejected POSTs are limited.

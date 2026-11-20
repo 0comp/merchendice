@@ -48,7 +48,7 @@ The backend uses Composio's [documented proxy endpoint](https://docs.composio.de
 
 ### Enquiry rate limits
 
-In `server.mjs`, each IP address can send 2 enquiries per hour (`ENQUIRY_LIMIT`). Only enquiries the email provider confirms count, so a form error, an oversized message, a spam-trap hit or a failed delivery doesn't use one up. Separately, every POST to the form counts toward an abuse cap of 20 per hour per IP (`ENQUIRY_RAW_LIMIT`), so the form can't be hammered. Both answer with a 429 and a `Retry-After` header. Behind the proxy, set `TRUST_PROXY=1` (as `compose.yaml` does) so the limits use the visitor's `X-Real-IP` rather than the proxy's address. Counts live in memory only and are dropped after about an hour.
+In `server.mjs`, each IP address can send 2 enquiries per hour (`ENQUIRY_LIMIT`). Only enquiries the email provider confirms count, so a form error, an oversized message, a spam-trap hit or a failed delivery doesn't use one up. Separately, every POST to the form counts toward an abuse cap of 20 per hour per IP (`ENQUIRY_RAW_LIMIT`), so the form can't be hammered. Both answer with a 429 and a `Retry-After` header. Behind the proxy, set `TRUST_PROXY=1` (as `compose.yaml` does) so the limits use the visitor's `X-Real-IP` rather than the proxy's address. The proxy must set `X-Real-IP` itself (overwriting any value the visitor sends), as the snippets in `deploy/` and the `Caddyfile` do, and the app's port must stay bound to `127.0.0.1` so nobody can reach it without the proxy. An IPv4 address counts on its own; an IPv6 address counts by its /64 network, since one connection is usually given a whole /64. Counts live in memory only and are dropped after about an hour.
 
 ### Gmail SMTP mode (matches the reference repository)
 

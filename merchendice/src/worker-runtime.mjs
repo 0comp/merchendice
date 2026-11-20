@@ -127,7 +127,9 @@ export default {
 
     if (honeypotTripped(input)) return json({ ok: true });
 
-    const name = typeof input?.name === 'string' ? input.name.trim() : '';
+    // The name is one line in the email, so line breaks and other control characters become spaces
+    // (a name can't add a fake "Email:" line to the message).
+    const name = typeof input?.name === 'string' ? input.name.replace(/[\u0000-\u001F\u007F]+/g, ' ').replace(/ {2,}/g, ' ').trim() : '';
     const email = typeof input?.email === 'string' ? input.email.trim() : '';
     const description = typeof input?.description === 'string' ? input.description.trim() : '';
     if (!name || name.length > 160 || !validEmail(email) || !description || description.length > 5000) {

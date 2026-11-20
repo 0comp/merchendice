@@ -447,3 +447,46 @@ test('every referenced local asset exists', async t => {
 
   assert.deepEqual(missing, [], missing.join('; '));
 });
+
+test('rate limits count IPv4 addresses singly and IPv6 addresses by their /64', async () => {
+  const { rateLimitKey } = await import('../server.mjs');
+  assert.equal(rateLimitKey('203.0.113.7'), '203.0.113.7');
+  assert.equal(rateLimitKey('::ffff:203.0.113.7'), '203.0.113.7');
+  assert.equal(rateLimitKey('2001:db8:1:2:aaaa::1'), '2001:db8:1:2::/64');
+  assert.equal(rateLimitKey('2001:DB8:1:2:ffff:ffff:ffff:ffff'), '2001:db8:1:2::/64');
+  assert.equal(rateLimitKey('[2001:db8::5]'), '2001:db8:0:0::/64');
+  assert.equal(rateLimitKey('fe80::1%eth0'), 'fe80:0:0:0::/64');
+  assert.equal(rateLimitKey('::1'), '0:0:0:0::/64');
+  assert.equal(rateLimitKey('64:ff9b::192.0.2.1'), '64:ff9b:0:0::/64');
+  assert.equal(rateLimitKey(''), 'unknown');
+});
+
+test('addresses in one IPv6 /64 share the 2 confirmed sends an hour', async () => {
+  const sent = [];
+  const server = createAppServer({ env: { NODE_ENV: 'test', TRUST_PROXY: '1', PUBLIC_ORIGIN: 'http://127.0.0.1' }, sendMail: async (m) => { sent.push(m); return { id: `id-${sent.length}` }; } });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address();
+  const post = (ip) => new Promise((resolve, reject) => {
+    const body = JSON.stringify({ name: 'Ada', email: 'ada@example.com', description: 'Tote bags' });
+    const req = httpRequest({ host: '127.0.0.1', port, path: '/api/enquiry', method: 'POST', headers: { host: '127.0.0.1', 'content-type': 'application/json', 'x-real-ip': ip, 'content-length': Buffer.byteLength(body) } }, (res) => { res.resume(); res.on('end', () => resolve(res.statusCode)); });
+    req.on('error', reject); req.end(body);
+  });
+  try {
+    assert.equal(await post('2001:db8:1:2::1'), 200);
+    assert.equal(await post('2001:db8:1:2::2'), 200);
+    assert.equal(await post('2001:db8:1:2:dead:beef::3'), 429);
+    assert.equal(await post('2001:db8:1:3::1'), 200);
+    assert.equal(sent.length, 3);
+  } finally { server.close(); }
+});
+
+test('a line break in the name cannot add a line to the enquiry email', async () => {
+  const sent = [];
+  const response = await worker.fetch(new Request('https://site.example.test/api/enquiry', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name: 'Ada\r\nEmail: other@example.com', email: 'ada@example.com', description: 'Tote bags' }),
+  }), { MAIL_TO: 'inbox@example.com', sendMail: async (m) => { sent.push(m); return { id: 'x' }; } });
+  assert.equal(response.status, 200);
+  assert.match(sent[0].text, /^Name: Ada Email: other@example\.com$/m);
+  assert.equal(sent[0].text.match(/^Email:/gm).length, 1);
+});
