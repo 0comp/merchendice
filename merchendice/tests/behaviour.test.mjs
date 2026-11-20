@@ -309,7 +309,7 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
   assert.match(home, /<p class="goods-range">Clothing, totes and bags, mugs, home goods and jewellery\.<\/p>/);
   assert.match(home, /influencers of any size/);
   assert.match(home, /Exclusive designs/);
-  assert.match(home, /A store in your look, built and kept running by us/);
+  assert.match(home, /A store in your look, set up and run by us/);
   assert.match(home, /<span>Based and designed in Sweden<\/span>/);
   assert.doesNotMatch(home, /mobile-cta|language|guide/i);
 });
@@ -395,7 +395,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
   const HERO = ['hero-tote-natural', 'hero-crewneck-sand', 'hero-dove-tee', 'hero-swallow-tee', 'hero-hoodie-sand', 'hero-songbird-tee'];
-  const allowed = [...HERO.map(name => `${name}-560`), 'feature-hoodie-black-480', 'store-phone-780'];
+  const allowed = [...HERO.map(name => `${name}-560`), 'feature-hoodie-black-640', 'store-phone-780'];
   const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
   for (const figure of figures) names.push(figure.match(/<img\b[^>]*src="\/images\/([a-z0-9-]+)\.webp"/)[1]);
@@ -416,7 +416,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.doesNotMatch(html, /tote-black|canvas-(black|natural|sand)|canvas weave|goods-flatlay|store-banner/);
   assert.doesNotMatch(html, /Pictured:/);
   // "A few good products" shows a piece with its print, not a blank sleeve.
-  assert.match(html, /<figure class="goods-feature">\s*<img src="\/images\/feature-hoodie-black-480\.webp" srcset="\/images\/feature-hoodie-black-360\.webp 360w, \/images\/feature-hoodie-black-480\.webp 480w" sizes="[^"]+" alt="Black hoodie with a small colourful songbird on a branch printed on the chest" width="480" height="600" loading="lazy" decoding="async">/);
+  assert.match(html, /<figure class="goods-feature">\s*<img src="\/images\/feature-hoodie-black-640\.webp" srcset="\/images\/feature-hoodie-black-400\.webp 400w, \/images\/feature-hoodie-black-640\.webp 640w" sizes="[^"]+" alt="Black hoodie with a small colourful songbird on a branch printed on the chest" width="640" height="800" loading="lazy" decoding="async">/);
   assert.doesNotMatch(html, /hoodie-black-496|Sleeve cuff and pocket/);
   assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
@@ -726,6 +726,8 @@ test('home copy says each idea once: no "for you" pile-up, "build and run" only 
   assert.ok((body.match(/\bfor you\b/g) || []).length === 0, 'no bare "for you" outside the FAQ');
   assert.match(body, /It starts with a short message\. We take it from there\./);
   assert.match(body, /The store opens and we look after it\./);
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /\n\.hero-points li \{[^}]*text-wrap: pretty/, 'no one-word last line in the hero bullets');
 });
 
 test('quick fixes: Example store naming, reply time on the enquiry page, no Oxford comma on the examples page', async () => {
