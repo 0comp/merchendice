@@ -4,10 +4,12 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY scripts ./scripts
 COPY src ./src
-COPY index.html site.css site.js examples.js ./
+COPY index.html site.css site.js robots.txt llms.txt sitemap.xml favicon.svg favicon.ico apple-touch-icon.png og.png 404.html ./
 COPY examples ./examples
-COPY examplepage.com ./examplepage.com
+COPY example-store ./example-store
 COPY enquiry ./enquiry
+COPY privacy ./privacy
+COPY about ./about
 RUN npm run build
 
 FROM node:24-alpine
@@ -17,6 +19,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/src ./src
 COPY --chown=node:node package.json server.mjs ./
+COPY --chown=node:node fonts ./fonts
+COPY --chown=node:node images ./images
 USER node
 EXPOSE 3000
 CMD ["node", "server.mjs"]

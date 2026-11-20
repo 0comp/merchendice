@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="robots" content="noindex">
+  <meta name="description" content="CREATOR storefront example, built by Merchendice. Browse the Songbird Edit and try the example bag. Products are examples.">
+  <title>CREATOR | Storefront example</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="preload" href="/fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="store.css">
+</head>
+<body>
+  <div class="announce"><a class="announce-back" href="/"><span aria-hidden="true">←</span> Back to Merchendice</a><span>Collection 001 · The Songbird Edit is here</span><span class="announce-tag">Example store</span></div>
+  <header class="shop-header">
+    <nav class="shop-nav" aria-label="Shop">
+      <a href="#shop">Shop all</a>
+      <button class="nav-extra" type="button" data-filter-link="T-shirts">T-shirts</button>
+      <button class="nav-extra" type="button" data-filter-link="Sweatshirts">Sweatshirts</button>
+      <button class="nav-extra" type="button" data-filter-link="Accessories">Accessories</button>
+    </nav>
+    <a class="logo" href="#top" aria-label="CREATOR home">CREATOR</a>
+    <div class="header-icons">
+      <button class="icon-btn" id="favOpen" type="button" aria-label="Saved items, 0">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>
+        <span class="badge-count" id="favCount" data-empty>0</span>
+      </button>
+      <button class="icon-btn" id="bagOpen" type="button" aria-label="Open example bag, 0 items">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="badge-count" id="bagCount" data-empty>0</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="kicker">Collection 001</p>
+        <h1 id="heroTitle">The Songbird Edit</h1>
+        <p>Soft everyday pieces with small, hand-drawn birds. Made to be worn, not kept in a drawer.</p>
+        <a class="text-cta" href="#shop">Shop the collection</a>
+        <span class="hero-note">Storefront example</span>
+      </div>
+      <button class="hero-tile hero-tile--a" id="heroOpenA" type="button">
+        <img id="heroImageA" src="/images/store/crewneck-25456.webp" alt="" fetchpriority="high" decoding="async">
+        <span class="tile-label"><strong id="heroLabelA">Songbird Crewneck</strong><span>View piece</span></span>
+      </button>
+      <button class="hero-tile hero-tile--b" id="heroOpenB" type="button">
+        <img id="heroImageB" alt="" decoding="async">
+        <span class="tile-label"><strong id="heroLabelB">Songbird Canvas Tote</strong><span>View piece</span></span>
+      </button>
+    </section>
+
+    <section id="shop" aria-labelledby="collectionTitle">
+      <div class="collection-head">
+        <h2 id="collectionTitle">Shop all</h2>
+        <p>Tees, sweatshirts and a few small extras from the first drop.</p>
+        <p class="count" id="productCount" role="status" aria-live="polite">8 products</p>
+      </div>
+      <div class="toolbar">
+        <div class="chips" role="group" aria-label="Filter by category">
+          <button class="chip" type="button" data-filter="All" aria-pressed="true">All</button>
+          <button class="chip" type="button" data-filter="T-shirts" aria-pressed="false">T-shirts</button>
+          <button class="chip" type="button" data-filter="Sweatshirts" aria-pressed="false">Sweatshirts</button>
+          <button class="chip" type="button" data-filter="Accessories" aria-pressed="false">Accessories</button>
+        </div>
+        <div class="sort">
+          <label for="sortSelect">Sort by</label>
+          <select id="sortSelect">
+            <option value="featured">Featured</option>
+            <option value="new">New first</option>
+            <option value="name">Name, A to Z</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid" id="products"></div>
+    </section>
+
+    <section class="editorial" aria-labelledby="storyTitle">
+      <button class="editorial-media" id="storyOpen" type="button" aria-label="View the Finch Hoodie"><img id="storyImage" alt="" loading="lazy" decoding="async"></button>
+      <div class="editorial-copy">
+        <p class="kicker">About the edit</p>
+        <h2 id="storyTitle">Small birds, quiet colours, everyday fits.</h2>
+        <p>Every piece in the first drop carries one small drawing, kept simple so it goes with everything you already own.</p>
+        <ul class="notes">
+          <li><span>Designs</span><span>Hand-drawn birds</span></li>
+          <li><span>Palette</span><span>Whites, sands and soft blues</span></li>
+          <li><span>Pieces</span><span>Tees, sweatshirts, a tote and a sticker</span></li>
+        </ul>
+        <a class="text-cta" href="#shop">Shop the collection</a>
+      </div>
+    </section>
+
+    <section class="newsletter" aria-labelledby="newsTitle">
+      <div>
+        <h2 id="newsTitle">Be first to the next drop.</h2>
+        <p>One short email when something new lands. Nothing else.</p>
+      </div>
+      <div>
+        <form class="news-form" id="newsForm" novalidate>
+          <label class="sr-only" for="newsEmail">Email address</label>
+          <input id="newsEmail" type="email" placeholder="Email address" autocomplete="email">
+          <button type="submit">Sign up</button>
+        </form>
+        <p class="news-status" id="newsStatus" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="shop-footer">
+    <div class="footer-top">
+      <div>
+        <a class="logo" href="#top">CREATOR</a>
+        <p>An example creator storefront. Products and the bag are for demonstration only.</p>
+      </div>
+      <nav class="footer-col" aria-label="Shop links">
+        <h3>Shop</h3>
+        <a href="#shop">Shop all</a>
+        <button type="button" data-filter-link="T-shirts">T-shirts</button>
+        <button type="button" data-filter-link="Sweatshirts">Sweatshirts</button>
+        <button type="button" data-filter-link="Accessories">Accessories</button>
+      </nav>
+      <nav class="footer-col" aria-label="About this example">
+        <h3>This example</h3>
+        <a href="/examples/">More storefront examples</a>
+        <a href="/enquiry/">Want a store like this?</a>
+        <a href="/">Merchendice</a>
+      </nav>
+    </div>
+    <div class="footer-base">
+      <span>© CREATOR · Storefront example. Products are examples. Purchases are not available.</span>
+      <a class="built-by" href="/"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 29 11.5 9 20 25 28.5 9 31 29"/><path d="M7 34.5h26" stroke-width="1.4"/></svg>Built by Merchendice</a>
+    </div>
+  </footer>
+
+  <dialog class="quickview" id="productDialog" aria-labelledby="detailName">
+    <button class="close" type="button" data-close aria-label="Close product"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    <div id="detail"></div>
+  </dialog>
+
+  <dialog class="bag" id="bagDialog" aria-labelledby="bagTitle">
+    <div class="bag-head"><h2 id="bagTitle">Your bag</h2><button class="close" type="button" data-close aria-label="Close bag"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="bag-items" id="bagItems"></div>
+    <div class="bag-foot">
+      <div class="subtotal" id="bagTotal"></div>
+      <button class="primary" id="checkoutBtn" type="button">Checkout</button>
+      <p class="demo-note"><strong>Example storefront</strong>You can add items to preview the experience. Checkout and purchases are not available.</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="store.js" defer></script>
+</body>
+</html>

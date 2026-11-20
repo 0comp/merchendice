@@ -1,4 +1,7 @@
-const PLATFORM_OPTIONS = new Set(['YouTube', 'Instagram', 'TikTok', 'Other platforms']);
+const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=()';
+const OPENER_POLICY = 'same-origin';
+const MAX_CHANNELS_LENGTH = 1000;
+const SLASH_REDIRECTS = new Set(['/enquiry', '/examples', '/privacy', '/about', '/example-store']);
 const MAX_ENQUIRY_BYTES = 40000;
 
 async function readEnquiry(request) {
@@ -28,23 +31,45 @@ async function readEnquiry(request) {
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'permissions-policy': PERMISSIONS_POLICY, 'cross-origin-opener-policy': OPENER_POLICY },
   });
 }
 
-function textResponse(body, contentType, status = 200, { creatorExample = false } = {}) {
-  const contentSecurityPolicy = creatorExample
-    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images-api.printify.com; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
-    : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'";
-  return new Response(body, {
-    status,
+function decodeAsset(asset) {
+  if (asset.encoding !== 'base64') return asset.body;
+  const binary = atob(asset.body);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function textResponse(body, contentType, status = 200, { creatorExample = false, scriptSrcExtra = '', cacheControl = 'no-cache' } = {}) {
+  const contentSecurityPolicy = `default-src 'self'; script-src 'self'${scriptSrcExtra}; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'`;
+  const headers = {
+    'content-type': contentType,
+    'cache-control': cacheControl,
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'strict-origin-when-cross-origin',
+    'x-frame-options': 'DENY',
+    'permissions-policy': PERMISSIONS_POLICY,
+    'cross-origin-opener-policy': OPENER_POLICY,
+    'content-security-policy': contentSecurityPolicy,
+  };
+  // The example store is a demo for a made-up brand, so search engines are asked not to list it.
+  if (creatorExample) headers['x-robots-tag'] = 'noindex';
+  return new Response(body, { status, headers });
+}
+
+function redirect(location) {
+  return new Response(null, {
+    status: 301,
     headers: {
-      'content-type': contentType,
+      location,
       'cache-control': 'no-cache',
       'x-content-type-options': 'nosniff',
       'referrer-policy': 'strict-origin-when-cross-origin',
-      'x-frame-options': 'DENY',
-      'content-security-policy': contentSecurityPolicy,
+      'permissions-policy': PERMISSIONS_POLICY,
+      'cross-origin-opener-policy': OPENER_POLICY,
     },
   });
 }
@@ -53,17 +78,41 @@ function validEmail(value) {
   return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function honeypotTripped(input) {
+  if (!input || typeof input !== 'object') return false;
+  const value = input.website;
+  if (typeof value === 'string') return value.trim() !== '';
+  return value != null;
+}
+
+function optionalLine(value, max) {
+  if (value == null || value === '') return '';
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (trimmed.length > max) return undefined;
+  return trimmed.replace(/[\u0000-\u001F\u007F]+/g, ' ').replace(/ {2,}/g, ' ').trim();
+}
+
 export default {
   async fetch(request, env = {}) {
     const url = new URL(request.url);
-    const isCreatorExample = url.pathname === '/examplepage.com'
-      || url.pathname.startsWith('/examplepage.com/');
+    if (['GET', 'HEAD'].includes(request.method) && SLASH_REDIRECTS.has(url.pathname)) {
+      return redirect(`${url.pathname}/${url.search}`);
+    }
+    const isCreatorExample = url.pathname.startsWith('/example-store/');
     if (['GET', 'HEAD'].includes(request.method) && (ASSETS[url.pathname] || isCreatorExample)) {
-      const asset = ASSETS[url.pathname] || ASSETS['/examplepage.com/'];
-      return textResponse(request.method === 'HEAD' ? null : asset.body, asset.type, 200, { creatorExample: isCreatorExample });
+      const asset = ASSETS[url.pathname] || ASSETS['/example-store/'];
+      return textResponse(request.method === 'HEAD' ? null : decodeAsset(asset), asset.type, 200, {
+        creatorExample: isCreatorExample && asset.type.startsWith('text/html'),
+        scriptSrcExtra: asset.scriptSrcExtra || '',
+        cacheControl: asset.immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
+      });
     }
     if (request.method !== 'POST' || url.pathname !== '/api/enquiry') {
-      return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });
+      if (['GET', 'HEAD'].includes(request.method) && !url.pathname.startsWith('/api/')) {
+        return textResponse(request.method === 'HEAD' ? null : NOT_FOUND_PAGE, 'text/html; charset=utf-8', 404, { cacheControl: 'no-store', scriptSrcExtra: typeof NOT_FOUND_SCRIPT_SRC === 'string' ? NOT_FOUND_SCRIPT_SRC : '' });
+      }
+      return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store', 'content-type': 'text/plain; charset=utf-8', 'permissions-policy': PERMISSIONS_POLICY, 'cross-origin-opener-policy': OPENER_POLICY } });
     }
 
     const origin = request.headers.get('origin');
@@ -76,15 +125,18 @@ export default {
         : json({ message: 'Please check the form and try again.' }, 400);
     }
 
-    const name = typeof input?.name === 'string' ? input.name.trim() : '';
+    if (honeypotTripped(input)) return json({ ok: true });
+
+    // The name is one line in the email, so line breaks and other control characters become spaces
+    // (a name can't add a fake "Email:" line to the message).
+    const name = typeof input?.name === 'string' ? input.name.replace(/[\u0000-\u001F\u007F]+/g, ' ').replace(/ {2,}/g, ' ').trim() : '';
     const email = typeof input?.email === 'string' ? input.email.trim() : '';
     const description = typeof input?.description === 'string' ? input.description.trim() : '';
-    const platforms = Array.isArray(input?.platforms)
-      ? [...new Set(input.platforms.filter((value) => PLATFORM_OPTIONS.has(value)))].slice(0, 4)
-      : [];
     if (!name || name.length > 160 || !validEmail(email) || !description || description.length > 5000) {
       return json({ message: 'Please check your name, email and project description, then try again.' }, 400);
     }
+    const channels = optionalLine(input?.channels, MAX_CHANNELS_LENGTH);
+    if (channels === undefined) return json({ message: 'Please shorten the links to your channels and try again.' }, 400);
 
     if (typeof env.sendMail !== 'function' || !env.MAIL_TO) {
       return json({ message: 'Enquiries are not available right now. Please try again later.' }, 503);
@@ -95,7 +147,7 @@ export default {
       '',
       `Name: ${name}`,
       `Email: ${email}`,
-      `Where to find them: ${platforms.length ? platforms.join(', ') : 'Not provided'}`,
+      `Links to their channels: ${channels || 'Not provided'}`,
       '',
       'Project description:',
       description,
