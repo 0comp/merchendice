@@ -202,7 +202,7 @@ test('llms.txt is short, line-ending safe and the Dockerfile ships all three cra
 test('the approved SEO wording is in place and the layout classes are unchanged', async () => {
   const home = await page('/');
   assert.match(home, /<h1 id="hero-title" class="hero-rise">Merch that looks like it came from you\.<\/h1>/);
-  assert.match(home, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
+  assert.match(home, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
   assert.match(home, /<h2 id="faq-title" class="rise">Frequently asked questions<\/h2>/);
   assert.match(home, /<h2 id="how-title">How it works<\/h2>/);
   assert.doesNotMatch(home, />Questions<\/h2>/);

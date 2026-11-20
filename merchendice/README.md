@@ -46,7 +46,7 @@ All four are under the [Pexels License](https://www.pexels.com/license/) (checke
 | `photo-tote-*.webp` | https://www.pexels.com/photo/a-person-holding-a-tote-bag-6787035/ | Artem Podrez | Pexels License |
 | `photo-crewneck-*.webp` | https://www.pexels.com/photo/white-crew-neck-t-shirt-9594089/ | Ron Lach | Pexels License |
 
-Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file (linked as `/og.png?v=2`; bump the number when the file changes). It is a white canvas with the dark wordmark bar, the headline and six tiles of designed pieces from the example-store mockups, downscaled only. No photos of people, nothing AI-generated.
+Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file (linked as `/og.png?v=2`; bump the number when the file changes). It shows the natural tote, the hero tee, the knit stack and the jewellery photo, as four 258 × 258 tiles on the right (no faces, nothing AI-generated). The knit tile is a square crop of `knit-stack.webp` (rows 80 to 720 of the 640 × 800 file), downscaled only. The file is saved as a 256-colour PNG to keep it near 150 KB.
 
 ## Icons
 

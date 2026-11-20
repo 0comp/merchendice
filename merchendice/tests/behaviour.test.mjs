@@ -463,7 +463,7 @@ test('JSON-LD and the visible hero line both say creators and influencers', asyn
   const json = JSON.parse(html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1])['@graph'].find((node) => node['@type'] === 'Organization');
   assert.match(json.description, /creators and influencers/);
   assert.match(json.audience.audienceType, /Creators and influencers/);
-  assert.match(html, /<p class="hero-line">A merch studio for creators and influencers<\/p>/);
+  assert.match(html, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
 });
 
 test('the primary Start a project button sits in the hero under the bullets, and the hero text is top-aligned', async () => {
