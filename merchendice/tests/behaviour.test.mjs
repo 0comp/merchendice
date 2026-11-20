@@ -394,27 +394,38 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
     assert.match(tag, /src="\/images\/[a-z0-9-]+\.webp"/, tag);
     assert.match(tag, /width="\d+" height="\d+"/, tag);
   }
-  const HERO = ['hero-tote-natural', 'hero-crewneck-sand', 'hero-dove-tee', 'hero-swallow-tee', 'hero-hoodie-sand', 'hero-songbird-tee'];
-  const allowed = [...HERO.map(name => `${name}-560`), 'hoodie-black-496', 'store-phone-780'];
+  const allowed = ['hero-tee', 'tote-natural', 'knit-stack', 'photo-jewellery-720', 'photo-tote-720', 'photo-crewneck-720', 'hoodie-black-496', 'store-phone-780'];
+  // Desktop-only tiles use <picture>. Count the designed photo once (the min-width source, or the img if there isn't one).
   const figures = [...html.matchAll(/<figure class="tile[^"]*">([\s\S]*?)<\/figure>/g)].map(m => m[1]);
   const names = [];
-  for (const figure of figures) names.push(figure.match(/<img\b[^>]*src="\/images\/([a-z0-9-]+)\.webp"/)[1]);
+  for (const figure of figures) {
+    const desktop = figure.match(/<source media="\(min-width: 901px\)" srcset="\/images\/([a-z0-9-]+)\.webp"/);
+    const img = figure.match(/<img\b[^>]*src="\/images\/([a-z0-9-]+)\.webp"/);
+    names.push((desktop || img)[1]);
+  }
   for (const tag of tags) {
     if (figures.some(figure => figure.includes(tag))) continue;
     names.push(tag.match(/\/images\/([a-z0-9-]+)\.webp/)[1]);
   }
   for (const name of names) assert.ok(allowed.includes(name), name);
   assert.equal(new Set(names).size, names.length, 'no photo is shown twice on the homepage');
-  // The hero shows only pieces that carry one of the bird designs: no blank stock products, no stock jewellery.
-  const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
-  const heroTiles = [...hero.matchAll(/<figure class="(tile[^"]*)"><img src="\/images\/([a-z0-9-]+)-560\.webp" srcset="\/images\/\2-360\.webp 360w, \/images\/\2-560\.webp 560w" sizes="\(max-width: 900px\) 46vw, 270px" alt="([^"]+)" width="560" height="700"/g)];
-  assert.deepEqual(heroTiles.map(m => m[2]), HERO);
-  for (const [, , , alt] of heroTiles) assert.match(alt, /songbird|dove|swallow/, alt);
-  assert.deepEqual(heroTiles.filter(m => m[1] === 'tile').map(m => m[2]), ['hero-crewneck-sand', 'hero-swallow-tee'], 'phones get two large tiles');
-  assert.doesNotMatch(hero, /knit-stack|photo-(jewellery|tote|crewneck)|hero-tee\.webp|Stack of folded knit|Gold necklaces|plain cream tote/);
+  // The colourful songbird (the cartoon bird from the tote) now appears on one homepage image; the sticker tile is the knit stack.
+  const songbird = names.filter(name => ['tote-natural', 'sticker', 'goods-flatlay'].includes(name));
+  assert.deepEqual(songbird, ['tote-natural']);
+  assert.match(html, /<img src="\/images\/knit-stack\.webp" alt="Stack of folded knit sweaters" width="640" height="800"/);
   assert.doesNotMatch(html, /sticker\.webp|Songbird kiss-cut sticker/);
+  // The fabric close-ups are gone; the hero mixes three stock product photos with the store mockups.
   assert.doesNotMatch(html, /tote-black|canvas-(black|natural|sand)|canvas weave|goods-flatlay|store-banner/);
+  assert.match(html, /Natural canvas tote with a colourful songbird print/);
+  for (const name of ['jewellery', 'tote', 'crewneck']) {
+    assert.match(html, new RegExp(`srcset="/images/photo-${name}-360\\.webp 360w, /images/photo-${name}-720\\.webp 720w"`), name);
+  }
   assert.doesNotMatch(html, /Pictured:/);
+  // The hero mosaic has exactly one tee; the store preview uses a different unedited store product.
+  assert.equal((html.match(/\/images\/hero-tee\.webp/g) || []).length, 1);
+  assert.match(html, /class="hero-mosaic"[\s\S]*hero-tee\.webp[\s\S]*<\/div>\s*<\/section>/);
+  const hero = html.slice(html.indexOf('<section class="hero"'), html.indexOf('</section>'));
+  assert.match(hero, /\/images\/hero-tee\.webp/);
   assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
   // No eyebrow labels, accent words, italic flourishes or scroll cue.
