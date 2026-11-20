@@ -24,7 +24,7 @@ The hero mosaic is six crops of example-store mockups (`images/store/`), all sho
 | File | Size (px) | Shape | Where it shows |
 | --- | --- | --- | --- |
 | `photo-jewellery-720.webp`, `photo-jewellery-360.webp` | 720 × 900, 360 × 450 | 4:5 | Not used on any page now (kept in the repo, not deleted). Stock photo: gold jewellery on cream cloth. |
-| `about-knit-800.webp`, `-1200`, `-1800` | 800 × 400, 1200 × 600, 1800 × 900 | 2:1 | About band (listed in `srcset`, shown about 944 px wide on desktop, so 1800 is sharp at 2×). Folded knit sweaters, cropped to 2:1 from the 3500 px original and scaled down only; `object-position` 45% (class `band-knit`). |
+| `about-knit-800.webp`, `-1200`, `-1900` | 800 × 400, 1200 × 600, 1900 × 950 | 2:1 | About band (listed in `srcset`, shown about 944 px wide on desktop, so 1900 is sharp at 2×). Folded knit sweaters, cropped to 2:1 from the 3500 px original and scaled down only; `object-position` 45% (class `band-knit`). |
 | `hero-crewneck-sand-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (also on phones), preloaded as the first photo. Songbird crewneck in sand (`store/crewneck-25456`). |
 | `hero-swallow-tee-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (also on phones). Vintage Swallow Tee in natural (`store/vintage-swallow-91227`). |
 | `hero-tote-natural-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (desktop only). Songbird Canvas Tote (`store/canvas-tote-101409`). |

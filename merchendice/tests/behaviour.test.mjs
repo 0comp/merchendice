@@ -824,10 +824,11 @@ test('About band shows the knit stack with responsive webp sources, alt text and
   const html = await page('/about/');
   const img = html.match(/<img\b[^>]*>/)[0];
   assert.match(img, /alt="Stack of folded knitted fabrics in soft grey and cream"/);
-  assert.match(img, /srcset="\/images\/about-knit-800\.webp 800w, \/images\/about-knit-1200\.webp 1200w, \/images\/about-knit-1800\.webp 1800w"/);
+  assert.match(img, /srcset="\/images\/about-knit-800\.webp 800w, \/images\/about-knit-1200\.webp 1200w, \/images\/about-knit-1900\.webp 1900w"/);
   assert.match(img, /sizes="[^"]+"/);
-  assert.match(img, /width="1800" height="900" class="band-knit"/);
+  assert.match(img, /width="1900" height="950" class="band-knit"/);
   assert.match(img, /fetchpriority="high"/);
+  assert.match(html, /<link rel="preload" as="image" href="\/images\/about-knit-1200\.webp" imagesrcset="\/images\/about-knit-800\.webp 800w, \/images\/about-knit-1200\.webp 1200w, \/images\/about-knit-1900\.webp 1900w" imagesizes="[^"]+" type="image\/webp">/);
   assert.doesNotMatch(html, /photo-jewellery|Gold necklaces/);
   assert.match(html, /We started Merchendice after watching a creator’s merch launch fall flat\./);
 });
