@@ -557,7 +557,7 @@ test('the homepage has one how-it-works flow with the five steps and no old exam
 
 const APPROVED_COST = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
 const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
-const APPROVED_SHIP = 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to Sweden, the EU or the UK.';
+const APPROVED_SHIP = 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.';
 const homeFaq = (home) => home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
 
 test('the FAQ has exactly the ten approved questions with the approved answers', async () => {

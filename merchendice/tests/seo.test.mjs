@@ -118,7 +118,7 @@ test('JSON-LD parses, uses only site facts and builds the FAQ word for word from
   assert.equal(visible.length, 10);
   assert.deepEqual(structured, visible);
   const ship = structured.filter(([q]) => /ship|deliver/i.test(q));
-  assert.deepEqual(ship, [['Where do you ship?', 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to Sweden, the EU or the UK.']]);
+  assert.deepEqual(ship, [['Where do you ship?', 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.']]);
   assert.ok(visible.some(([q, a]) => q === ship[0][0] && a === ship[0][1]), 'the shipping answer is visible word for word');
 
   const serialised = JSON.stringify(graph);
@@ -243,4 +243,28 @@ test('the hero line keeps its paragraph look now that it is a heading', async ()
   for (const declaration of [/font-family: var\(--sans\)/, /line-height: 1\.65/, /font-size: 13px/, /font-weight: 500/, /text-transform: uppercase/, /letter-spacing: \.2em/]) {
     assert.match(rule, declaration);
   }
+});
+
+test('the shipping FAQ sits between delivery timing and damage and has clean wording (curly apostrophe, no Sweden, no prices or times)', async () => {
+  const home = await page('/');
+  const [graph] = jsonLd(home);
+  const faq = graph['@graph'].find((n) => n['@type'] === 'FAQPage');
+  const names = faq.mainEntity.map((e) => e.name);
+  const i = names.indexOf('Where do you ship?');
+  assert.equal(names.filter((n) => n === 'Where do you ship?').length, 1, 'exactly one shipping question');
+  assert.equal(names[i - 1], 'How long until my store is live?');
+  assert.equal(names[i + 1], 'What if an order arrives damaged?');
+  const answer = faq.mainEntity[i].acceptedAnswer.text;
+  assert.equal(answer, 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.');
+  assert.doesNotMatch(answer, /'|Sweden/, 'no straight apostrophe and no mention of Sweden');
+  assert.doesNotMatch(answer, /\b(?:free|days?|weeks?|€|\$|£|\d)/i, 'no delivery times or prices in the shipping answer');
+  assert.equal([...home.matchAll(/<summary>Where do you ship\?<\/summary>/g)].length, 1);
+  // Only the first FAQ item starts open; the accordion group keeps one open at a time.
+  assert.equal([...home.matchAll(/<details class="faq-item" name="faq" open>/g)].length, 1);
+  assert.equal([...home.matchAll(/<details class="faq-item" name="faq"/g)].length, 10);
+});
+
+test('the home page sitemap date is not older than the last FAQ change', async () => {
+  const sitemap = await (await worker.fetch(new Request('https://site.example.test/sitemap.xml'))).text();
+  assert.match(sitemap, /<loc>https:\/\/merchendice\.com\/<\/loc><lastmod>2026-11-2\d<\/lastmod>/);
 });
