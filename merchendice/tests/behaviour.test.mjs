@@ -301,7 +301,7 @@ test('the sent dialog markup is a labelled native dialog with the approved wordi
 test('marketing pages never mention samples, quality checks or Shopify, and list jewellery', async () => {
   for (const route of PAGES) {
     const html = await page(route);
-    assert.doesNotMatch(html, /sample|quality|shopify/i, route);
+    assert.doesNotMatch(html.replaceAll(WHAT_YOU_GET, ''), /sample|quality|shopify/i, route);
     assert.doesNotMatch(html.replace(/<[^>]+>/g, ' '), /\bcolor|\bfavorite|jewelry|\bcenter\b/i, route);
   }
   const home = await (await worker.fetch(new Request('https://site.example.test/'))).text();
@@ -434,7 +434,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   // Mugs are allowed: Oscar's approved 'What can I sell?' answer names them.
   assert.doesNotMatch(html, /Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
-  assert.doesNotMatch(html, /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
+  assert.doesNotMatch(html.replaceAll(WHAT_YOU_GET, ''), /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
@@ -541,12 +541,13 @@ test('site.js has no pointer or mouse-move effects', async () => {
 test('the homepage has one how-it-works flow with the five steps and no old example link', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   assert.match(html, /id="how-it-works"/);
-  assert.doesNotMatch(html, /id="what-you-get"|id="why"/);
+  assert.doesNotMatch(html, /id="why"/);
   const steps = [...html.matchAll(/<li class="process-step[^"]*">[\s\S]*?<h3>([^<]+)<\/h3>/g)].map(m => m[1]);
   assert.deepEqual(steps, ['Idea', 'Designs', 'Products', 'Your store', 'Launch']);
   assert.doesNotMatch(html, /href="\/examplepage\.com/);
 });
 
+const WHAT_YOU_GET = "A store in your look and a first collection drawn from your content. Nothing to pay while we shape the idea and the designs, and one launch fee when your store is ready to open. Every month you get a report and a payout, so you always know what sold. You can order samples at cost to wear, film or check first. All we ask is at least 3 videos featuring the merch, so your audience knows it's there.";
 const APPROVED_COST = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
 const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged or faulty, send us a photo and we’ll replace it.';
 const APPROVED_SHIP = 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.';
@@ -580,7 +581,7 @@ test('the only cost wording on any page is the approved FAQ answer', async () =>
   const faq = homeFaq(await page('/'));
   assert.doesNotMatch(faq.replace(APPROVED_COST, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   for (const route of PAGES) {
-    const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '');
+    const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '').replaceAll(WHAT_YOU_GET, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }
@@ -647,7 +648,7 @@ test('one call-to-action label, and each idea said only once across the site', a
   const all = Object.values(pages).join(' ');
   const count = (re) => (all.match(re) || []).length;
   assert.equal(count(/A demo store, so you can see the finished standard/g), 1);
-  assert.equal(count(/in your look/g), 1);
+  assert.equal(count(/in your look/g), 2, 'hero bullet plus the approved What you get section');
   assert.equal(count(/\bjoke/g), 1, "only the approved enquiry-step wording");
   assert.equal(count(/already recognises/g), 0, "the removed statement line stays gone");
   // The homepage ends on the closing call to action after the FAQ, and the footer carries the contact line.
@@ -791,4 +792,15 @@ test('no marketing page, llms.txt or JSON-LD mentions stickers, and the damaged 
   const faq = ld['@graph'].find(n => n['@type'] === 'FAQPage');
   const jsonAnswer = faq.mainEntity.find(q => q.name === 'What if an order arrives damaged?').acceptedAnswer.text;
   assert.equal(jsonAnswer, APPROVED_DAMAGED);
+});
+
+test('the homepage "What you get" section carries the approved text verbatim, once, with no price or profit wording', async () => {
+  const html = await page('/');
+  const m = html.match(/<section class="gets-section" id="what-you-get" aria-labelledby="gets-title">\s*<h2 id="gets-title"[^>]*>What you get<\/h2>\s*<p class="gets-text[^"]*">([^<]*)<\/p>\s*<\/section>/);
+  assert.ok(m, 'section present');
+  assert.equal(m[1], WHAT_YOU_GET);
+  assert.doesNotMatch(m[1], /\$|profit|split|\bfree\b|printify|shineon|shopify/i);
+  assert.ok(html.indexOf('id="how-it-works"') < html.indexOf('id="what-you-get"') && html.indexOf('id="what-you-get"') < html.indexOf('id="faq"'));
+  assert.equal(html.split(WHAT_YOU_GET).length - 1, 1);
+  for (const route of PAGES.filter((r) => r !== '/')) assert.doesNotMatch(await page(route), /samples at cost|What you get/, route);
 });
