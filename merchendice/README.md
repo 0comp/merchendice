@@ -33,7 +33,7 @@ The hero mosaic is six crops of example-store mockups (`images/store/`), all sho
 | `hero-songbird-tee-560.webp`, `-360` | 560 × 700, 360 × 450 | 4:5 | Homepage mosaic (desktop only). Branch Tee in cream (`store/songbird-tee-18390`). |
 | `tote-natural.webp` | 720 × 960 | 3:4 | Enquiry page (desktop), share image. Songbird Canvas Tote, unedited. |
 | `knit-stack.webp` | 640 × 800 | 4:5 | Not used on any page now (the About band uses `about-knit-*`; kept in the repo, not deleted). Folded knit sweaters, photo by Arina Krasnikova on Pexels (Pexels licence): https://www.pexels.com/photo/a-close-up-shot-of-stack-of-folded-knitted-fabrics-5710046/ |
-| `feature-hoodie-black-480.webp`, `-360` | 480 × 600, 360 × 450 | 4:5 | "A few good products" (shown at most 460 px wide). Chest of the black Finch Hoodie with the songbird print (`store/bird-hoodie-32920`, the 480 × 600 area from x 210, y 100), scaled down only. |
+| `hoodie-black-496.webp` | 496 × 620 | 4:5 | "A few good products" (shown at most 460 px wide). Sleeve and pocket of the black hoodie. |
 | `store-phone-780.webp`, `store-phone-520.webp` | 780 × 1158, 520 × 772 | about 2:3 | Homepage example-store section (shown at most 380 px wide). Unedited 2× phone screenshot of `/example-store/`. |
 | `store-desktop-1440.webp`, `store-desktop-960.webp` | 1440 × 900, 960 × 600 | 16:10 | `/examples/` card (shown at most about 720 px wide). Unedited 1440 × 900 desktop screenshot of the current `/example-store/` (960 is the same capture scaled down). |
 | `store/<product>-<colour>.webp` | 900 × 900 | 1:1 | Example store product cards and quick view |
