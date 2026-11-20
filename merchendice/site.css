@@ -251,7 +251,7 @@ main { display: block; }
   align-items: center;
   padding-block: clamp(72px, 9vw, 128px);
 }
-.goods-feature { overflow: hidden; background: var(--bg-warm); }
+.goods-feature { overflow: hidden; border-radius: 4px; background: var(--bg-warm); }
 .goods-feature img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
 .goods-copy h2 { max-width: 20ch; }
 .goods-copy { padding-block: 24px 8px; }

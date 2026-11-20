@@ -736,3 +736,11 @@ test('the share image is a 1200 × 630 PNG under 300 KB, and every page points t
     assert.match(html, /<meta name="twitter:image" content="https:\/\/merchendice\.com\/og\.png">/, route);
   }
 });
+
+test('the homepage hoodie photo has 4px rounded corners', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  const decl = radiusDeclarations(css).filter(d => d.selector === '.goods-feature');
+  assert.ok(decl.length >= 1, '.goods-feature declares a radius');
+  for (const d of decl) assert.equal(d.value, '4px');
+  assert.match(css, /\.goods-feature\s*\{[^}]*overflow:\s*hidden/);
+});
