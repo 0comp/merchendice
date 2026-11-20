@@ -727,6 +727,7 @@ test('home copy says each idea once: no "for you" pile-up, "build and run" only 
   const body = html.slice(html.indexOf('<main'), faqStart).replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(body, /build and run|built and run|we run\b|run it\b|handle (the rest|everything)/i);
   assert.doesNotMatch(html.slice(0, html.indexOf('<main')).replace(/<script[\s\S]*?<\/script>/g, ''), /build and run/i, 'not in the meta descriptions either');
+  assert.doesNotMatch(html.match(/"@type":"Organization"[^]*?"audience"/)[0], /builds and runs/, 'the structured-data description does not repeat it either');
   const footer = html.slice(html.indexOf('<footer')).replace(/<[^>]+>/g, ' ');
   assert.match(footer, /Designs and stores for creators of any size on TikTok, Instagram and YouTube\./);
   assert.doesNotMatch(footer, /we run|build and run/i);
