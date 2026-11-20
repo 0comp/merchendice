@@ -19,7 +19,7 @@ Every photo on the marketing pages is a plain file in `images/`. To use your own
 
 The stock photos show plain, unbranded products (jewellery, a blank tote, a crewneck) with no faces, logos or watermarks. They are there to show the kind of product, and are never captioned as Merchendice work, products or clients.
 
-The colourful songbird (the small chest print on the tote and the matching sticker) appears on one homepage photo: the natural tote, a desktop-only tile in the mosaic. It also shows on the crewneck inside the example-store screenshots. The hero shirt is a different design, the Dove Line Tee. The black hoodie in "A few good products" is a close detail of a store product, cropped clear of the print. The bird artwork's origin still needs confirming before these photos go live.
+The colourful songbird (the small chest print on the tote) appears on one homepage photo: the natural tote, a desktop-only tile in the mosaic. It also shows on the crewneck inside the example-store screenshots. The hero shirt is a different design, the Dove Line Tee. The black hoodie in "A few good products" is a close detail of a store product, cropped clear of the print. The bird artwork's origin still needs confirming before these photos go live.
 
 | File | Size (px) | Shape | Where it shows |
 | --- | --- | --- | --- |

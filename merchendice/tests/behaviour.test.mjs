@@ -442,7 +442,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   // Mugs are allowed: Oscar's approved 'What can I sell?' answer names them.
   assert.doesNotMatch(html, /Prints and posters/);
   assert.doesNotMatch(html, /class="closer|example-store-accessories|sticker-camel|tote-black-detail/, 'no closer section and no leftover bird or store-chrome shots');
-  assert.doesNotMatch(html.replaceAll('replaced free of charge', 'replaced'), /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
+  assert.doesNotMatch(html, /\bfree\b|payout|profit|\d+\s?(k|K|M)\b followers/i);
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
@@ -556,7 +556,7 @@ test('the homepage has one how-it-works flow with the five steps and no old exam
 });
 
 const APPROVED_COST = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
-const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
+const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged or faulty, send us a photo and we’ll replace it.';
 const APPROVED_SHIP = 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.';
 const homeFaq = (home) => home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
 
@@ -719,7 +719,7 @@ test('the example store links back to the Merchendice homepage from its top bar'
 test('the homepage product band lists exactly what Oscar approved', async () => {
   const html = await (await worker.fetch(new Request('https://site.example.test/'))).text();
   const strip = html.match(/<ul aria-label="What we make">([\s\S]*?)<\/ul>/)[1];
-  assert.deepEqual([...strip.matchAll(/<li>([^<]+)<\/li>/g)].map(m => m[1]), ['Totes and bags', 'Stickers', 'Clothes', 'Jewellery']);
+  assert.deepEqual([...strip.matchAll(/<li>([^<]+)<\/li>/g)].map(m => m[1]), ['Totes and bags', 'Clothes', 'Jewellery']);
 });
 
 test('the share image is a 1200 × 630 PNG under 300 KB, and every page points to it with matching meta', async () => {
@@ -745,4 +745,24 @@ test('the homepage hoodie photo has 4px rounded corners', async () => {
   assert.ok(decl.length >= 1, '.goods-feature declares a radius');
   for (const d of decl) assert.equal(d.value, '4px');
   assert.match(css, /\.goods-feature\s*\{[^}]*overflow:\s*hidden/);
+});
+
+test('no marketing page, llms.txt or JSON-LD mentions stickers, and the damaged answer makes no day-count or free promise', async () => {
+  for (const route of ['/', '/about/', '/examples/', '/enquiry/', '/privacy/', '/llms.txt', '/404.html']) {
+    let body;
+    try { body = await page(route); } catch { continue; }
+    assert.doesNotMatch(body, /sticker/i, route);
+  }
+  for (const file of ['index.html', 'llms.txt', 'README.md', 'TODO.md']) {
+    assert.doesNotMatch(await fs.readFile(new URL(`../${file}`, import.meta.url), 'utf8'), /sticker/i, file);
+  }
+  assert.doesNotMatch(APPROVED_DAMAGED, /30 days|free of charge/i);
+  const home = await page('/');
+  const answer = homeFaq(home).match(/<summary>What if an order arrives damaged\?<\/summary>\s*<p>([^<]+)<\/p>/)[1];
+  assert.equal(answer, APPROVED_DAMAGED);
+  assert.doesNotMatch(home, /30[ -]days?|free of charge|replaced free/i);
+  const ld = JSON.parse(home.match(/<script type="application\/ld\+json">([^<]+)<\/script>/)[1]);
+  const faq = ld['@graph'].find(n => n['@type'] === 'FAQPage');
+  const jsonAnswer = faq.mainEntity.find(q => q.name === 'What if an order arrives damaged?').acceptedAnswer.text;
+  assert.equal(jsonAnswer, APPROVED_DAMAGED);
 });
