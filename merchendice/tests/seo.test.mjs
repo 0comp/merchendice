@@ -115,9 +115,11 @@ test('JSON-LD parses, uses only site facts and builds the FAQ word for word from
 
   const visible = [...home.matchAll(/<summary>(.*?)<\/summary>\s*<p>(.*?)<\/p>/gs)].map(([, q, a]) => [decode(q), decode(a.replace(/<[^>]+>/g, ''))]);
   const structured = byType.FAQPage.mainEntity.map((entry) => [entry.name, entry.acceptedAnswer.text]);
-  assert.equal(visible.length, 9);
+  assert.equal(visible.length, 10);
   assert.deepEqual(structured, visible);
-  assert.ok(!structured.some(([q]) => /ship|deliver/i.test(q)), 'no shipping FAQ until its wording is approved');
+  const ship = structured.filter(([q]) => /ship|deliver/i.test(q));
+  assert.deepEqual(ship, [['Where do you ship?', 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to Sweden, the EU or the UK.']]);
+  assert.ok(visible.some(([q, a]) => q === ship[0][0] && a === ship[0][1]), 'the shipping answer is visible word for word');
 
   const serialised = JSON.stringify(graph);
   assert.doesNotMatch(serialised, FORBIDDEN);

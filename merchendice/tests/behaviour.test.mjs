@@ -557,12 +557,13 @@ test('the homepage has one how-it-works flow with the five steps and no old exam
 
 const APPROVED_COST = 'There’s nothing to pay while we shape the idea and the designs. You only pay once your store is ready to launch. Commercial terms are agreed with you before any work begins.';
 const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged, defective or wrong, send us a photo within 30 days and we’ll have it replaced free of charge.';
+const APPROVED_SHIP = 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to Sweden, the EU or the UK.';
 const homeFaq = (home) => home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
 
-test('the FAQ has exactly the nine approved questions with the approved answers', async () => {
+test('the FAQ has exactly the ten approved questions with the approved answers', async () => {
   const faq = homeFaq(await page('/'));
   const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
-  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?', 'How long until my store is live?', 'What if an order arrives damaged?']);
+  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?', 'How long until my store is live?', 'Where do you ship?', 'What if an order arrives damaged?']);
   assert.ok(faq.includes('<p>Send us <a href="/enquiry/">the form</a>, and we’ll reply by email, usually within one or two days.</p>'));
   assert.ok(faq.includes(`<p>${APPROVED_COST}</p>`));
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
@@ -570,7 +571,8 @@ test('the FAQ has exactly the nine approved questions with the approved answers'
   assert.match(faq, /<summary>What can I sell\?<\/summary>\s*<p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery\.<\/p>/);
   assert.doesNotMatch(faq, /Clothing like tees and totes/);
   assert.ok(faq.includes(`<p>${APPROVED_DAMAGED}</p>`));
-  // The FAQPage data is built from these same nine answers; tests/seo.test.mjs checks it word for word.
+  assert.match(faq, new RegExp(`<summary>Where do you ship\\?</summary>\\s*<p>${APPROVED_SHIP}</p>`));
+  // The FAQPage data is built from these same ten answers; tests/seo.test.mjs checks it word for word.
   assert.match(await page('/'), /"@type":"FAQPage"/);
 });
 
