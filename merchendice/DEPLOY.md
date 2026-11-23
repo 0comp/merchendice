@@ -120,6 +120,68 @@ TLS ends at the reverse proxy (Nginx Proxy Manager), and the app only sees plain
 - In Nginx Proxy Manager, turning on **Force SSL** for the proxy host does the same redirect at the proxy, before the app is reached. Use either or both. Also make sure the proxy host forwards `X-Forwarded-Proto` (Nginx Proxy Manager does this by default).
 - **www must redirect to the apex domain at the proxy.** The enquiry form only accepts submissions whose browser `Origin` matches `PUBLIC_ORIGIN` (`https://merchendice.com`). A visitor who stays on `https://www.merchendice.com` would get "Please submit the form from this website." In Nginx Proxy Manager, add `www.merchendice.com` as a **Redirection Host** that sends a 301 to `https://merchendice.com` (preserve path, Force SSL on, with its own certificate). Do not serve the site on both names.
 
+## HTTP and www redirects in Nginx Proxy Manager
+
+Do not apply this on the live server until Oscar says to go live. The notes below are the exact proxy change. They sit alongside the app-side safety nets already in this repo.
+
+### What is going wrong
+
+Plain `http://merchendice.com` has been reported as returning 500. The Node app is not the source of that status: a GET of `/` in production either returns 200 or, when the trusted proxy sends `X-Forwarded-Proto: http`, a 301 to `https://merchendice.com/` (see "HTTPS, HSTS and HTTP redirects" above). It does not return 500 for that request.
+
+`https://merchendice.com` already serves the site. `https://www.merchendice.com` already returns a 301 to `https://merchendice.com/` at the proxy. So the gap is port 80: HTTP for the apex and for www is failing before a 301 can be issued.
+
+A 500 on port 80 is almost always Nginx Proxy Manager (or something in front of it), for example Force SSL left off, an HTTP server block that is missing or broken, or a redirect loop that OpenResty aborts as 500. The fix is to 301 HTTP to HTTPS at the proxy, and to 301 www to the apex, before the app has to get involved.
+
+### What the app already does (safety net only)
+
+These run only after a request reaches the app, and only in production. They do not replace the proxy setup.
+
+- If `TRUST_PROXY=1` and the proxy sends `X-Forwarded-Proto: http`, `server.mjs` 301s to the same path and query on `PUBLIC_ORIGIN` (`https://merchendice.com`). Requests with no such header, including `/healthz`, are not redirected, so this cannot loop.
+- If the `Host` header is `www.merchendice.com` (or `www.` plus the hostname of `PUBLIC_ORIGIN`), `server.mjs` 301s to the same path and query on the HTTPS apex, in one hop. This is a safety net in case a www request is accidentally proxied to the app instead of the redirection host below.
+
+Files touched: `server.mjs` (the two 301s), `tests/hosting.test.mjs` (coverage for both). Nothing in `compose.yaml` or `.env` needs to change; `TRUST_PROXY=1` and `PUBLIC_ORIGIN=https://merchendice.com` are already correct.
+
+### Apex proxy host: force HTTP to HTTPS
+
+In Nginx Proxy Manager, open **Hosts → Proxy Hosts** and edit the `merchendice.com` host (the one that already forwards to the Merchendice app at `127.0.0.1:82`, or `merchendice-contabo:3000` if the proxy is on a Docker network).
+
+1. **Details.** Domain Names: `merchendice.com` only. Do not also list `www.merchendice.com` here; www has its own redirection host below. Scheme `http`, forward hostname and port as they are now. Websockets can stay off.
+2. **SSL.** Select a certificate that covers `merchendice.com`. Tick **Force SSL**. Tick **HTTP/2 Support**. You can tick **HSTS Enabled** as well; the app already sends `Strict-Transport-Security: max-age=31536000; includeSubDomains` in production, so either is enough, but both must use a certificate that also covers `www` before HSTS `includeSubDomains` is safe. Tick **Force SSL** even if HSTS is already on: Force SSL is what answers port 80 with a 301 rather than a 500.
+3. Confirm the proxy forwards `X-Forwarded-Proto` (Nginx Proxy Manager does this by default). The snippet in `deploy/nginx-location.conf` sets `X-Forwarded-Proto $scheme`, `Host $host` and `X-Real-IP $remote_addr`.
+
+Force SSL is usually enough. If port 80 still does not 301, add this to the apex host's **Advanced → Custom Nginx Configuration**. It issues the 301 at the proxy and keeps the path and query:
+
+```nginx
+if ($scheme = http) {
+    return 301 https://merchendice.com$request_uri;
+}
+```
+
+Files touched when this is applied on the server (not applied now): the merchendice.com Proxy Host in Nginx Proxy Manager (Force SSL, and optionally the Advanced box). No container rebuild is required.
+
+### www redirection host: 301 to the HTTPS apex
+
+`https://www.merchendice.com` already 301s to the apex. HTTP www still needs the same treatment, with a certificate that covers www.
+
+In Nginx Proxy Manager, open **Hosts → Redirection Hosts**. If `www.merchendice.com` is already there, edit it; otherwise add a host.
+
+1. **Details.** Domain Names: `www.merchendice.com`. Forward Domain: `merchendice.com`. Scheme: `https`. Tick **Preserve Path** (this keeps `$request_uri`, path and query). HTTP Code: **301 Permanent**.
+2. **SSL.** Request or select a certificate that covers `www.merchendice.com`. A single Let's Encrypt certificate for both `merchendice.com` and `www.merchendice.com` is best, and can be reused on the apex proxy host. Tick **Force SSL**, so `http://www.merchendice.com/guides/?ref=1` 301s to `https://merchendice.com/guides/?ref=1` rather than failing on port 80.
+
+If you would rather keep www as a Proxy Host instead of a Redirection Host, do not forward www to the app. Put only this in that host's Advanced box (still with a www certificate and Force SSL):
+
+```nginx
+return 301 https://merchendice.com$request_uri;
+```
+
+Do not serve the site on both names. The enquiry form only accepts an `Origin` of `https://merchendice.com`.
+
+Files touched when this is applied on the server (not applied now): the www.merchendice.com Redirection Host (or Proxy Host Advanced box) and the certificate that covers www. No app or Compose change.
+
+### Optional Caddy overlay (fresh servers only)
+
+The optional `Caddyfile` already 301s `www` to `https://{$SITE_HOSTNAME}{uri}` and Caddy automatically 301s HTTP to HTTPS on the apex. It also sends `X-Robots-Tag: noindex` for `/example-store/` and `/example-store/*`. Production uses Nginx Proxy Manager, not this overlay.
+
 ## Log retention (30 days)
 
 The Privacy notice says server and proxy logs are deleted after 30 days. Match that wherever the logs live:

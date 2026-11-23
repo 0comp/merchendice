@@ -131,8 +131,11 @@ test('subpages carry a BreadcrumbList that points at their canonical address', a
     const html = await page(route);
     const crumbs = jsonLd(html).flatMap((d) => d['@graph'] || [d]).find((d) => d['@type'] === 'BreadcrumbList');
     assert.ok(crumbs, route);
-    assert.deepEqual(crumbs.itemListElement.map((i) => i.item), [`${APEX}/`, `${APEX}${route}`], route);
-    assert.deepEqual(crumbs.itemListElement.map((i) => i.position), [1, 2]);
+    const expected = route.startsWith('/guides/') && route !== '/guides/'
+      ? [`${APEX}/`, `${APEX}/guides/`, `${APEX}${route}`]
+      : [`${APEX}/`, `${APEX}${route}`];
+    assert.deepEqual(crumbs.itemListElement.map((i) => i.item), expected, route);
+    assert.deepEqual(crumbs.itemListElement.map((i) => i.position), expected.map((_, idx) => idx + 1));
     assert.doesNotMatch(JSON.stringify(crumbs), FORBIDDEN);
   }
 });
@@ -267,4 +270,54 @@ test('the shipping FAQ sits between delivery timing and damage and has clean wor
 test('the home page sitemap date is not older than the last FAQ change', async () => {
   const sitemap = await (await worker.fetch(new Request('https://site.example.test/sitemap.xml'))).text();
   assert.match(sitemap, /<loc>https:\/\/merchendice\.com\/<\/loc><lastmod>2026-11-2\d<\/lastmod>/);
+});
+
+test('guides index and first article carry valid CollectionPage, Article, BreadcrumbList and FAQPage JSON-LD', async () => {
+  const indexHtml = await page('/guides/');
+  const indexGraph = jsonLd(indexHtml).find((d) => d['@graph'])['@graph'];
+  const collection = indexGraph.find((n) => n['@type'] === 'CollectionPage');
+  assert.ok(collection, 'CollectionPage on /guides/');
+  assert.equal(collection.url, `${APEX}/guides/`);
+  assert.equal(collection.inLanguage, 'en-GB');
+  assert.equal(collection.publisher['@id'], `${APEX}/#organization`);
+  assert.equal(collection.publisher.name, 'Merchendice');
+
+  const articleHtml = await page('/guides/start-merch-small-youtuber/');
+  const articleGraph = jsonLd(articleHtml).find((d) => d['@graph'])['@graph'];
+  const article = articleGraph.find((n) => n['@type'] === 'Article');
+  assert.ok(article, 'Article on /guides/start-merch-small-youtuber/');
+  assert.equal(article.headline, 'How to start merch as a small YouTuber');
+  assert.equal(article.datePublished, '2026-11-23');
+  assert.equal(article.dateModified, '2026-11-23');
+  assert.equal(article.inLanguage, 'en-GB');
+  assert.equal(article.mainEntityOfPage['@id'], `${APEX}/guides/start-merch-small-youtuber/`);
+  assert.equal(article.publisher['@id'], `${APEX}/#organization`);
+  assert.equal(article.author.name, 'Merchendice');
+  assert.match(articleHtml, /<meta property="article:published_time" content="2026-11-23">/);
+  const faq = articleGraph.find((n) => n['@type'] === 'FAQPage');
+  assert.ok(faq, 'FAQPage on article');
+  const visibleFaq = [...articleHtml.matchAll(/<summary>(.*?)<\/summary>\s*<p>(.*?)<\/p>/gs)].map(([, q, a]) => [decode(q), decode(a.replace(/<[^>]+>/g, ''))]);
+  assert.equal(visibleFaq.length, 4);
+  assert.deepEqual(faq.mainEntity.map((e) => [e.name, e.acceptedAnswer.text]), visibleFaq);
+  assert.doesNotMatch(JSON.stringify(articleGraph), FORBIDDEN);
+});
+
+test('public marketing titles are unique, descriptive, under 60 characters and match og and twitter titles', async () => {
+  const expected = {
+    '/': 'Custom Merch for Creators & Influencers | Merchendice',
+    '/about/': 'About Merchendice, a merch studio based in Sweden',
+    '/examples/': 'Example store: a demo shop you can browse | Merchendice',
+    '/enquiry/': 'Start a merch project: send Merchendice a short note',
+    '/privacy/': 'Privacy notice: how Merchendice handles enquiries',
+    '/guides/': 'Guides to starting creator merch | Merchendice',
+    '/guides/start-merch-small-youtuber/': 'How to start merch as a small YouTuber | Merchendice',
+  };
+  for (const [route, title] of Object.entries(expected)) {
+    const html = await page(route);
+    const visible = decode(meta(html, /<title>([^<]+)<\/title>/));
+    assert.equal(visible, title, route);
+    assert.ok(visible.length <= 60, `${route} title is ${visible.length} characters`);
+    assert.equal(decode(meta(html, /<meta property="og:title" content="([^"]+)"/)), title, route);
+    assert.equal(decode(meta(html, /<meta name="twitter:title" content="([^"]+)"/)), title, route);
+  }
 });

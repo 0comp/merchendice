@@ -14,7 +14,8 @@ export const { default: worker } = await import('../dist/app.mjs');
 export const ORIGIN = 'https://site.example.test';
 export const MISSING_PAGE = '/missing-page';
 // Every marketing page, plus the branded 404 page. The example store is separate and is not edited.
-export const PAGES = ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', MISSING_PAGE];
+export const CORE_PAGES = ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', MISSING_PAGE];
+export const PAGES = ['/', '/examples/', '/enquiry/', '/privacy/', '/about/', '/guides/', '/guides/start-merch-small-youtuber/', MISSING_PAGE];
 
 export const expectedStatus = (route) => (route === MISSING_PAGE ? 404 : 200);
 

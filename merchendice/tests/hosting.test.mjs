@@ -330,6 +330,26 @@ test('plain HTTP from the trusted proxy redirects to HTTPS once, without a loop'
   assert.equal(localHttp.statusCode, 200);
 });
 
+test('www hosts in production 301 to the HTTPS apex and keep the path and query', async t => {
+  const fixture = await serverFixture(t, { env: { NODE_ENV: 'production', PUBLIC_ORIGIN: 'https://merchendice.example.test', MAIL_TO: settings.MAIL_TO, TRUST_PROXY: '1' } });
+  const httpsWww = await proxyGet(fixture.base, '/guides/start-merch-small-youtuber/?ref=1', { host: 'www.merchendice.example.test', 'x-forwarded-proto': 'https' });
+  assert.equal(httpsWww.statusCode, 301);
+  assert.equal(httpsWww.headers.location, 'https://merchendice.example.test/guides/start-merch-small-youtuber/?ref=1');
+  const httpWww = await proxyGet(fixture.base, '/enquiry/?a=1', { host: 'www.merchendice.example.test', 'x-forwarded-proto': 'http' });
+  assert.equal(httpWww.statusCode, 301);
+  assert.equal(httpWww.headers.location, 'https://merchendice.example.test/enquiry/?a=1');
+  const postWww = await new Promise((resolve, reject) => {
+    const req = httpRequest(`${fixture.base}/enquiry/`, { method: 'POST', headers: { host: 'www.merchendice.example.test', 'x-forwarded-proto': 'https', 'content-length': 0 } }, res => { res.resume(); res.on('end', () => resolve(res)); });
+    req.on('error', reject); req.end();
+  });
+  assert.equal(postWww.statusCode, 301);
+  assert.equal(postWww.headers.location, 'https://merchendice.example.test/enquiry/');
+  const apex = await proxyGet(fixture.base, '/', { host: 'merchendice.example.test', 'x-forwarded-proto': 'https' });
+  assert.equal(apex.statusCode, 200);
+  const localWww = await proxyGet(fixture.base, '/', { host: 'localhost', 'x-forwarded-proto': 'https' });
+  assert.equal(localWww.statusCode, 200);
+});
+
 test('old /examplepage.com links redirect permanently to /example-store/', async t => {
   const fixture = await serverFixture(t);
   const doubleSlash = await fetch(`${fixture.base}//`, { redirect: 'manual' });

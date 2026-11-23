@@ -21,3 +21,5 @@ Send the enquiry form and we reply by email, usually within one or two days. The
 - [About](https://merchendice.com/about/): who we are, Oscar Thomas and Oscar Rodelius
 - [Start a project](https://merchendice.com/enquiry/): the enquiry form
 - [Privacy notice](https://merchendice.com/privacy/): how enquiry details are handled
+- [Guides](https://merchendice.com/guides/): plain guides to creator merch
+- [How to start merch as a small YouTuber](https://merchendice.com/guides/start-merch-small-youtuber/): starting a merch store without holding stock

@@ -152,3 +152,17 @@ test('the share image shows the knit stack in the tile where the old bird sticke
   // The old sticker tile was mostly a flat #2E241E background.
   assert.ok(result.darkShare < 0.05, `no sticker background left (${(result.darkShare * 100).toFixed(1)}% of the tile)`);
 });
+
+test('guides pages have no horizontal overflow on desktop or narrow mobile viewports', browserTestOptions(), async (t) => {
+  const { base } = await startServer(t);
+  const browser = await startBrowser(t);
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 375, height: 812 }]) {
+    const tab = await browser.newPage(viewport);
+    for (const route of ['/guides/', '/guides/start-merch-small-youtuber/']) {
+      await tab.goto(`${base}${route}`);
+      const { scrollW, innerW } = await tab.evaluate(`({ scrollW: document.documentElement.scrollWidth, innerW: window.innerWidth })`);
+      assert.ok(scrollW <= innerW, `${route} at ${viewport.width}px: scrollWidth ${scrollW} <= innerWidth ${innerW}`);
+    }
+    await tab.close();
+  }
+});
