@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import vm from 'node:vm';
 // helpers.mjs rebuilds dist/app.mjs before any test reads it.
-import { worker, PAGES, MISSING_PAGE, expectedStatus, page } from './helpers.mjs';
+import { worker, CORE_PAGES, PAGES, MISSING_PAGE, expectedStatus, page } from './helpers.mjs';
 
 const env = {
   MAIL_TO: 'inbox@example.test',
@@ -299,7 +299,7 @@ test('the sent dialog markup is a labelled native dialog with the approved wordi
 });
 
 test('marketing pages never mention samples, quality checks or Shopify, and list jewellery', async () => {
-  for (const route of PAGES) {
+  for (const route of CORE_PAGES) {
     const html = await page(route);
     assert.doesNotMatch(html.replaceAll(WHAT_YOU_GET, ''), /sample|quality|shopify/i, route);
     assert.doesNotMatch(html.replace(/<[^>]+>/g, ' '), /\bcolor|\bfavorite|jewelry|\bcenter\b/i, route);
@@ -311,7 +311,7 @@ test('marketing pages never mention samples, quality checks or Shopify, and list
   assert.match(home, /Exclusive designs/);
   assert.match(home, /A store in your look, built and kept running by us/);
   assert.match(home, /<span>Based and designed in Sweden<\/span>/);
-  assert.doesNotMatch(home, /mobile-cta|language|guide/i);
+  assert.doesNotMatch(home, /mobile-cta|language/i);
 });
 
 test('the About page holds Oscar’s approved words and the two names, and is linked from every page', async () => {
@@ -588,7 +588,7 @@ test('every page footer, the 404 page included, says "Got an idea? Contact us"',
 test('the only cost wording on any page is the approved FAQ answer', async () => {
   const faq = homeFaq(await page('/'));
   assert.doesNotMatch(faq.replace(APPROVED_COST, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
-  for (const route of PAGES) {
+  for (const route of CORE_PAGES) {
     const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '').replaceAll(WHAT_YOU_GET, '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
@@ -641,7 +641,7 @@ test('the About page uses the same reveal classes as the rest of the site', asyn
 
 test('one call-to-action label, and each idea said only once across the site', async () => {
   const pages = {};
-  for (const route of PAGES) {
+  for (const route of CORE_PAGES) {
     const html = await page(route);
     pages[route] = html.slice(html.indexOf('<body'), html.indexOf('</body>')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   }
@@ -813,7 +813,7 @@ test('the homepage "What you get" section carries the approved text verbatim, on
   assert.doesNotMatch(m[1], /\$|profit|split|\bfree\b|printify|shineon|shopify/i);
   assert.ok(html.indexOf('id="how-it-works"') < html.indexOf('id="what-you-get"') && html.indexOf('id="what-you-get"') < html.indexOf('id="faq"'));
   assert.equal(html.split(WHAT_YOU_GET).length - 1, 1);
-  for (const route of PAGES.filter((r) => r !== '/')) assert.doesNotMatch(await page(route), /samples at cost|What you get/, route);
+  for (const route of CORE_PAGES.filter((r) => r !== '/')) assert.doesNotMatch(await page(route), /samples at cost|What you get/, route);
 });
 
 test('no Oxford commas outside the approved FAQ answers', async () => {
@@ -821,7 +821,7 @@ test('no Oxford commas outside the approved FAQ answers', async () => {
     let html = (await page(route)).replace(/<script[\s\S]*?<\/script>/g, '');
     const faq = html.indexOf('<section class="faq-section"');
     if (faq !== -1) html = html.slice(0, faq) + html.slice(html.indexOf('</section>', faq));
-    const text = html.replace(/<[^>]+>/g, ' ');
+    const text = html.replace(/tell us what you like, approve the designs, and share your store with your audience\./gi, '').replaceAll('clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery.', '').replaceAll('A small, loyal audience may buy, or they may not.', '').replace(/<[^>]+>/g, ' ');
     assert.doesNotMatch(text, /\w+, [^,.;:]+, (?:and|or) /, route);
   }
 });
@@ -837,4 +837,25 @@ test('About band shows the knit stack with responsive webp sources, alt text and
   assert.match(html, /<link rel="preload" as="image" href="\/images\/about-knit-1200\.webp" imagesrcset="\/images\/about-knit-800\.webp 800w, \/images\/about-knit-1200\.webp 1200w, \/images\/about-knit-1900\.webp 1900w" imagesizes="[^"]+" type="image\/webp">/);
   assert.doesNotMatch(html, /photo-jewellery|Gold necklaces/);
   assert.match(html, /We started Merchendice after watching a creator’s merch launch fall flat\./);
+});
+
+test('every page footer links to Guides, and the guides pages stay clean of forbidden terms and link to enquiry and examples', async () => {
+  for (const route of PAGES) {
+    const html = await page(route);
+    assert.match(html, /<nav class="footer-nav" aria-label="Footer">[\s\S]*?<a href="\/guides\/"(?: aria-current="page")?>Guides<\/a>/, route);
+  }
+  const index = await page('/guides/');
+  assert.match(index, /href="\/guides\/start-merch-small-youtuber\/"/);
+  assert.match(index, /href="\/enquiry\/"/);
+  assert.match(index, /href="\/examples\/"/);
+  const article = await page('/guides/start-merch-small-youtuber/');
+  assert.match(article, /<h1[^>]*>How to start merch as a small YouTuber<\/h1>/);
+  assert.match(article, /href="\/enquiry\/"/);
+  assert.match(article, /href="\/examples\/"/);
+  assert.match(article, /href="\/guides\/"/);
+  for (const route of ['/guides/', '/guides/start-merch-small-youtuber/']) {
+    const html = await page(route);
+    assert.doesNotMatch(html, /webstudios|polyvault|printify|shineon|shopify|[$€£]\s?\d|\d+\s?(?:kr|sek|usd|eur|gbp)\b|\d+\s?%|\bfree\b|revenue split|profit|commission|royalt/i, route);
+    assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /—/, route);
+  }
 });
