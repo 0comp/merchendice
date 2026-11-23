@@ -320,7 +320,7 @@ test('the About page holds Oscar’s approved words and the two names, and is li
   assert.match(html, /We design every piece from a creator’s own content and colours, then build and run the store for them\. Each order is printed on demand and shipped for them, so they never touch stock\. They have as much say as they want, and we handle the rest\./);
   assert.match(html, /<p class="v-names">Oscar Thomas and Oscar Rodelius<\/p><p class="v-where">Based in Sweden<\/p>/);
   assert.doesNotMatch(html, /Your photo here|v2-points|class="v2c-pt/);
-  assert.match(html, /<title>About \| Merchendice<\/title>/);
+  assert.match(html, /<title>About Merchendice, a merch studio based in Sweden<\/title>/);
   assert.match(html, /<link rel="canonical" href="https:\/\/merchendice\.com\/about\/">/);
   assert.match(html, /<div class="v2-panel hero-rise hero-rise-2">[\s\S]*<p class="v2-panel-cta"><a class="button button-primary" href="\/enquiry\/">Contact us<\/a><\/p>\s*<\/div>/);
   assert.doesNotMatch(html, /Start a project/);
@@ -749,7 +749,7 @@ test('quick fixes: Example store naming, reply time on the enquiry page, no Oxfo
     if (route !== '/example-store/') assert.equal((html.match(/<a href="\/examples\/"( aria-current="page")?>Example store<\/a>/g) || []).length, 2, route);
   }
   const examples = await page('/examples/');
-  assert.match(examples, /<title>Example store \| Merchendice<\/title>/);
+  assert.match(examples, /<title>Example store: a demo shop you can browse \| Merchendice<\/title>/);
   assert.match(examples, /<h1 id="directory-title" class="hero-rise">Example store<\/h1>/);
   assert.match(examples, /a collection page, quick view and a bag\./);
   const enquiry = await page('/enquiry/');
@@ -858,4 +858,30 @@ test('every page footer links to Guides, and the guides pages stay clean of forb
     assert.doesNotMatch(html, /webstudios|polyvault|printify|shineon|shopify|[$€£]\s?\d|\d+\s?(?:kr|sek|usd|eur|gbp)\b|\d+\s?%|\bfree\b|revenue split|profit|commission|royalt/i, route);
     assert.doesNotMatch(html.replace(/<[^>]+>/g, ''), /—/, route);
   }
+});
+
+test('marketing pages send "Example store" entry points to /examples/, and only the directory links through to the noindex demo', async () => {
+  const home = await page('/');
+  assert.match(home, /<a class="showcase-image" href="\/examples\/"/);
+  assert.match(home, /<a class="button" href="\/examples\/">See the example store<\/a>/);
+  assert.doesNotMatch(home, /href="\/example-store\/"/);
+  const examples = await page('/examples/');
+  assert.match(examples, /href="\/example-store\/"/);
+  for (const route of ['/guides/', '/about/', '/enquiry/', '/privacy/']) {
+    const html = await page(route);
+    assert.doesNotMatch(html, /href="\/example-store\/"/, route);
+    assert.match(html, /href="\/examples\/"/, route);
+  }
+});
+
+test('the home page intro names the studio once, and how-it-works links to the guides', async () => {
+  const home = await page('/');
+  const studio = home.match(/<p class="hero-studio">([\s\S]*?)<\/p>/);
+  assert.ok(studio);
+  assert.equal(studio[1].replace(/<[^>]+>/g, ''), 'Merchendice is a custom merch studio for creators and influencers of any size.');
+  assert.match(home, /<h2 class="hero-line">A merch studio for creators and influencers<\/h2>/);
+  const how = home.slice(home.indexOf('id="how-it-works"'), home.indexOf('id="what-you-get"'));
+  assert.match(how, /It starts with a short message\. We take it from there\. <a class="process-guides-link" href="\/guides\/">Read our guides<\/a><\/p>/);
+  const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta"'));
+  assert.doesNotMatch(faq, /Read our guides/, 'the link is outside the FAQ answers');
 });

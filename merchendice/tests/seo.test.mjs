@@ -301,3 +301,23 @@ test('guides index and first article carry valid CollectionPage, Article, Breadc
   assert.deepEqual(faq.mainEntity.map((e) => [e.name, e.acceptedAnswer.text]), visibleFaq);
   assert.doesNotMatch(JSON.stringify(articleGraph), FORBIDDEN);
 });
+
+test('public marketing titles are unique, descriptive, under 60 characters and match og and twitter titles', async () => {
+  const expected = {
+    '/': 'Custom Merch for Creators & Influencers | Merchendice',
+    '/about/': 'About Merchendice, a merch studio based in Sweden',
+    '/examples/': 'Example store: a demo shop you can browse | Merchendice',
+    '/enquiry/': 'Start a merch project: send Merchendice a short note',
+    '/privacy/': 'Privacy notice: how Merchendice handles enquiries',
+    '/guides/': 'Guides to starting creator merch | Merchendice',
+    '/guides/start-merch-small-youtuber/': 'How to start merch as a small YouTuber | Merchendice',
+  };
+  for (const [route, title] of Object.entries(expected)) {
+    const html = await page(route);
+    const visible = decode(meta(html, /<title>([^<]+)<\/title>/));
+    assert.equal(visible, title, route);
+    assert.ok(visible.length <= 60, `${route} title is ${visible.length} characters`);
+    assert.equal(decode(meta(html, /<meta property="og:title" content="([^"]+)"/)), title, route);
+    assert.equal(decode(meta(html, /<meta name="twitter:title" content="([^"]+)"/)), title, route);
+  }
+});
