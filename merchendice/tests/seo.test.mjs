@@ -115,7 +115,7 @@ test('JSON-LD parses, uses only site facts and builds the FAQ word for word from
 
   const visible = [...home.matchAll(/<summary>(.*?)<\/summary>\s*<p>(.*?)<\/p>/gs)].map(([, q, a]) => [decode(q), decode(a.replace(/<[^>]+>/g, ''))]);
   const structured = byType.FAQPage.mainEntity.map((entry) => [entry.name, entry.acceptedAnswer.text]);
-  assert.equal(visible.length, 10);
+  assert.equal(visible.length, 8);
   assert.deepEqual(structured, visible);
   const ship = structured.filter(([q]) => /ship|deliver/i.test(q));
   assert.deepEqual(ship, [['Where do you ship?', 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.']]);
@@ -264,7 +264,7 @@ test('the shipping FAQ sits between delivery timing and damage and has clean wor
   assert.equal([...home.matchAll(/<summary>Where do you ship\?<\/summary>/g)].length, 1);
   // Only the first FAQ item starts open; the accordion group keeps one open at a time.
   assert.equal([...home.matchAll(/<details class="faq-item" name="faq" open>/g)].length, 1);
-  assert.equal([...home.matchAll(/<details class="faq-item" name="faq"/g)].length, 10);
+  assert.equal([...home.matchAll(/<details class="faq-item" name="faq"/g)].length, 8);
 });
 
 test('the home page sitemap date is not older than the last FAQ change', async () => {

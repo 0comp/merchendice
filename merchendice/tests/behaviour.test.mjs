@@ -428,8 +428,8 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.match(hero, /\/images\/hero-tee\.webp/);
   assert.doesNotMatch(hero, /See the example store/);
   assert.doesNotMatch(html, /hero-illustration|art-piece|hero-art|<circle|<ellipse|<svg/);
-  // No eyebrow labels, accent words, italic flourishes or scroll cue.
-  assert.doesNotMatch(html, /class="[^"]*\b(kicker|accent|reveal|scroll-cue|section-lede|eyebrow)\b/);
+  // No accent words, italic flourishes or scroll cue. Small eyebrow labels sit above the section headings (2026-11-23 redesign brief).
+  assert.doesNotMatch(html, /class="[^"]*\b(kicker|accent|reveal|scroll-cue|section-lede)\b/);
   assert.doesNotMatch(html, /<em>|<i>[^<]/);
   assert.doesNotMatch(html, /We help creators turn|Merch your audience would buy/i);
   assert.doesNotMatch(html, /We read every note|keep looking after/i);
@@ -446,12 +446,14 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(css, /\/fonts\/cormorant-garamond\.woff2/);
+  assert.match(css, /url\("\/fonts\/bodoni-moda\.woff2"\)/);
+  assert.doesNotMatch(css, /Cormorant/, 'option B swaps the heading face completely');
   assert.match(css, /\/fonts\/dm-sans\.woff2/);
   assert.match(css, /font-display: swap/);
   assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.kicker|\.accent\b/);
   assert.match(css, /@keyframes rise-in/);
-  assert.match(css, /body \{[^}]*font-size: 17px/);
+  assert.match(css, /\nbody \{[^}]*font-size: 18px;[^}]*font-weight: 500;/);
+  assert.match(css, /@media \(max-width: 760px\) \{\n  body \{ font-size: 17px; \}/);
   const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
   assert.match(js, /IntersectionObserver/);
   assert.match(js, /unobserve/);
@@ -500,7 +502,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
   for (const route of PAGES) {
     const html = await page(route);
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
-    assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/bodoni-moda\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
@@ -560,13 +562,23 @@ const APPROVED_COST = 'There’s nothing to pay while we shape the idea and the 
 const APPROVED_DAMAGED = 'Our supplier is responsible for getting it right. If something arrives damaged or faulty, send us a photo and we’ll replace it.';
 const APPROVED_SHIP = 'We ship to the US, Canada and most countries worldwide. Right now we don’t ship to the EU or the UK.';
 const homeFaq = (home) => home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta'));
+// The home page shows eight of the ten approved FAQ answers. The cost answer has its own section and the
+// "What do I need to do?" answer closes the "Why Merchendice" section, both word for word (2026-11-23 redesign brief).
+const HOME_FAQ = ['How long until my store is live?', 'Where do you ship?', 'What if an order arrives damaged?', 'How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'How do we choose the products?', 'How do I get started?'];
+const APPROVED_NEED = 'Very little. Tell us what you like, approve the designs, and share your store with your audience. We take care of everything else.';
+const REASSURANCE = 'Nothing to pay while we shape the idea and the designs.';
 
-test('the FAQ has exactly the ten approved questions with the approved answers', async () => {
-  const faq = homeFaq(await page('/'));
+test('the home FAQ shows eight approved questions with the approved answers, and the other two answers appear word for word in their own sections', async () => {
+  const home = await page('/');
+  const faq = homeFaq(home);
   const questions = [...faq.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
-  assert.deepEqual(questions, ['How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'What do I need to do?', 'How do I get started?', 'How do we choose the products?', 'What does it cost to get started?', 'How long until my store is live?', 'Where do you ship?', 'What if an order arrives damaged?']);
+  assert.deepEqual(questions, HOME_FAQ);
   assert.ok(faq.includes('<p>Send us <a href="/enquiry/">the form</a>, and we’ll reply by email, usually within one or two days.</p>'));
-  assert.ok(faq.includes(`<p>${APPROVED_COST}</p>`));
+  assert.match(home, new RegExp(`<section class="cost-section[^"]*" id="cost" aria-labelledby="cost-title">[\\s\\S]*?<h2 id="cost-title">What does it cost to get started\\?</h2>[\\s\\S]*?<p class="cost-text">${APPROVED_COST}</p>`));
+  assert.equal(home.split(APPROVED_COST).length - 1, 1, 'once, in the cost section; the FAQPage data only carries the eight visible FAQ answers');
+  assert.ok(home.indexOf('id="storefront"') < home.indexOf('id="cost"') && home.indexOf('id="cost"') < home.indexOf('id="faq"'), 'cost sits between the example store and the FAQ');
+  const why = home.slice(home.indexOf('id="why-merchendice"'), home.indexOf('id="how-it-works"'));
+  assert.ok(why.includes(`<span class="problem-answer-lead">What do I need to do?</span> ${APPROVED_NEED}`), 'the approved "What do I need to do?" question and answer close the Why Merchendice section');
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
   // Any whitespace between the question and its answer, so a Windows (CRLF) checkout passes too.
   assert.match(faq, /<summary>What can I sell\?<\/summary>\s*<p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery\.<\/p>/);
@@ -587,9 +599,14 @@ test('every page footer, the 404 page included, says "Got an idea? Contact us"',
 
 test('the only cost wording on any page is the approved FAQ answer', async () => {
   const faq = homeFaq(await page('/'));
-  assert.doesNotMatch(faq.replace(APPROVED_COST, '').replace('What does it cost to get started?', ''), /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
+  assert.doesNotMatch(faq, /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
+  const home = await page('/');
+  // The one reassurance line by a call to action is a sentence from the approved What you get text.
+  assert.ok(WHAT_YOU_GET.startsWith('A store in your look and a first collection drawn from your content. Nothing to pay while we shape the idea and the designs,'));
+  assert.equal(home.split(`<p class="cta-note">${REASSURANCE}</p>`).length - 1, 1);
+  assert.equal(home.split(REASSURANCE).length - 1, 1);
   for (const route of CORE_PAGES) {
-    const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '').replaceAll(WHAT_YOU_GET, '');
+    const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '').replaceAll(WHAT_YOU_GET, '').replaceAll(REASSURANCE, '').replace('<h2 id="cost-title">What does it cost to get started?</h2>', '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
     assert.doesNotMatch(html, /Commercial terms are agreed/, route);
   }
@@ -807,7 +824,7 @@ test('no marketing page, llms.txt or JSON-LD mentions stickers, and the damaged 
 
 test('the homepage "What you get" section carries the approved text verbatim, once, with no price or profit wording', async () => {
   const html = await page('/');
-  const m = html.match(/<section class="gets-section" id="what-you-get" aria-labelledby="gets-title">\s*<h2 id="gets-title"[^>]*>What you get<\/h2>\s*<p class="gets-text[^"]*">([^<]*)<\/p>\s*<\/section>/);
+  const m = html.match(/<section class="gets-section[^"]*" id="what-you-get" aria-labelledby="gets-title">\s*<div class="gets-head[^"]*">\s*<p class="eyebrow">What you get<\/p>\s*<h2 id="gets-title">[^<]+<\/h2>\s*<\/div>\s*<p class="gets-text[^"]*">([^<]*)<\/p>/);
   assert.ok(m, 'section present');
   assert.equal(m[1], WHAT_YOU_GET);
   assert.doesNotMatch(m[1], /\$|profit|split|\bfree\b|printify|shineon|shopify/i);
@@ -884,4 +901,72 @@ test('the home page intro names the studio once, and how-it-works links to the g
   assert.match(how, /It starts with a short message\. We take it from there\. <a class="process-guides-link" href="\/guides\/">Read our guides<\/a><\/p>/);
   const faq = home.slice(home.indexOf('id="faq"'), home.indexOf('class="closing-cta"'));
   assert.doesNotMatch(faq, /Read our guides/, 'the link is outside the FAQ answers');
+});
+
+const SECTION_ORDER = ['id="top"', 'id="why-merchendice"', 'id="how-it-works"', 'id="what-you-get"', 'id="storefront"', 'id="cost"', 'id="faq"', 'class="closing-cta'];
+
+test('the home page follows the redesign order: hero, problem, how it works, what you get, example store, cost, FAQ, closing call to action', async () => {
+  const home = await page('/');
+  const positions = SECTION_ORDER.map((marker) => home.indexOf(marker));
+  for (const [i, position] of positions.entries()) assert.ok(position > 0, SECTION_ORDER[i]);
+  assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'sections are in the brief order');
+  // The products block is folded into What you get, after the approved paragraph.
+  const gets = home.slice(home.indexOf('id="what-you-get"'), home.indexOf('id="storefront"'));
+  assert.ok(gets.indexOf('class="gets-text') < gets.indexOf('id="what-we-make"'));
+  assert.match(gets, /<h3 id="goods-title">A few good products, chosen with you<\/h3>/);
+});
+
+test('every home section heading after the hero has a small eyebrow label above it', async () => {
+  const home = await page('/');
+  const main = home.slice(home.indexOf('<main'), home.indexOf('class="closing-cta'));
+  const headings = [...main.matchAll(/<h2 id="([a-z-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(headings, ['problem-title', 'how-title', 'gets-title', 'store-title', 'cost-title', 'faq-title']);
+  const labels = {};
+  for (const id of headings) {
+    const before = main.slice(0, main.indexOf(`<h2 id="${id}"`));
+    const label = [...before.matchAll(/<p class="eyebrow[^"]*">([^<]+)<\/p>/g)].pop();
+    assert.ok(label && before.length - label.index < 160, `${id} has an eyebrow right above it`);
+    labels[id] = label[1];
+  }
+  assert.deepEqual(Object.values(labels), ['Why Merchendice', 'Five steps', 'What you get', 'Example store', 'Cost', 'FAQ']);
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.match(css, /\.eyebrow \{[^}]*text-transform: uppercase/);
+});
+
+test('a Start a project button comes every two or three sections, with one reassurance line', async () => {
+  const home = await page('/');
+  const main = home.slice(home.indexOf('<main'), home.indexOf('</main>'));
+  const buttons = [...main.matchAll(/<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>/g)].map((m) => m.index);
+  assert.equal(buttons.length, 4);
+  const sectionOf = (index) => SECTION_ORDER.filter((marker) => main.indexOf(marker) !== -1 && main.indexOf(marker) < index).length - 1;
+  const sections = buttons.map(sectionOf);
+  assert.deepEqual(sections, [0, 2, 5, 7], 'hero, how it works, cost and the closing band');
+  for (let i = 1; i < sections.length; i++) assert.ok(sections[i] - sections[i - 1] <= 3, 'never more than three sections apart');
+  assert.match(main, /<div class="section-cta rise">\s*<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>\s*<p class="cta-note">Nothing to pay while we shape the idea and the designs\.<\/p>/);
+  assert.equal((main.match(/class="cta-note"/g) || []).length, 1);
+});
+
+test('the Why Merchendice section only uses wording the site already has', async () => {
+  const home = await page('/');
+  const why = home.slice(home.indexOf('id="why-merchendice"'), home.indexOf('id="how-it-works"')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  for (const line of ['You do not need to design the artwork yourself.', 'We design every piece from your content and colours.', 'You do not buy a box of shirts in advance, store them at home or post them yourself.', 'We build the store and keep it running.', 'We take care of everything else.']) assert.ok(why.includes(line), line);
+  assert.doesNotMatch(why, /\d|price|pay|fee|free|time\b|hours?|days?|weeks?/i, 'no numbers, prices or timings');
+});
+
+test('body text and labels pass WCAG AA contrast on both section tones', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  const colour = (name) => css.match(new RegExp(`--${name}: (#[0-9A-Fa-f]{6})`))[1];
+  const luminance = (hex) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  for (const bg of ['bg', 'bg-alt']) {
+    assert.ok(ratio(colour('text'), colour(bg)) >= 7, `text on ${bg}`);
+    assert.ok(ratio(colour('muted'), colour(bg)) >= 4.5, `muted on ${bg}`);
+    assert.ok(ratio(colour('accent'), colour(bg)) >= 4.5, `eyebrow accent on ${bg}`);
+  }
+  assert.ok(ratio(colour('on-accent'), colour('accent')) >= 4.5, 'closing band text');
+  assert.match(css, /font-family: "Bodoni Moda";\n  font-style: normal;\n  font-weight: 400 700;/);
+  assert.match(css, /--head-weight: 600;/);
 });

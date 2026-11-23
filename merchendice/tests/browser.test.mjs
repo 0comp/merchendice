@@ -166,3 +166,35 @@ test('guides pages have no horizontal overflow on desktop or narrow mobile viewp
     await tab.close();
   }
 });
+
+test('the redesigned home page has no horizontal overflow at 1440, 390 or 375 px, and uses the heavier type', browserTestOptions(), async (t) => {
+  const { base } = await startServer(t);
+  const browser = await startBrowser(t);
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 375, height: 812 }]) {
+    const tab = await browser.newPage(viewport);
+    await tab.goto(`${base}/`);
+    await tab.evaluate('document.fonts.ready.then(() => true)');
+    const info = await tab.evaluate(`(() => {
+      const css = (el, prop) => getComputedStyle(el).getPropertyValue(prop);
+      const h2 = document.querySelector('#how-title');
+      return {
+        scrollW: document.documentElement.scrollWidth,
+        innerW: window.innerWidth,
+        bodySize: parseFloat(css(document.body, 'font-size')),
+        bodyWeight: Number(css(document.body, 'font-weight')),
+        h2Weight: Number(css(h2, 'font-weight')),
+        h1Size: parseFloat(css(document.querySelector('#hero-title'), 'font-size')),
+        h2Size: parseFloat(css(h2, 'font-size')),
+        h3Size: parseFloat(css(document.querySelector('.process-step h3'), 'font-size')),
+        headingFont: document.fonts.check('600 40px "Bodoni Moda"'),
+      };
+    })()`);
+    assert.ok(info.scrollW <= info.innerW, `/ at ${viewport.width}px: scrollWidth ${info.scrollW} <= innerWidth ${info.innerW}`);
+    assert.equal(info.bodySize, viewport.width > 760 ? 18 : 17, `body size at ${viewport.width}px`);
+    assert.equal(info.bodyWeight, 500);
+    assert.ok(info.h2Weight >= 600, `H2 weight ${info.h2Weight}`);
+    assert.ok(info.h1Size > info.h2Size && info.h2Size > info.h3Size, `heading scale ${info.h1Size} > ${info.h2Size} > ${info.h3Size}`);
+    assert.ok(info.headingFont, 'the heading face is loaded');
+    await tab.close();
+  }
+});

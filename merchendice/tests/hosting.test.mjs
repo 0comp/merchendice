@@ -278,11 +278,12 @@ test('the fonts are served from the site, and removed product mockups are not', 
     assert.equal(response.status, 200, image);
     assert.match(response.headers.get('content-type'), /image\/webp/);
   }
-  for (const name of ['cormorant-garamond', 'dm-sans']) {
+  for (const name of ['bodoni-moda', 'dm-sans']) {
     const font = await fetch(`${fixture.base}/fonts/${name}.woff2`);
     assert.equal(font.status, 200, name);
     assert.match(font.headers.get('content-type'), /font\/woff2/);
   }
+  assert.equal((await fetch(`${fixture.base}/fonts/cormorant-garamond.woff2`)).status, 404, 'option B no longer ships Cormorant');
   assert.equal((await fetch(`${fixture.base}/fonts/OFL.txt`)).status, 404);
 });
 
