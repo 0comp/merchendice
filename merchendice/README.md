@@ -11,7 +11,7 @@ npm run build
 npm start
 ```
 
-Tests mock email delivery and never send messages. Every test file rebuilds `dist/` first, so a stale build can't hide a change. Three checks run the site in headless Chrome over the DevTools protocol, with no extra npm packages: the share image, the computed button corners and how the sent dialog closes (Esc, Close or a backdrop click). They find Chrome, Chromium or Edge in the usual places; set `CHROME_PATH` to point elsewhere. Without a browser they fail on purpose; `SKIP_BROWSER_TESTS=1` marks them as skipped instead. `/healthz` reports that the web server is running; it does not certify email delivery. Configure the provider and verify one enquiry before accepting visitors.
+Tests mock email delivery and never send messages. Every test file rebuilds `dist/` first, so a stale build can't hide a change. Several checks run the site in headless Chrome over the DevTools protocol, with no extra npm packages: the share image, the computed button corners, how the sent dialog closes (Esc, Close or a backdrop click), horizontal overflow on the guides and home pages, and the home page type sizes and weights. They find Chrome, Chromium or Edge in the usual places; set `CHROME_PATH` to point elsewhere. Without a browser they fail on purpose; `SKIP_BROWSER_TESTS=1` marks them as skipped instead. `/healthz` reports that the web server is running; it does not certify email delivery. Configure the provider and verify one enquiry before accepting visitors.
 
 ## Image slots
 
@@ -47,6 +47,19 @@ All four are under the [Pexels License](https://www.pexels.com/license/) (checke
 | `photo-crewneck-*.webp` | https://www.pexels.com/photo/white-crew-neck-t-shirt-9594089/ | Ron Lach | Pexels License |
 
 Keep the subject near the middle of each photo, because tiles are cropped a little at different screen sizes. `og.png` (1200 × 630) is the picture shown when the site is shared and is a separate file (linked as `/og.png?v=2`; bump the number when the file changes). It shows the natural tote, the hero tee, the knit stack and the jewellery photo, as four 258 × 258 tiles on the right (no faces, nothing AI-generated). The knit tile is a square crop of `knit-stack.webp` (rows 80 to 720 of the 640 × 800 file), downscaled only. The file is saved as a 256-colour PNG to keep it near 150 KB.
+
+## Home page layout and type
+
+The home page follows the 23 November 2026 redesign brief, in this order: hero, Why Merchendice (the problem), How it works, What you get (with the products folded in), the example store, cost, FAQ and a closing call to action. Each section heading after the hero has a small uppercase eyebrow label above it, and the sections alternate between the cream background (`--bg`) and a slightly deeper tone (`--bg-alt`). The closing call to action sits on a terracotta band. A "Start a project" button appears in the hero, after How it works, in the cost section and in the closing band, never more than three sections apart. The one reassurance line beside a button ("Nothing to pay while we shape the idea and the designs.") is a sentence from the approved What you get text.
+
+Every sentence on the home page is existing site wording or a plain rephrase of it. The cost section shows the approved cost answer word for word, and the Why Merchendice section ends with the approved "What do I need to do?" answer. Those two answers are therefore not repeated in the home FAQ, which shows the other eight approved answers. The FAQPage structured data carries exactly those eight visible answers. All ten stay approved and unchanged.
+
+Headings use Cormorant Garamond at weight 600 (H3 and the FAQ questions at 700). Body text is DM Sans at 18 px on desktop and 17 px on phones, weight 500, in `--text` (#2E2C29). Contrast is checked in `tests/behaviour.test.mjs`. Both fonts are self-hosted woff2 files in `fonts/`, Latin subsets made with fontTools from the Google Fonts sources:
+
+| File | Font | Weights | Source | Licence |
+| --- | --- | --- | --- | --- |
+| `cormorant-garamond.woff2` | Cormorant Garamond 4.001 (Christian Thalmann, Catharsis Fonts) | variable 400 to 700 | https://github.com/google/fonts/tree/main/ofl/cormorantgaramond | SIL Open Font License 1.1, `fonts/OFL-CormorantGaramond.txt` |
+| `dm-sans.woff2` | DM Sans (Colophon Foundry) | variable 400 to 600 | https://github.com/google/fonts/tree/main/ofl/dmsans | SIL Open Font License 1.1, `fonts/OFL-DMSans.txt` |
 
 ## Icons
 

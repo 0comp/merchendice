@@ -1,7 +1,7 @@
 @font-face {
   font-family: "Cormorant Garamond";
   font-style: normal;
-  font-weight: 400 600;
+  font-weight: 400 700;
   font-display: swap;
   src: url("/fonts/cormorant-garamond.woff2") format("woff2");
 }
@@ -20,8 +20,9 @@
   --espresso: #2B2A28;
   --espresso-soft: #3F3D3A;
   --ink: #2B2A28;
-  --text: #3C3A37;
-  --muted: #5E5C58;
+  --text: #2E2C29;
+  --muted: #54524E;
+  --bg-alt: #EFE7DA;
   --accent: #B03A26;
   --accent-hover: #8C2E20;
   --on-accent: #FFF8F2;
@@ -43,6 +44,8 @@
   --spring: cubic-bezier(.32, .72, 0, 1);
   --hover-dur: .45s;
   --radius: 0;
+  --head-weight: 600;
+  --section-space: clamp(80px, 10vw, 148px);
 }
 
 * { box-sizing: border-box; }
@@ -52,7 +55,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 500;
   line-height: 1.65;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -66,13 +70,13 @@ h1, h2, h3 {
   margin: 0;
   color: var(--ink);
   font-family: var(--serif);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -.01em;
+  font-weight: var(--head-weight);
+  line-height: 1.08;
+  letter-spacing: -.012em;
   text-wrap: balance;
 }
-h2 { font-size: clamp(36px, 3.8vw, 56px); }
-h3 { font-size: 26px; font-weight: 600; line-height: 1.1; }
+h2 { font-size: clamp(38px, 4vw, 60px); }
+h3 { font-size: 27px; font-weight: 700; line-height: 1.12; }
 strong { color: var(--ink); font-weight: 600; }
 ::selection { background: var(--accent); color: var(--on-accent); }
 
@@ -755,4 +759,74 @@ main { display: block; }
 @media (max-width: 760px) {
   .guide-lead { font-size: 21px; }
   .guide-cta-actions .button { width: 100%; }
+}
+
+/* Home page redesign: sturdier type, toned bands, an eyebrow over each H2 and a call to action every few sections */
+.eyebrow { margin: 0 0 16px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 600; line-height: 1.4; letter-spacing: .2em; text-transform: uppercase; }
+/* A full-width tone behind a section that keeps its centred content width (no extra wrapper markup) */
+.tone-alt { background: var(--bg-alt); box-shadow: 0 0 0 100vmax var(--bg-alt); clip-path: inset(0 -100vmax); }
+.problem-section, .cost-section { width: 100%; max-width: calc(var(--wrap) + var(--gutter) * 2); margin-inline: auto; padding-inline: var(--gutter); }
+.problem-section, .process-section, .gets-section, .showcase, .cost-section, .faq-section { padding-block: var(--section-space); }
+.process-section::before, .gets-section::before, .faq-section::before, .closing-cta::before { display: none; }
+.section-head h2 { max-width: 20ch; }
+.section-head > p:not(.eyebrow) { max-width: 34em; margin: 22px 0 0; }
+
+/* Why Merchendice: three things you do not have to do */
+.problem-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: clamp(40px, 5vw, 64px) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--espresso); }
+.problem-list li { padding: 26px 32px 6px 0; }
+.problem-list li + li { padding-left: 28px; border-left: 1px solid var(--line-strong); }
+.problem-list h3 { margin-bottom: 12px; }
+.problem-list p { max-width: 24em; margin: 0; }
+.problem-section { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(24px, 5vw, 80px); align-items: end; }
+.problem-section .section-head { grid-column: 1; grid-row: 1; }
+.problem-list { grid-column: 1 / -1; grid-row: 2; }
+.problem-answer { grid-column: 2; grid-row: 1; max-width: 30em; margin: 0; color: var(--ink); font-family: var(--serif); font-size: clamp(23px, 2.2vw, 30px); font-weight: 500; line-height: 1.35; }
+.problem-answer-lead { font-weight: 700; }
+
+/* How it works ends on a call to action with one reassurance line */
+.section-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: clamp(40px, 5vw, 60px); }
+.cta-note { margin: 0; color: var(--ink); font-size: 16px; }
+
+/* What you get: heading left, the approved paragraph right, then the products */
+.gets-section { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); row-gap: 0; }
+.gets-head h2 { max-width: 13em; }
+.gets-section .gets-text { font-weight: 500; }
+.gets-section .goods { grid-column: 1 / -1; max-width: none; margin: clamp(56px, 7vw, 104px) 0 0; padding: 0; justify-content: start; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 5vw, 80px); }
+.gets-section .goods-feature { max-width: 440px; }
+.goods-copy h3 { max-width: 18ch; font-size: clamp(30px, 2.8vw, 40px); }
+
+/* Cost: the approved answer, with a call to action beside it */
+.cost-section { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 5vw, 80px); align-items: start; }
+.cost-section h2 { max-width: 13ch; }
+.cost-text { max-width: 30em; margin: 0 0 32px; color: var(--ink); font-family: var(--serif); font-size: clamp(23px, 2.2vw, 30px); font-weight: 500; line-height: 1.38; }
+
+/* FAQ heading centred over its column */
+.faq-section .section-head { margin-bottom: clamp(28px, 3.4vw, 44px); text-align: center; }
+.faq-section .section-head h2 { margin: 0 auto; }
+.faq-section h2 { margin-bottom: 0; }
+.faq-item summary { font-size: 26px; }
+
+/* Closing call to action: a terracotta band before the footer */
+.closing-cta { max-width: none; padding: clamp(72px, 9vw, 128px) var(--gutter); background: var(--accent); color: var(--on-accent); }
+.closing-cta h2 { color: var(--on-accent); }
+.closing-cta .button-primary { background: var(--on-accent); border-color: var(--on-accent); color: var(--accent); }
+.closing-cta .button-primary:hover { background: var(--espresso); border-color: var(--espresso); color: var(--on-dark); }
+.closing-cta :focus-visible { outline-color: var(--on-accent); }
+
+.button, .nav-cta { font-weight: 600; }
+
+@media (max-width: 900px) {
+  .problem-section, .problem-list, .cost-section, .gets-section, .gets-section .goods { grid-template-columns: minmax(0, 1fr); }
+  .problem-section .section-head, .problem-answer, .problem-list { grid-column: 1; grid-row: auto; }
+  .problem-answer { margin-top: 24px; }
+  .gets-section .goods-feature { max-width: 340px; }
+  .problem-list li, .problem-list li + li { padding: 22px 0; border-left: 0; border-bottom: 1px solid var(--line-strong); }
+  .gets-section .gets-text { margin-top: 22px; }
+  .gets-section .goods { margin-top: 48px; }
+}
+@media (max-width: 760px) {
+  body { font-size: 17px; }
+  .section-cta { flex-direction: column; align-items: stretch; text-align: center; }
+  .section-cta .button, .cost-body .button { width: 100%; }
+  .faq-item summary { font-size: 23px; }
 }
