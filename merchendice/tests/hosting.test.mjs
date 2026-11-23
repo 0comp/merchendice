@@ -283,6 +283,9 @@ test('the fonts are served from the site, and removed product mockups are not', 
     assert.equal(font.status, 200, name);
     assert.match(font.headers.get('content-type'), /font\/woff2/);
   }
+  const versioned = await fetch(`${fixture.base}/fonts/cormorant-garamond.woff2?v=2`);
+  assert.equal(versioned.status, 200, 'the versioned heading font URL used by the pages is served');
+  assert.match(versioned.headers.get('cache-control'), /immutable/);
   assert.equal((await fetch(`${fixture.base}/fonts/OFL.txt`)).status, 404);
 });
 
