@@ -1,9 +1,11 @@
 @font-face {
-  font-family: "Cormorant Garamond";
+  font-family: "Bodoni Moda";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/cormorant-garamond.woff2?v=2") format("woff2");
+  src: url("/fonts/bodoni-moda.woff2") format("woff2");
+  /* Bodoni Moda sets wider and taller than the option A face; scale it so both options keep the same line lengths */
+  size-adjust: 90%;
 }
 @font-face {
   font-family: "DM Sans";
@@ -35,7 +37,7 @@
   --form-error-text: #7A2316;
   --form-success-bg: #E6E2CF;
   --form-success-text: #2F3A1C;
-  --serif: "Cormorant Garamond", Garamond, "Times New Roman", serif;
+  --serif: "Bodoni Moda", Didot, "Bodoni 72", "Times New Roman", serif;
   --sans: "DM Sans", "Helvetica Neue", Arial, sans-serif;
   --wrap: 1280px;
   --gutter: clamp(20px, 4vw, 56px);

@@ -446,7 +446,8 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(css, /url\("\/fonts\/cormorant-garamond\.woff2\?v=2"\)/, 'the heavier file has a new URL, because fonts are cached for a year');
+  assert.match(css, /url\("\/fonts\/bodoni-moda\.woff2"\)/);
+  assert.doesNotMatch(css, /Cormorant/, 'option B swaps the heading face completely');
   assert.match(css, /\/fonts\/dm-sans\.woff2/);
   assert.match(css, /font-display: swap/);
   assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.kicker|\.accent\b/);
@@ -501,7 +502,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
   for (const route of PAGES) {
     const html = await page(route);
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
-    assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2\?v=2" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/bodoni-moda\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
@@ -966,6 +967,6 @@ test('body text and labels pass WCAG AA contrast on both section tones', async (
     assert.ok(ratio(colour('accent'), colour(bg)) >= 4.5, `eyebrow accent on ${bg}`);
   }
   assert.ok(ratio(colour('on-accent'), colour('accent')) >= 4.5, 'closing band text');
-  assert.match(css, /font-family: "Cormorant Garamond";\n  font-style: normal;\n  font-weight: 400 700;/);
+  assert.match(css, /font-family: "Bodoni Moda";\n  font-style: normal;\n  font-weight: 400 700;/);
   assert.match(css, /--head-weight: 600;/);
 });
