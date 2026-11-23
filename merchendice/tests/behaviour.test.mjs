@@ -446,7 +446,7 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(css, /\/fonts\/cormorant-garamond\.woff2/);
+  assert.match(css, /url\("\/fonts\/cormorant-garamond\.woff2\?v=2"\)/, 'the heavier file has a new URL, because fonts are cached for a year');
   assert.match(css, /\/fonts\/dm-sans\.woff2/);
   assert.match(css, /font-display: swap/);
   assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.kicker|\.accent\b/);
@@ -501,7 +501,7 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
   for (const route of PAGES) {
     const html = await page(route);
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
-    assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/cormorant-garamond\.woff2\?v=2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
@@ -564,7 +564,7 @@ const homeFaq = (home) => home.slice(home.indexOf('id="faq"'), home.indexOf('cla
 // The home page shows eight of the ten approved FAQ answers. The cost answer has its own section and the
 // "What do I need to do?" answer closes the "Why Merchendice" section, both word for word (2026-11-23 redesign brief).
 const HOME_FAQ = ['How long until my store is live?', 'Where do you ship?', 'What if an order arrives damaged?', 'How does Merchendice work?', 'Who is it for?', 'What can I sell?', 'How do we choose the products?', 'How do I get started?'];
-const APPROVED_NEED = 'Tell us what you like, approve the designs, and share your store with your audience. We take care of everything else.';
+const APPROVED_NEED = 'Very little. Tell us what you like, approve the designs, and share your store with your audience. We take care of everything else.';
 const REASSURANCE = 'Nothing to pay while we shape the idea and the designs.';
 
 test('the home FAQ shows eight approved questions with the approved answers, and the other two answers appear word for word in their own sections', async () => {
@@ -576,8 +576,8 @@ test('the home FAQ shows eight approved questions with the approved answers, and
   assert.match(home, new RegExp(`<section class="cost-section[^"]*" id="cost" aria-labelledby="cost-title">[\\s\\S]*?<h2 id="cost-title">What does it cost to get started\\?</h2>[\\s\\S]*?<p class="cost-text">${APPROVED_COST}</p>`));
   assert.equal(home.split(APPROVED_COST).length - 1, 1, 'once, in the cost section; the FAQPage data only carries the eight visible FAQ answers');
   assert.ok(home.indexOf('id="storefront"') < home.indexOf('id="cost"') && home.indexOf('id="cost"') < home.indexOf('id="faq"'), 'cost sits between the example store and the FAQ');
-  const why = home.slice(home.indexOf('id="without"'), home.indexOf('id="how-it-works"'));
-  assert.ok(why.includes(APPROVED_NEED), 'the approved "What do I need to do?" answer closes the Why Merchendice section');
+  const why = home.slice(home.indexOf('id="why-merchendice"'), home.indexOf('id="how-it-works"'));
+  assert.ok(why.includes(`<span class="problem-answer-lead">What do I need to do?</span> ${APPROVED_NEED}`), 'the approved "What do I need to do?" question and answer close the Why Merchendice section');
   assert.ok(faq.includes('<p>Usually 2 to 3 weeks.</p>'));
   // Any whitespace between the question and its answer, so a Windows (CRLF) checkout passes too.
   assert.match(faq, /<summary>What can I sell\?<\/summary>\s*<p>Lots of things: clothing, totes and bags, mugs, home goods like pillows and blankets, and jewellery\.<\/p>/);
@@ -902,7 +902,7 @@ test('the home page intro names the studio once, and how-it-works links to the g
   assert.doesNotMatch(faq, /Read our guides/, 'the link is outside the FAQ answers');
 });
 
-const SECTION_ORDER = ['id="top"', 'id="without"', 'id="how-it-works"', 'id="what-you-get"', 'id="storefront"', 'id="cost"', 'id="faq"', 'class="closing-cta'];
+const SECTION_ORDER = ['id="top"', 'id="why-merchendice"', 'id="how-it-works"', 'id="what-you-get"', 'id="storefront"', 'id="cost"', 'id="faq"', 'class="closing-cta'];
 
 test('the home page follows the redesign order: hero, problem, how it works, what you get, example store, cost, FAQ, closing call to action', async () => {
   const home = await page('/');
@@ -947,7 +947,7 @@ test('a Start a project button comes every two or three sections, with one reass
 
 test('the Why Merchendice section only uses wording the site already has', async () => {
   const home = await page('/');
-  const why = home.slice(home.indexOf('id="without"'), home.indexOf('id="how-it-works"')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const why = home.slice(home.indexOf('id="why-merchendice"'), home.indexOf('id="how-it-works"')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   for (const line of ['You do not need to design the artwork yourself.', 'We design every piece from your content and colours.', 'You do not buy a box of shirts in advance, store them at home or post them yourself.', 'We build the store and keep it running.', 'We take care of everything else.']) assert.ok(why.includes(line), line);
   assert.doesNotMatch(why, /\d|price|pay|fee|free|time\b|hours?|days?|weeks?/i, 'no numbers, prices or timings');
 });

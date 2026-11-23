@@ -54,7 +54,7 @@ The home page follows the 23 November 2026 redesign brief, in this order: hero, 
 
 Every sentence on the home page is existing site wording or a plain rephrase of it. The cost section shows the approved cost answer word for word, and the Why Merchendice section ends with the approved "What do I need to do?" answer. Those two answers are therefore not repeated in the home FAQ, which shows the other eight approved answers. The FAQPage structured data carries exactly those eight visible answers. All ten stay approved and unchanged.
 
-Headings use Cormorant Garamond at weight 600 (H3 and the FAQ questions at 700). Body text is DM Sans at 18 px on desktop and 17 px on phones, weight 500, in `--text` (#2E2C29). Contrast is checked in `tests/behaviour.test.mjs`. Both fonts are self-hosted woff2 files in `fonts/`, Latin subsets made with fontTools from the Google Fonts sources:
+Headings use Cormorant Garamond at weight 600 (H3 and the FAQ questions at 700). Body text is DM Sans at 18 px on desktop and 17 px on phones, weight 500, in `--text` (#2E2C29). Contrast is checked in `tests/behaviour.test.mjs`. Both fonts are self-hosted woff2 files in `fonts/`, Latin subsets made with fontTools from the Google Fonts sources. Fonts are served with a one-year immutable cache, so when a font file changes, bump its `?v=` number in `site.css` and in the preload link on every page (Cormorant Garamond is `?v=2` since it gained weight 700):
 
 | File | Font | Weights | Source | Licence |
 | --- | --- | --- | --- | --- |

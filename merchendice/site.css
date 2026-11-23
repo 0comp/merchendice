@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/cormorant-garamond.woff2") format("woff2");
+  src: url("/fonts/cormorant-garamond.woff2?v=2") format("woff2");
 }
 @font-face {
   font-family: "DM Sans";
@@ -220,7 +220,7 @@ main { display: block; }
   text-transform: uppercase;
 }
 .hero-points { margin: 0 0 32px; padding: 0; list-style: none; }
-.hero-points li { position: relative; padding: 5px 0 5px 30px; font-size: 17px; color: var(--text); }
+.hero-points li { position: relative; padding: 5px 0 5px 30px; font-size: 18px; color: var(--text); }
 .hero-points li::before { content: ""; position: absolute; left: 0; top: 1.05em; width: 16px; height: 1px; background: var(--ink); }
 .nowrap { white-space: nowrap; }
 .hero-studio { margin: 16px 0 0; max-width: 32em; color: var(--ink); text-wrap: pretty; }
@@ -275,7 +275,7 @@ main { display: block; }
 .process-step { padding: 24px 24px 8px 0; }
 .process-step + .process-step { padding-left: 22px; border-left: 1px solid var(--line); }
 .process-step h3 { margin-bottom: 12px; }
-.process-step p { margin: 0; font-size: 16px; }
+.process-step p { margin: 0; font-size: 17px; }
 
 /* What you get: heading left, one paragraph right */
 .gets-section h2 { margin: 0; }
@@ -829,4 +829,24 @@ main { display: block; }
   .section-cta { flex-direction: column; align-items: stretch; text-align: center; }
   .section-cta .button, .cost-body .button { width: 100%; }
   .faq-item summary { font-size: 23px; }
+}
+
+/* Review fixes */
+/* Links stand out from the heavier body text by weight as well as colour */
+.process-guides-link, .faq-item p a, .text-link { font-weight: 600; }
+/* The paragraph beside a heading starts level with the heading, not with its eyebrow */
+@media (min-width: 901px) {
+  .gets-section .gets-text, .cost-body { margin-top: 34px; }
+}
+/* Header links stay on one line between phone and desktop widths */
+@media (min-width: 761px) and (max-width: 1000px) {
+  .site-header { gap: 14px; }
+  .main-nav { gap: 0; }
+  .main-nav a { padding: 0 9px; letter-spacing: .1em; white-space: nowrap; }
+  .nav-cta { padding: 0 14px; white-space: nowrap; }
+}
+@media (max-width: 760px) {
+  :root { --section-space: 64px; }
+  .cost-section h2, .section-head h2 { max-width: none; }
+  .problem-answer, .cost-text { font-size: 22px; }
 }
