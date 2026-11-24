@@ -186,13 +186,13 @@ test('the redesigned home page has no horizontal overflow at 1440, 390 or 375 px
         h1Size: parseFloat(css(document.querySelector('#hero-title'), 'font-size')),
         h2Size: parseFloat(css(h2, 'font-size')),
         h3Size: parseFloat(css(document.querySelector('.process-step h3'), 'font-size')),
-        headingFont: document.fonts.check('600 40px "Bodoni Moda"'),
+        headingFont: document.fonts.check('800 40px "Manrope"') && document.fonts.check('400 18px "Inter"'),
       };
     })()`);
     assert.ok(info.scrollW <= info.innerW, `/ at ${viewport.width}px: scrollWidth ${info.scrollW} <= innerWidth ${info.innerW}`);
     assert.equal(info.bodySize, viewport.width > 760 ? 18 : 17, `body size at ${viewport.width}px`);
-    assert.equal(info.bodyWeight, 500);
-    assert.ok(info.h2Weight >= 600, `H2 weight ${info.h2Weight}`);
+    assert.equal(info.bodyWeight, 400);
+    assert.ok(info.h2Weight === 800, `H2 weight ${info.h2Weight}`);
     assert.ok(info.h1Size > info.h2Size && info.h2Size > info.h3Size, `heading scale ${info.h1Size} > ${info.h2Size} > ${info.h3Size}`);
     assert.ok(info.headingFont, 'the heading face is loaded');
     await tab.close();

@@ -446,13 +446,14 @@ test('homepage is image-led with self-hosted mockups, one shirt in the hero, and
   assert.equal((html.match(/href="\/enquiry\/"/g) || []).length >= 3, true);
   const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
   assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(css, /url\("\/fonts\/bodoni-moda\.woff2"\)/);
+  assert.match(css, /url\("\/fonts\/manrope\.woff2\?v=1"\)/);
+  assert.match(css, /url\("\/fonts\/inter\.woff2\?v=1"\)/);
   assert.doesNotMatch(css, /Cormorant/, 'option B swaps the heading face completely');
-  assert.match(css, /\/fonts\/dm-sans\.woff2/);
+  assert.doesNotMatch(css, /dm-sans/, 'the site stylesheet no longer loads DM Sans (only the example store does)');
   assert.match(css, /font-display: swap/);
   assert.doesNotMatch(css, /Instrument Serif|Archivo|Source Serif|font-style: italic|\.kicker|\.accent\b/);
   assert.match(css, /@keyframes rise-in/);
-  assert.match(css, /\nbody \{[^}]*font-size: 18px;[^}]*font-weight: 500;/);
+  assert.match(css, /\nbody \{[^}]*font-size: 18px;[^}]*font-weight: 400;/);
   assert.match(css, /@media \(max-width: 760px\) \{\n  body \{ font-size: 17px; \}/);
   const js = await (await worker.fetch(new Request('https://site.example.test/site.js'))).text();
   assert.match(js, /IntersectionObserver/);
@@ -502,8 +503,8 @@ test('marketing pages use the cream, charcoal and terracotta theme with no green
   for (const route of PAGES) {
     const html = await page(route);
     assert.doesNotMatch(html, /class="grad|glow|#7cc8d9|#9a8be8|#ecd27f/, route);
-    assert.match(html, /<link rel="preload" href="\/fonts\/bodoni-moda\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
-    assert.match(html, /<link rel="preload" href="\/fonts\/dm-sans\.woff2" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/manrope\.woff2\?v=1" as="font" type="font\/woff2" crossorigin>/, route);
+    assert.match(html, /<link rel="preload" href="\/fonts\/inter\.woff2\?v=1" as="font" type="font\/woff2" crossorigin>/, route);
     assert.match(html, /<meta name="theme-color" content="#2B2A28">/, route);
     assert.match(html, /<a class="wordmark" href="[^"]+" aria-label="Merchendice home">Merchendice<\/a>/, route);
     // Other marketing pages only use the natural tote (enquiry) or the example-store product image (examples).
@@ -601,10 +602,11 @@ test('the only cost wording on any page is the approved FAQ answer', async () =>
   const faq = homeFaq(await page('/'));
   assert.doesNotMatch(faq, /price|pricing|\$|payout|cost|Shopify|Printify|ShineOn|promo/i);
   const home = await page('/');
-  // The one reassurance line by a call to action is a sentence from the approved What you get text.
+  // The cost idea appears twice on the home page: in the What you get text and in the approved cost answer. The How it works button has no note.
   assert.ok(WHAT_YOU_GET.startsWith('A store in your look and a first collection drawn from your content. Nothing to pay while we shape the idea and the designs,'));
-  assert.equal(home.split(`<p class="cta-note">${REASSURANCE}</p>`).length - 1, 1);
-  assert.equal(home.split(REASSURANCE).length - 1, 1);
+  assert.equal(home.split('class="cta-note"').length - 1, 0);
+  assert.equal(home.split(REASSURANCE).length - 1, 0);
+  assert.equal((home.match(/nothing to pay while we shape the idea and the designs/gi) || []).length, 2);
   for (const route of CORE_PAGES) {
     const html = (await page(route)).replaceAll(APPROVED_COST, '').replaceAll(APPROVED_DAMAGED, '').replaceAll(WHAT_YOU_GET, '').replaceAll(REASSURANCE, '').replace('<h2 id="cost-title">What does it cost to get started?</h2>', '');
     assert.doesNotMatch(html, /[$€£]\s?\d|\d+\s?(kr|sek|usd|eur)\b|\d+\s?%|\bfree\b|\bpay(s|ing|ment)?\b(?! details)|\bfees?\b|payout|revenue split|\bsplit\b|profit|commission|royalt/i, route);
@@ -942,8 +944,8 @@ test('a Start a project button comes every two or three sections, with one reass
   const sections = buttons.map(sectionOf);
   assert.deepEqual(sections, [0, 2, 5, 7], 'hero, how it works, cost and the closing band');
   for (let i = 1; i < sections.length; i++) assert.ok(sections[i] - sections[i - 1] <= 3, 'never more than three sections apart');
-  assert.match(main, /<div class="section-cta rise">\s*<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>\s*<p class="cta-note">Nothing to pay while we shape the idea and the designs\.<\/p>/);
-  assert.equal((main.match(/class="cta-note"/g) || []).length, 1);
+  assert.match(main, /<div class="section-cta rise">\s*<a class="button button-primary" href="\/enquiry\/">Start a project<\/a>\s*<\/div>/);
+  assert.equal((main.match(/class="cta-note"/g) || []).length, 0);
 });
 
 test('the Why Merchendice section only uses wording the site already has', async () => {
@@ -967,6 +969,24 @@ test('body text and labels pass WCAG AA contrast on both section tones', async (
     assert.ok(ratio(colour('accent'), colour(bg)) >= 4.5, `eyebrow accent on ${bg}`);
   }
   assert.ok(ratio(colour('on-accent'), colour('accent')) >= 4.5, 'closing band text');
-  assert.match(css, /font-family: "Bodoni Moda";\n  font-style: normal;\n  font-weight: 400 700;/);
-  assert.match(css, /--head-weight: 600;/);
+  assert.match(css, /font-family: "Manrope";\n  font-style: normal;\n  font-weight: 400 800;/);
+  assert.match(css, /font-family: "Inter";\n  font-style: normal;\n  font-weight: 400 700;/);
+  assert.match(css, /--head-weight: 800;/);
+  assert.match(css, /h3 \{[^}]*font-weight: 600;/);
+});
+
+test('Manrope and Inter replace Bodoni Moda, Fraunces and DM Sans, and nothing fakes an italic or a bold', async () => {
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.doesNotMatch(css, /Bodoni|Fraunces|DM Sans|dm-sans|Cormorant/i);
+  assert.doesNotMatch(css, /font-style:\s*italic/, 'no italic face is shipped, so no faux italics');
+  assert.doesNotMatch(css, /var\(--serif\)/);
+  assert.match(css, /font-synthesis: none/);
+  assert.match(css, /--display: "Manrope"/);
+  assert.match(css, /--sans: "Inter"/);
+  assert.match(css, /\.button, \.nav-cta \{ font-weight: 600; \}/);
+  for (const route of PAGES) {
+    const html = await page(route);
+    assert.doesNotMatch(html, /bodoni|fraunces|dm-sans/i, route);
+  }
+  assert.doesNotMatch(await page('/'), /class="cta-note"/);
 });
