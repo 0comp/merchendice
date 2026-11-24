@@ -37,12 +37,10 @@ function renderProducts(){
   const list=visible();
   $('#productCount').textContent=`${list.length} ${list.length===1?'product':'products'}`;
   $('#products').innerHTML=list.length?list.map((p,i)=>{
-    const second=p.colors[1];
     return `<article class="card" data-product="${esc(p.id)}">
       <div class="card-figure">
         <button class="card-media" type="button" data-open="${esc(p.id)}" aria-label="Quick view ${esc(p.name)}">
           <img class="img-a" src="${esc(photo(p,p.colors[0]))}" alt="${esc(p.name)}" ${i<4?'fetchpriority="high"':'loading="lazy"'} decoding="async" width="600" height="800">
-          ${second?`<img class="img-b" data-src="${esc(photo(p,second))}" alt="" decoding="async" width="600" height="800">`:''}
           <span class="quick" aria-hidden="true">Quick view +</span>
         </button>
         <button class="fav" type="button" data-fav="${esc(p.id)}" aria-pressed="${saved.has(p.id)}" aria-label="Save ${esc(p.name)}">${ICON_HEART}</button>
@@ -57,10 +55,6 @@ function renderProducts(){
   paint($('#products'));
   $$('#products [data-open]').forEach(b=>b.addEventListener('click',()=>openProduct(b.dataset.open)));
   $$('#products [data-fav]').forEach(b=>b.addEventListener('click',()=>toggleSaved(b.dataset.fav,b)));
-  $$('#products .card').forEach(card=>{
-    const load=()=>{const img=card.querySelector('.img-b');if(img&&!img.src){img.addEventListener('load',()=>img.classList.add('is-ready'),{once:true});img.src=img.dataset.src}};
-    card.addEventListener('pointerenter',load,{once:true});card.addEventListener('focusin',load,{once:true});
-  });
 }
 function setFilter(value){
   filter=value;$$('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.filter===value)));renderProducts();
