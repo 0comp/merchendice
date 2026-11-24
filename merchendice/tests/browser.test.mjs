@@ -186,7 +186,7 @@ test('the redesigned home page has no horizontal overflow at 1440, 390 or 375 px
         h1Size: parseFloat(css(document.querySelector('#hero-title'), 'font-size')),
         h2Size: parseFloat(css(h2, 'font-size')),
         h3Size: parseFloat(css(document.querySelector('.process-step h3'), 'font-size')),
-        headingFont: document.fonts.check('600 40px "Bodoni Moda"'),
+        headingFont: document.fonts.check('600 40px "Fraunces"'),
       };
     })()`);
     assert.ok(info.scrollW <= info.innerW, `/ at ${viewport.width}px: scrollWidth ${info.scrollW} <= innerWidth ${info.innerW}`);

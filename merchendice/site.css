@@ -1,11 +1,11 @@
 @font-face {
-  font-family: "Bodoni Moda";
+  font-family: "Fraunces";
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/bodoni-moda.woff2") format("woff2");
-  /* Bodoni Moda sets wider and taller than the option A face; scale it so both options keep the same line lengths */
-  size-adjust: 90%;
+  src: url("/fonts/fraunces.woff2?v=1") format("woff2");
+  /* Fraunces sets slightly wider than the option A face; scale it so headings keep similar line lengths */
+  size-adjust: 94%;
 }
 @font-face {
   font-family: "DM Sans";
@@ -37,7 +37,7 @@
   --form-error-text: #7A2316;
   --form-success-bg: #E6E2CF;
   --form-success-text: #2F3A1C;
-  --serif: "Bodoni Moda", Didot, "Bodoni 72", "Times New Roman", serif;
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
   --sans: "DM Sans", "Helvetica Neue", Arial, sans-serif;
   --wrap: 1280px;
   --gutter: clamp(20px, 4vw, 56px);
@@ -54,6 +54,7 @@
 html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header) + 16px); -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
+  font-synthesis: none;
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
@@ -74,11 +75,12 @@ h1, h2, h3 {
   font-family: var(--serif);
   font-weight: var(--head-weight);
   line-height: 1.08;
-  letter-spacing: -.012em;
+  letter-spacing: -.018em;
+  font-synthesis: none;
   text-wrap: balance;
 }
 h2 { font-size: clamp(38px, 4vw, 60px); }
-h3 { font-size: 27px; font-weight: 700; line-height: 1.12; }
+h3 { font-size: 27px; font-weight: 650; line-height: 1.12; }
 strong { color: var(--ink); font-weight: 600; }
 ::selection { background: var(--accent); color: var(--on-accent); }
 
@@ -384,15 +386,15 @@ main { display: block; }
   margin-block: 28px 24px;
   color: var(--on-dark);
   font-family: var(--serif);
-  font-size: clamp(34px, 7.4vw, 108px);
+  font-size: clamp(30px, 6.6vw, 100px);
   font-weight: 500;
   line-height: 1;
-  letter-spacing: .24em;
+  letter-spacing: .2em;
   text-align: center;
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
-  padding-left: .24em;
+  padding-left: .2em;
 }
 .footer-base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; margin-bottom: 0; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--on-dark) 25%, transparent); color: var(--on-dark-muted); font-size: 14px; }
 
@@ -656,7 +658,7 @@ main { display: block; }
 .v2c-lower{max-width:600px;margin-top:clamp(40px,5vw,72px)!important}
 .v2c-prose p{font-family:var(--serif);font-size:clamp(19px,1.5vw,21px);line-height:1.62;color:var(--ink);margin:0 0 1.15em}
 .v2c-prose p:last-child{margin-bottom:0}
-.v2c-prose em{font-style:italic;color:var(--accent);font-weight:500}
+.v2c-prose em{font-style:normal;color:var(--accent);font-weight:500}
 .v-cta{margin-top:clamp(36px,4vw,52px)}
 @media(max-width:860px){.v2c-lower{max-width:none;margin-top:36px!important}.v2c-prose p{font-size:19px}}
 @media(min-width:861px){
@@ -676,7 +678,7 @@ main { display: block; }
 
 /* about mockup C2d */
 .v2d-lower .v2c-prose p{font-size:clamp(20px,1.6vw,22.5px);line-height:1.6}
-.v2d-lower .v-names{margin:clamp(28px,3vw,40px) 0 4px;font-family:var(--serif);font-style:italic;font-size:clamp(19px,1.5vw,21px)}
+.v2d-lower .v-names{margin:clamp(28px,3vw,40px) 0 4px;font-family:var(--serif);font-style:normal;font-size:clamp(19px,1.5vw,21px)}
 .v2d-lower .v-cta{margin:clamp(28px,3vw,40px) 0 0;padding-bottom:0}
 .v2d-lower .v-names{padding-top:clamp(20px,2vw,28px);border-top:1px solid var(--line-strong);margin-top:clamp(28px,3vw,40px)}
 .v2d-lower .v-where{letter-spacing:.02em}
@@ -685,7 +687,7 @@ main { display: block; }
 @media(min-width:861px){.v2d-lower .v2c-prose{max-width:none}}
 
 /* C2d final balance */
-.v2d-foot .v-names{margin:0 0 4px;padding:0;border:0;font-family:var(--serif);font-style:italic;font-size:clamp(20px,1.6vw,22.5px);color:var(--ink)}
+.v2d-foot .v-names{margin:0 0 4px;padding:0;border:0;font-family:var(--serif);font-style:normal;font-size:clamp(20px,1.6vw,22.5px);color:var(--ink)}
 .v2d-foot .v-where{margin:0;font-size:14px;color:var(--muted);letter-spacing:.02em}
 .v2d-foot .v-cta{margin:0;padding:0}
 .v2d-foot .v-cta .button{min-width:176px;text-align:center}
@@ -782,17 +784,16 @@ main { display: block; }
 .problem-section { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: clamp(24px, 5vw, 80px); align-items: end; }
 .problem-section .section-head { grid-column: 1; grid-row: 1; }
 .problem-list { grid-column: 1 / -1; grid-row: 2; }
-.problem-answer { grid-column: 2; grid-row: 1; max-width: 30em; margin: 0; color: var(--ink); font-family: var(--serif); font-size: clamp(23px, 2.2vw, 30px); font-weight: 500; line-height: 1.35; }
+.problem-answer { grid-column: 2; grid-row: 1; max-width: 30em; margin: 0; color: var(--ink); font-family: var(--serif); font-size: clamp(22px, 2.1vw, 29px); font-weight: 450; line-height: 1.38; }
 .problem-answer-lead { font-weight: 700; }
 
-/* How it works ends on a call to action with one reassurance line */
+/* How it works ends on a call to action */
 .section-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: clamp(40px, 5vw, 60px); }
-.cta-note { margin: 0; color: var(--ink); font-size: 16px; }
 
 /* What you get: heading left, the approved paragraph right, then the products */
 .gets-section { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); row-gap: 0; }
 .gets-head h2 { max-width: 13em; }
-.gets-section .gets-text { font-weight: 500; }
+.gets-section .gets-text { font-weight: 450; }
 .gets-section .goods { grid-column: 1 / -1; max-width: none; margin: clamp(56px, 7vw, 104px) 0 0; padding: 0; justify-content: start; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 5vw, 80px); }
 .gets-section .goods-feature { max-width: 440px; }
 .goods-copy h3 { max-width: 18ch; font-size: clamp(30px, 2.8vw, 40px); }
@@ -800,7 +801,7 @@ main { display: block; }
 /* Cost: the approved answer, with a call to action beside it */
 .cost-section { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 5vw, 80px); align-items: start; }
 .cost-section h2 { max-width: 13ch; }
-.cost-text { max-width: 30em; margin: 0 0 32px; color: var(--ink); font-family: var(--serif); font-size: clamp(23px, 2.2vw, 30px); font-weight: 500; line-height: 1.38; }
+.cost-text { max-width: 30em; margin: 0 0 32px; color: var(--ink); font-family: var(--serif); font-size: clamp(22px, 2.1vw, 29px); font-weight: 450; line-height: 1.4; }
 
 /* FAQ heading centred over its column */
 .faq-section .section-head { margin-bottom: clamp(28px, 3.4vw, 44px); text-align: center; }
@@ -842,10 +843,11 @@ main { display: block; }
 }
 /* Header links stay on one line between phone and desktop widths */
 @media (min-width: 761px) and (max-width: 1000px) {
-  .site-header { gap: 14px; }
+  .site-header { gap: 12px; }
+  .wordmark { font-size: 21px; letter-spacing: .12em; }
   .main-nav { gap: 0; }
-  .main-nav a { padding: 0 9px; letter-spacing: .1em; white-space: nowrap; }
-  .nav-cta { padding: 0 14px; white-space: nowrap; }
+  .main-nav a { padding: 0 8px; letter-spacing: .08em; white-space: nowrap; }
+  .nav-cta { padding: 0 12px; white-space: nowrap; }
 }
 @media (max-width: 760px) {
   :root { --section-space: 64px; }

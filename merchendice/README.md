@@ -54,11 +54,11 @@ The home page follows the 23 November 2026 redesign brief, in this order: hero, 
 
 Every sentence on the home page is existing site wording or a plain rephrase of it. The cost section shows the approved cost answer word for word, and the Why Merchendice section ends with the approved "What do I need to do?" answer. Those two answers are therefore not repeated in the home FAQ, which shows the other eight approved answers. The FAQPage structured data carries exactly those eight visible answers. All ten stay approved and unchanged.
 
-Headings use Bodoni Moda (option B, a sturdier high-contrast serif) at weight 600, with H3s at 700. Body text is DM Sans at 18 px on desktop and 17 px on phones, weight 500, in `--text` (#2E2C29). Contrast is checked in `tests/behaviour.test.mjs`. Both fonts are self-hosted woff2 files in `fonts/`, Latin subsets made with fontTools from the Google Fonts sources. Fonts are served with a one-year immutable cache, so when a font file changes, bump its `?v=` number in `site.css` and in the preload link on every page:
+Headings use Fraunces (a warm soft-edged serif, option B with Fraunces) at weight 600, with H3s at 650. Body text is DM Sans at 18 px on desktop and 17 px on phones, weight 500, in `--text` (#2E2C29). Contrast is checked in `tests/behaviour.test.mjs`. Both fonts are self-hosted woff2 files in `fonts/`, Latin subsets made with fontTools from the Google Fonts sources. The home page's How it works button has no cost note; the cost idea appears twice, in What you get and in the cost section. Fonts are served with a one-year immutable cache, so when a font file changes, bump its `?v=` number in `site.css` and in the preload link on every page:
 
 | File | Font | Weights | Source | Licence |
 | --- | --- | --- | --- | --- |
-| `bodoni-moda.woff2` | Bodoni Moda 2.005 (Owen Earl, indestructible type*), optical size fixed at 28 | variable 400 to 700 | https://github.com/google/fonts/tree/main/ofl/bodonimoda | SIL Open Font License 1.1, `fonts/OFL-BodoniModa.txt` |
+| `fraunces.woff2` | Fraunces (Undercase Type), optical size fixed at 36, SOFT and WONK axes fixed at 0 | variable 400 to 700 | https://github.com/google/fonts/tree/main/ofl/fraunces | SIL Open Font License 1.1, `fonts/OFL-Fraunces.txt` |
 | `dm-sans.woff2` | DM Sans (Colophon Foundry) | variable 400 to 600 | https://github.com/google/fonts/tree/main/ofl/dmsans | SIL Open Font License 1.1, `fonts/OFL-DMSans.txt` |
 
 ## Icons
