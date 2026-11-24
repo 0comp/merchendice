@@ -990,3 +990,29 @@ test('Manrope and Inter replace Bodoni Moda, Fraunces and DM Sans, and nothing f
   }
   assert.doesNotMatch(await page('/'), /class="cta-note"/);
 });
+
+test('the product band under the hero is plain labels: no links, buttons or focus styles, and no menu-style capitals', async () => {
+  const html = await page('/');
+  const strip = html.match(/<div class="service-strip">([\s\S]*?)<\/div>/)[1];
+  assert.match(strip, /<ul aria-label="What we make">/);
+  assert.doesNotMatch(strip, /<a\b|<button|tabindex|role=/);
+  const css = await (await worker.fetch(new Request('https://site.example.test/site.css'))).text();
+  assert.doesNotMatch(css, /\.service-strip[^{]*:focus-visible/);
+  assert.doesNotMatch(css, /\.service-strip[^{]*:hover/);
+  const rules = [...css.matchAll(/\.service-strip[^{]*\{[^}]*\}/g)].map(m => m[0]).join('\n');
+  assert.doesNotMatch(rules, /text-transform:\s*uppercase/);
+  assert.match(rules, /cursor: default/);
+  assert.match(rules, /li \+ li::before \{ content: "";/, 'separators are drawn, not text');
+});
+
+test('example store cards show one image, in the first colour, with no colour swap on hover', async () => {
+  const js = await fs.readFile(new URL('../example-store/store.js', import.meta.url), 'utf8');
+  const css = await fs.readFile(new URL('../example-store/store.css', import.meta.url), 'utf8');
+  const card = js.slice(js.indexOf('function renderProducts'), js.indexOf('function setFilter'));
+  assert.equal((card.match(/<img\b/g) || []).length, 1);
+  assert.match(card, /<img class="img-a" src="\$\{esc\(photo\(p,p\.colors\[0\]\)\)\}"/);
+  assert.match(card, /<p class="card-colour">\$\{p\.colors\[0\]\?esc\(p\.colors\[0\]\[0\]\)/);
+  assert.match(js, /activeColor=p\.colors\[0\]\|\|null/, 'quick view opens on the same first colour');
+  assert.doesNotMatch(js + css, /img-b|is-ready|data-src/);
+  assert.match(css, /\.quick\{/);
+});

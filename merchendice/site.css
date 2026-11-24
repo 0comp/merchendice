@@ -87,7 +87,6 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
   outline-offset: 3px;
 }
 .site-header :focus-visible, .site-footer :focus-visible { outline-color: var(--on-dark); }
-.service-strip :focus-visible { outline-color: var(--on-accent); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .skip-link { position: absolute; left: 16px; top: -60px; z-index: 100; padding: 10px 16px; background: var(--bg); color: var(--ink); text-decoration: none; }
 .skip-link:focus { top: 12px; }
@@ -234,19 +233,21 @@ main { display: block; }
 .tile { overflow: hidden; background: var(--bg-warm); }
 .tile img { width: 100%; }
 
-/* Strip under the hero */
-.service-strip { background: var(--accent); color: var(--on-accent); }
+/* Strip under the hero: plain labels in a sentence-case run with small dots between them, so it does not read as a menu */
+.service-strip { background: var(--accent); color: var(--on-accent); cursor: default; }
 .service-strip ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px 64px;
+  gap: 6px 0;
   max-width: calc(var(--wrap) + var(--gutter) * 2);
   margin: 0 auto;
-  padding: 18px var(--gutter);
+  padding: 16px var(--gutter);
   list-style: none;
 }
-.service-strip li { font-size: 13px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; }
+.service-strip li { display: inline-flex; align-items: center; font-size: 16px; line-height: 1.4; letter-spacing: 0; white-space: nowrap; }
+/* A drawn dot, not a text character, so screen readers only hear the five labels */
+.service-strip li + li::before { content: ""; width: 4px; height: 4px; margin: 0 16px; border-radius: 50%; background: currentColor; opacity: .7; }
 
 /* Statement */
 
@@ -530,9 +531,12 @@ main { display: block; }
   .hero-studio { margin-top: 0; }
   .hero-actions { margin-top: 20px; }
   .hero-points li { padding: 4px 0 4px 28px; }
-  .service-strip ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 28px; }
+  /* Phones: the labels wrap, so align them with the page text and draw a dot before every label.
+     The dot that would start a line falls in the clipped strip left of the gutter and is never seen. */
+  .service-strip ul { justify-content: flex-start; margin-left: calc(var(--gutter) - 28px); padding: 14px var(--gutter) 14px 0; clip-path: inset(0 0 0 28px); }
+  .service-strip li::before, .service-strip li + li::before { content: ""; width: 4px; height: 4px; margin: 0 12px; flex: none; border-radius: 50%; background: currentColor; opacity: .7; }
   .goods-copy, .showcase-copy, .listing-card-body, .closing-cta { font-size: 17px; }
-  .service-strip li { font-size: 12px; letter-spacing: .16em; }
+  .service-strip li { font-size: 15px; }
   .process-step, .process-step + .process-step { grid-template-columns: minmax(0, 1fr); }
   .form-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .faq-item summary { font-size: 18px; }
@@ -856,5 +860,6 @@ main { display: block; }
 /* Sans-only setup: Manrope for labels, navigation and buttons; Inter for reading text */
 .eyebrow, .main-nav a, .nav-cta, .button, .footer-nav a, .service-strip li, .hero-line, .field label, .platform-field legend, .faq-item summary { font-family: var(--display); }
 .eyebrow { font-weight: 700; letter-spacing: .16em; }
-.hero-line, .service-strip li { font-weight: 600; }
+.hero-line { font-weight: 600; }
+.service-strip li { font-weight: 600; }
 .main-nav a, .footer-nav a { font-weight: 600; }

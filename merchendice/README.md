@@ -62,6 +62,8 @@ Headings use Manrope: H1 and H2 at weight 800, H3 and smaller headings at 600, w
 | `inter.woff2` | Inter 4 (Rasmus Andersson), optical size fixed at 14 | variable 400 to 700 | https://github.com/google/fonts/tree/main/ofl/inter | SIL Open Font License 1.1, `fonts/OFL-Inter.txt` |
 | `dm-sans.woff2` | DM Sans (Colophon Foundry), used only by the example store at `/example-store/`, which is not edited | variable 400 to 600 | https://github.com/google/fonts/tree/main/ofl/dmsans | SIL Open Font License 1.1, `fonts/OFL-DMSans.txt` |
 
+The red band under the hero lists the five product types (Clothing, Totes and bags, Mugs, Home goods, Jewellery) as plain labels, not links. It is sentence case with small drawn dots between the labels, so it does not read as a menu, and on phones it wraps left-aligned with the page text. The example store's product cards show one photo, in the product's first colour, which is also the colour named under the card and the one the quick view opens on.
+
 ## Icons
 
 The site icon is a cream M on a charcoal (#2B2A28) rounded tile. `favicon.svg` is the source. `favicon.ico` holds 16, 32 and 48 px frames and `apple-touch-icon.png` is 180 px. Pages link them with `?v=3`; bump that number on every page when the icon changes, because browsers cache icons hard. The example store links `/favicon.ico` without a version and only picks up a new icon when the cache expires.

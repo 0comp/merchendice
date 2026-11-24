@@ -198,3 +198,49 @@ test('the redesigned home page has no horizontal overflow at 1440, 390 or 375 px
     await tab.close();
   }
 });
+
+test('the product band stays tidy at 320, 375, 768 and 1440 px, and store cards, captions and quick view agree on the first colour', browserTestOptions(), async (t) => {
+  const { base } = await startServer(t);
+  const browser = await startBrowser(t);
+  for (const width of [320, 375, 768, 1440]) {
+    const tab = await browser.newPage({ width, height: 900 });
+    await tab.goto(`${base}/`);
+    await tab.evaluate('document.fonts.ready.then(() => true)');
+    const info = await tab.evaluate(`(() => {
+      const strip = document.querySelector('.service-strip');
+      const box = strip.getBoundingClientRect();
+      // Measure the label text itself: on phones each label's leading dot sits in a clipped area left of the gutter.
+      const items = [...strip.querySelectorAll('li')].map(li => { const r = document.createRange(); r.selectNodeContents(li); return r.getBoundingClientRect(); });
+      return {
+        scrollW: document.documentElement.scrollWidth, innerW: innerWidth,
+        inside: items.every(r => r.left >= box.left - 0.5 && r.right <= box.right + 0.5),
+        focusable: strip.querySelectorAll('a, button, [tabindex]').length,
+        cursor: getComputedStyle(strip.querySelector('li')).cursor,
+        lines: new Set(items.map(r => Math.round(r.top))).size,
+        lineStarts: [...new Set(items.map(r => Math.round(r.top)))].map(top => Math.round(Math.min(...items.filter(r => Math.round(r.top) === top).map(r => r.left)))),
+      };
+    })()`);
+    assert.ok(info.scrollW <= info.innerW, `/ at ${width}px overflows`);
+    assert.ok(info.inside, `band labels stay inside the band at ${width}px`);
+    assert.equal(info.focusable, 0);
+    assert.equal(info.cursor, 'default');
+    assert.ok(info.lines <= (width > 760 ? 1 : 3), `band wraps to ${info.lines} lines at ${width}px`);
+    if (info.lines > 1) assert.equal(new Set(info.lineStarts).size, 1, `wrapped lines start level at ${width}px: ${info.lineStarts}`);
+    await tab.close();
+  }
+  const tab = await browser.newPage({ width: 1440, height: 900 });
+  await tab.goto(`${base}/example-store/`);
+  const cards = await tab.evaluate(`[...document.querySelectorAll('#products .card')].map(c => ({ imgs: c.querySelectorAll('img').length, src: c.querySelector('img').getAttribute('src'), caption: c.querySelector('.card-colour').textContent }))`);
+  assert.ok(cards.length >= 8);
+  for (const card of cards) assert.equal(card.imgs, 1, card.src);
+  const dove = await tab.evaluate(`(() => {
+    const card = document.querySelector('.card[data-product="dove-tee"]');
+    const grid = { src: card.querySelector('img').getAttribute('src'), caption: card.querySelector('.card-colour').textContent };
+    card.querySelector('.card-media').click();
+    return { grid, quick: { src: document.querySelector('#detailImage').getAttribute('src'), colour: document.querySelector('#selectedColor').textContent } };
+  })()`);
+  assert.equal(dove.grid.caption, 'White');
+  assert.equal(dove.quick.colour, dove.grid.caption);
+  assert.equal(dove.quick.src, dove.grid.src);
+  await tab.close();
+});
