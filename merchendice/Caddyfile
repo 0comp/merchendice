@@ -8,6 +8,9 @@
         }
     }
     encode zstd gzip
+    # The CREATOR demo is a made-up brand; ask crawlers not to list it. The app also sends this header.
+    @exampleStore path /example-store /example-store/*
+    header @exampleStore X-Robots-Tag noindex
     reverse_proxy app:3000 {
         header_up X-Real-IP {remote_host}
     }

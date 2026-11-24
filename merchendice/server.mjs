@@ -254,7 +254,16 @@ export function createAppServer({
         incoming.resume();
         return sendJson(outgoing, 400, { message: invalidRequest });
       }
-      const local = LOCAL_HOSTS.has(requestHostname(incoming));
+      const incomingHost = requestHostname(incoming);
+      const local = LOCAL_HOSTS.has(incomingHost);
+      const publicHost = new URL(publicOrigin).hostname;
+      // Safety net: if a www host reaches the app, send it to the apex in one hop (HTTPS).
+      // The proxy should already do this; see DEPLOY.md. Keep the path and query string.
+      if (production && !local && incomingHost === `www.${publicHost}`) {
+        incoming.resume();
+        outgoing.writeHead(301, { location: `${publicOrigin}${url.pathname}${url.search}`, 'cache-control': 'no-cache', 'x-content-type-options': 'nosniff', ...SECURITY_HEADERS });
+        return outgoing.end();
+      }
       if (forceHttps && !local && String(incoming.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase() === 'http') {
         incoming.resume();
         outgoing.writeHead(301, { location: `${publicOrigin}${url.pathname}${url.search}`, 'cache-control': 'no-cache' });

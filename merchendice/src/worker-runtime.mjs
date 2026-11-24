@@ -1,7 +1,7 @@
 const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=()';
 const OPENER_POLICY = 'same-origin';
 const MAX_CHANNELS_LENGTH = 1000;
-const SLASH_REDIRECTS = new Set(['/enquiry', '/examples', '/privacy', '/about', '/example-store']);
+const SLASH_REDIRECTS = new Set(['/enquiry', '/examples', '/privacy', '/about', '/guides', '/guides/start-merch-small-youtuber', '/example-store']);
 const MAX_ENQUIRY_BYTES = 40000;
 
 async function readEnquiry(request) {

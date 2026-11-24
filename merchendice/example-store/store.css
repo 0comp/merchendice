@@ -67,9 +67,7 @@ h1,h2,h3,p{margin-top:0}
 .card{min-width:0}
 .card-figure{position:relative}
 .card-media{position:relative;display:block;width:100%;aspect-ratio:3/4;overflow:hidden;padding:0;border:0;background:var(--stone)}
-.card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply;transition:opacity .6s var(--ease),transform 1s var(--ease)}
-.card-media .img-b{opacity:0}
-.card:hover .card-media .img-b.is-ready{opacity:1}
+.card-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;mix-blend-mode:multiply;transition:transform 1s var(--ease)}
 .card:hover .card-media img{transform:scale(1.035)}
 .quick{position:absolute;left:12px;right:12px;bottom:12px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;background:rgba(255,255,255,.92);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:0;transform:translateY(8px);transition:opacity .35s var(--ease),transform .35s var(--ease)}
 .card:hover .quick,.card-media:focus-visible .quick{opacity:1;transform:none}
